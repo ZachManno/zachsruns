@@ -97,11 +97,10 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
         : firstName;
       
       return (
-        <span key={index} className="inline-flex items-center gap-1 mr-2">
+        <div key={index} className="flex items-center gap-1">
           <span className="text-gray-900">{displayName}</span>
           {p.badge && <BadgeIcon badge={p.badge as any} size="small" />}
-          {index < participants.length - 1 && <span>,</span>}
-        </span>
+        </div>
       );
     });
   };
@@ -167,7 +166,7 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
               Confirmed: {run.participant_counts?.confirmed || 0}
             </span>
             {run.participants?.confirmed && run.participants.confirmed.length > 0 && (
-              <div className="text-gray-600 text-xs mt-1 flex flex-wrap">
+              <div className="text-gray-600 text-xs mt-1 space-y-1">
                 {formatParticipantNames(run.participants.confirmed)}
               </div>
             )}
@@ -177,7 +176,7 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
               Interested: {run.participant_counts?.interested || 0}
             </span>
             {run.participants?.interested && run.participants.interested.length > 0 && (
-              <div className="text-gray-600 text-xs mt-1 flex flex-wrap">
+              <div className="text-gray-600 text-xs mt-1 space-y-1">
                 {formatParticipantNames(run.participants.interested)}
               </div>
             )}
@@ -187,7 +186,7 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
               Out: {run.participant_counts?.out || 0}
             </span>
             {run.participants?.out && run.participants.out.length > 0 && (
-              <div className="text-gray-600 text-xs mt-1 flex flex-wrap">
+              <div className="text-gray-600 text-xs mt-1 space-y-1">
                 {formatParticipantNames(run.participants.out)}
               </div>
             )}
@@ -197,7 +196,7 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
               <span className="font-semibold text-orange-600">
                 No Show: {run.participant_counts?.no_show || 0}
               </span>
-              <div className="text-gray-600 text-xs mt-1 flex flex-wrap">
+              <div className="text-gray-600 text-xs mt-1 space-y-1">
                 {formatParticipantNames(run.participants.no_show)}
               </div>
             </div>

@@ -103,11 +103,21 @@ class Run(db.Model):
         }
         
         if include_participants:
-            # Get participant user objects with names
-            confirmed_users = [p.user for p in self.participants if p.status == 'confirmed']
-            interested_users = [p.user for p in self.participants if p.status == 'interested']
-            out_users = [p.user for p in self.participants if p.status == 'out']
-            no_show_users = [p.user for p in self.participants if p.no_show]
+            # Format participant names with badge info and attendance
+            # Sort confirmed participants by updated_at (earliest confirmed first)
+            confirmed_participants_list = sorted(
+                [p for p in self.participants if p.status == 'confirmed'],
+                key=lambda p: p.updated_at or datetime.utcnow()
+            )
+            interested_participants_list = [p for p in self.participants if p.status == 'interested']
+            out_participants_list = [p for p in self.participants if p.status == 'out']
+            no_show_participants_list = [p for p in self.participants if p.no_show]
+            
+            # Get participant user objects with names (confirmed in sorted order)
+            confirmed_users = [p.user for p in confirmed_participants_list]
+            interested_users = [p.user for p in interested_participants_list]
+            out_users = [p.user for p in out_participants_list]
+            no_show_users = [p.user for p in no_show_participants_list]
             
             confirmed_count = len(confirmed_users)
             
@@ -119,12 +129,6 @@ class Run(db.Model):
                     result['cost'] = round(float(self.total_cost), 2)  # Show total if no participants yet
             else:
                 result['cost'] = round(float(self.cost), 2) if self.cost else None
-            
-            # Format participant names with badge info and attendance
-            confirmed_participants_list = [p for p in self.participants if p.status == 'confirmed']
-            interested_participants_list = [p for p in self.participants if p.status == 'interested']
-            out_participants_list = [p for p in self.participants if p.status == 'out']
-            no_show_participants_list = [p for p in self.participants if p.no_show]
             
             confirmed = [{'username': u.username, 'first_name': u.first_name, 'last_name': u.last_name, 'badge': u.badge, 'attended': p.attended, 'no_show': p.no_show} for u, p in zip(confirmed_users, confirmed_participants_list)]
             interested = [{'username': u.username, 'first_name': u.first_name, 'last_name': u.last_name, 'badge': u.badge, 'attended': p.attended, 'no_show': p.no_show} for u, p in zip(interested_users, interested_participants_list)]
