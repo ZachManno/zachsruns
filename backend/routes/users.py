@@ -52,9 +52,9 @@ def get_user_runs():
     participations = RunParticipant.query.filter_by(user_id=user.id).all()
     run_ids = [p.run_id for p in participations]
     
-    runs = Run.query.filter(Run.id.in_(run_ids)).order_by(Run.date.desc()).all()
+    runs = Run.query.filter(Run.id.in_(run_ids)).all()
     
-    # Separate into upcoming and history
+    # Separate into upcoming and history (completed runs go to history)
     today = datetime.now().date()
     upcoming = []
     history = []
@@ -64,15 +64,65 @@ def get_user_runs():
         run_dict = run.to_dict()
         run_dict['user_status'] = participation.status if participation else None
         
-        if run.date >= today:
+        # Completed runs always go to history
+        if run.is_completed:
+            history.append(run_dict)
+        elif run.date >= today:
             upcoming.append(run_dict)
         else:
-            # Only include in history if user was confirmed
-            if participation and participation.status == 'confirmed':
-                history.append(run_dict)
+            # Past runs (not completed) go to history
+            history.append(run_dict)
+    
+    # Sort upcoming runs by ascending date (nearest first), then by start_time
+    upcoming.sort(key=lambda x: (x['date'], x['start_time']), reverse=False)
+    # Sort history by descending date (most recent first), then by start_time
+    history.sort(key=lambda x: (x['date'], x['start_time']), reverse=True)
     
     return jsonify({
         'upcoming': upcoming,
         'history': history
+    }), 200
+
+@users_bp.route('/community', methods=['GET'])
+@require_auth
+def get_community():
+    """Get all users for community page, grouped by badge"""
+    # Get all users - stats are already in to_dict()
+    users = User.query.all()
+    
+    # Convert to dict with run_count (using runs_attended_count)
+    user_data = []
+    for user in users:
+        user_dict = user.to_dict()
+        user_dict['run_count'] = user.runs_attended_count  # Use attended count instead of confirmed
+        user_data.append(user_dict)
+    
+    # Group by badge
+    grouped = {
+        'vip': [],
+        'regular': [],
+        'rookie': [],
+        'plus_one': [],
+        'none': [],
+        'unverified': []
+    }
+    
+    for user in user_data:
+        if not user['is_verified']:
+            grouped['unverified'].append(user)
+        elif user['badge']:
+            if user['badge'] in grouped:
+                grouped[user['badge']].append(user)
+            else:
+                grouped['none'].append(user)
+        else:
+            grouped['none'].append(user)
+    
+    # Sort each group by name
+    for key in grouped:
+        grouped[key].sort(key=lambda x: (x.get('first_name') or x.get('username', '')).lower())
+    
+    return jsonify({
+        'users': grouped
     }), 200
 

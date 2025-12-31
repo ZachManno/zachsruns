@@ -70,7 +70,7 @@ export const authApi = {
 // Runs endpoints
 export const runsApi = {
   getAll: async () => {
-    return fetchApi<{ runs: Run[] }>('/api/runs');
+    return fetchApi<{ upcoming: Run[]; past: Run[] }>('/api/runs');
   },
 
   getById: async (id: string) => {
@@ -121,6 +121,19 @@ export const usersApi = {
   getMyRuns: async () => {
     return fetchApi<{ upcoming: Run[]; history: Run[] }>('/api/users/me/runs');
   },
+
+  getCommunity: async () => {
+    return fetchApi<{
+      users: {
+        vip: User[];
+        regular: User[];
+        rookie: User[];
+        plus_one: User[];
+        none: User[];
+        unverified: User[];
+      };
+    }>('/api/users/community');
+  },
 };
 
 // Admin endpoints
@@ -164,6 +177,49 @@ export const adminApi = {
       method: 'POST',
       body: JSON.stringify(runsData),
     });
+  },
+
+  assignBadge: async (userId: string, badge: 'vip' | 'regular' | 'rookie' | 'plus_one' | null, referredBy?: string) => {
+    return fetchApi<{ message: string; user: User }>(
+      `/api/admin/users/${userId}/badge`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ badge, referred_by: referredBy }),
+      }
+    );
+  },
+
+  bulkAssignBadge: async (userIds: string[], badge: 'vip' | 'regular' | 'rookie' | 'plus_one') => {
+    return fetchApi<{ message: string; updated_count: number }>(
+      '/api/admin/users/bulk-badge',
+      {
+        method: 'POST',
+        body: JSON.stringify({ badge, user_ids: userIds }),
+      }
+    );
+  },
+
+  getAllRuns: async () => {
+    return fetchApi<{ runs: Run[] }>('/api/admin/runs');
+  },
+
+  completeRun: async (
+    runId: string,
+    attendedUserIds: string[],
+    noShowUserIds: string[],
+    extraAttendees: string[] = []
+  ) => {
+    return fetchApi<{ message: string; run: Run }>(
+      `/api/admin/runs/${runId}/complete`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          attended_user_ids: attendedUserIds,
+          no_show_user_ids: noShowUserIds,
+          extra_attendees: extraAttendees,
+        }),
+      }
+    );
   },
 };
 

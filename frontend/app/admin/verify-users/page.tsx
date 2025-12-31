@@ -30,7 +30,22 @@ export default function VerifyUsersPage() {
     try {
       setLoading(true);
       const data = await adminApi.getUsers();
-      setUsers(data.users);
+      // Sort users: unverified first, then verified
+      const sortedUsers = [...data.users].sort((a, b) => {
+        // Unverified users come first (false < true)
+        if (a.is_verified !== b.is_verified) {
+          return a.is_verified ? 1 : -1;
+        }
+        // If same verification status, sort alphabetically by name
+        const nameA = (a.first_name && a.last_name) 
+          ? `${a.first_name} ${a.last_name}`.toLowerCase()
+          : a.username.toLowerCase();
+        const nameB = (b.first_name && b.last_name)
+          ? `${b.first_name} ${b.last_name}`.toLowerCase()
+          : b.username.toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+      setUsers(sortedUsers);
     } catch (error) {
       console.error('Failed to fetch users:', error);
     } finally {

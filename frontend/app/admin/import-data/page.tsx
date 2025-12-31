@@ -156,7 +156,7 @@ export default function ImportDataPage() {
                 value={jsonData}
                 onChange={(e) => setJsonData(e.target.value)}
                 rows={15}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent font-mono text-sm"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent font-mono text-sm text-gray-900"
                 placeholder='{"runs": [...]}'
               />
             </div>

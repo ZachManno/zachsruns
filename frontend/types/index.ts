@@ -4,9 +4,21 @@ export interface User {
   email: string;
   first_name?: string;
   last_name?: string;
+  badge?: 'vip' | 'regular' | 'rookie' | 'plus_one' | null;
+  referred_by?: string;
+  referrer?: {
+    id: string;
+    username: string;
+    first_name?: string;
+    last_name?: string;
+  };
+  runs_attended_count?: number;
+  no_shows_count?: number;
+  attendance_rate?: number;
   is_admin: boolean;
   is_verified: boolean;
   created_at: string;
+  run_count?: number;
 }
 
 export interface Run {
@@ -25,15 +37,20 @@ export interface Run {
   created_by: string;
   created_at: string;
   is_historical: boolean;
+  is_completed?: boolean;
+  completed_at?: string;
+  completed_by?: string;
   participants?: {
-    confirmed: Array<{username: string; first_name?: string; last_name?: string}>;
-    interested: Array<{username: string; first_name?: string; last_name?: string}>;
-    out: Array<{username: string; first_name?: string; last_name?: string}>;
+    confirmed: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean; no_show?: boolean}>;
+    interested: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean; no_show?: boolean}>;
+    out: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean; no_show?: boolean}>;
+    no_show?: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean; no_show?: boolean}>;
   };
   participant_counts?: {
     confirmed: number;
     interested: number;
     out: number;
+    no_show?: number;
   };
   user_status?: 'confirmed' | 'interested' | 'out';
 }

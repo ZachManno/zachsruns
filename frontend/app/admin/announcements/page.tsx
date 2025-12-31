@@ -128,7 +128,7 @@ export default function AnnouncementsPage() {
                 onChange={(e) => setMessage(e.target.value)}
                 rows={4}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
                 placeholder="Enter announcement message..."
               />
               <p className="text-sm text-gray-500 mt-1">

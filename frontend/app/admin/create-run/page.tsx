@@ -111,7 +111,7 @@ export default function CreateRunPage() {
                 value={formData.title}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
               />
             </div>
 
@@ -130,7 +130,7 @@ export default function CreateRunPage() {
                   value={formData.date}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
                 />
               </div>
             </div>
@@ -150,7 +150,7 @@ export default function CreateRunPage() {
                   value={formData.start_time}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
                 />
               </div>
 
@@ -168,7 +168,7 @@ export default function CreateRunPage() {
                   value={formData.end_time}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
                 />
               </div>
             </div>
@@ -187,7 +187,7 @@ export default function CreateRunPage() {
                 value={formData.location}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
               />
             </div>
 
@@ -205,7 +205,7 @@ export default function CreateRunPage() {
                 value={formData.address}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
               />
             </div>
 
@@ -222,7 +222,7 @@ export default function CreateRunPage() {
                 value={formData.description}
                 onChange={handleChange}
                 rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
               />
             </div>
 
@@ -241,7 +241,7 @@ export default function CreateRunPage() {
                   min="1"
                   value={formData.capacity}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
                 />
               </div>
 
@@ -250,7 +250,7 @@ export default function CreateRunPage() {
                   Cost Type
                 </label>
                 <div className="flex gap-4 mb-3">
-                  <label className="flex items-center">
+                  <label className="flex items-center text-gray-700">
                     <input
                       type="radio"
                       name="costType"
@@ -260,7 +260,7 @@ export default function CreateRunPage() {
                     />
                     Fixed Cost
                   </label>
-                  <label className="flex items-center">
+                  <label className="flex items-center text-gray-700">
                     <input
                       type="radio"
                       name="costType"
@@ -288,7 +288,7 @@ export default function CreateRunPage() {
                       value={formData.total_cost}
                       onChange={handleChange}
                       placeholder="e.g., 250"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       Cost per person = Total Cost ÷ Number of confirmed participants
@@ -310,7 +310,7 @@ export default function CreateRunPage() {
                       step="0.01"
                       value={formData.cost}
                       onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
                     />
                   </div>
                 )}

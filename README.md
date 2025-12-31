@@ -42,11 +42,11 @@ zachs-runs/
    python app.py
    ```
 
-   The backend will run on `http://localhost:5000`
+   The backend will run on `http://localhost:5001`
 
    Note: On first run, the database will be created and a default admin user will be set up:
    - Username: `zmann`
-   - Password: `basketball`
+   - Password: Set via `ADMIN_PASSWORD` environment variable (see Environment Variables section)
 
 ### Frontend Setup
 
@@ -71,12 +71,15 @@ zachs-runs/
 
 ### Backend
 
-Create a `.env` file in the `backend` directory (optional for local development):
+Create a `.env` file in the `backend` directory:
 
 ```
+ADMIN_PASSWORD=your-admin-password-here
 JWT_SECRET=your-secret-key-change-in-production
 POSTGRES_URL=your-postgres-url  # Only needed for Vercel Postgres
 ```
+
+**Required**: `ADMIN_PASSWORD` - The password for the default admin user (username: `zmann`). This is used when creating the admin account on first run.
 
 For local development, the app uses SQLite by default. The database file will be created as `zachs_runs.db` in the backend directory.
 
@@ -85,10 +88,10 @@ For local development, the app uses SQLite by default. The database file will be
 Create a `.env.local` file in the `frontend` directory (optional):
 
 ```
-NEXT_PUBLIC_API_URL=http://localhost:5000
+NEXT_PUBLIC_API_URL=http://localhost:5001
 ```
 
-If not set, it defaults to `http://localhost:5000`.
+If not set, it defaults to `http://localhost:5001`.
 
 ## Features
 
@@ -104,7 +107,7 @@ If not set, it defaults to `http://localhost:5000`.
 ## Default Admin Account
 
 - **Username**: `zmann`
-- **Password**: `basketball`
+- **Password**: Set via `ADMIN_PASSWORD` environment variable in the backend `.env` file
 
 ## API Endpoints
 
@@ -178,3 +181,17 @@ Note: Participant usernames must match existing user accounts in the database.
 4. Deploy frontend to Vercel
 5. Update API URL in frontend environment variables
 
+
+
+
+
+zmann (admin)
+testuser
+stevesheeran
+plusoneguy
+ranman
+Barry
+kantuk
+Diego1
+Dre
+Leem

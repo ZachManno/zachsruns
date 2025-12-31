@@ -7,7 +7,8 @@ import RunCard from '@/components/RunCard';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
 
 export default function Home() {
-  const [runs, setRuns] = useState<Run[]>([]);
+  const [upcomingRuns, setUpcomingRuns] = useState<Run[]>([]);
+  const [pastRuns, setPastRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,7 +16,8 @@ export default function Home() {
     try {
       setLoading(true);
       const data = await runsApi.getAll();
-      setRuns(data.runs);
+      setUpcomingRuns(data.upcoming);
+      setPastRuns(data.past);
       setError(null);
     } catch (err) {
       setError('Failed to load runs');
@@ -28,22 +30,6 @@ export default function Home() {
   useEffect(() => {
     fetchRuns();
   }, []);
-
-  // Separate upcoming and past runs
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  const upcomingRuns = runs.filter((run) => {
-    const runDate = new Date(run.date);
-    runDate.setHours(0, 0, 0, 0);
-    return runDate >= today && !run.is_historical;
-  });
-
-  const pastRuns = runs.filter((run) => {
-    const runDate = new Date(run.date);
-    runDate.setHours(0, 0, 0, 0);
-    return runDate < today || run.is_historical;
-  });
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -96,7 +82,7 @@ export default function Home() {
               </div>
             )}
 
-            {runs.length === 0 && (
+            {upcomingRuns.length === 0 && pastRuns.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-gray-600">No runs scheduled yet.</p>
               </div>

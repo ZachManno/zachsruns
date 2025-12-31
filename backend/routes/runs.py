@@ -2,16 +2,55 @@ from flask import Blueprint, request, jsonify
 from datetime import datetime, date, time
 from database import db
 from models import Run, RunParticipant
-from middleware import require_auth, require_admin
+from middleware import require_auth, require_admin, verify_token
 
 runs_bp = Blueprint('runs', __name__)
 
 @runs_bp.route('', methods=['GET'])
 def get_runs():
-    """Get all runs"""
-    runs = Run.query.order_by(Run.date.desc(), Run.start_time.desc()).all()
+    """Get all runs, separated into upcoming and past"""
+    today = date.today()
+    runs = Run.query.all()
+    
+    # Optionally get current user if authenticated
+    current_user = None
+    auth_header = request.headers.get('Authorization')
+    if auth_header:
+        try:
+            token = auth_header.split(' ')[1]  # Bearer <token>
+            current_user = verify_token(token)
+        except (IndexError, Exception):
+            pass  # Not authenticated, continue without user
+    
+    upcoming = []
+    past = []
+    
+    for run in runs:
+        run_dict = run.to_dict()
+        
+        # Add user_status if user is authenticated
+        if current_user:
+            participation = RunParticipant.query.filter_by(
+                run_id=run.id,
+                user_id=current_user.id
+            ).first()
+            run_dict['user_status'] = participation.status if participation else None
+        else:
+            run_dict['user_status'] = None
+        
+        if run.is_completed or run.date < today:
+            past.append(run_dict)
+        else:
+            upcoming.append(run_dict)
+    
+    # Sort upcoming runs by ascending date (soonest first), then by start_time ascending
+    upcoming.sort(key=lambda x: (x['date'], x['start_time']), reverse=False)
+    # Sort past runs by descending date (most recent first), then by start_time descending
+    past.sort(key=lambda x: (x['date'], x['start_time']), reverse=True)
+    
     return jsonify({
-        'runs': [run.to_dict() for run in runs]
+        'upcoming': upcoming,
+        'past': past
     }), 200
 
 @runs_bp.route('/<run_id>', methods=['GET'])
@@ -80,6 +119,9 @@ def update_run(run_id):
     if not run:
         return jsonify({'error': 'Run not found'}), 404
     
+    if run.is_completed:
+        return jsonify({'error': 'Cannot edit completed run'}), 400
+    
     data = request.get_json()
     
     try:
@@ -130,6 +172,9 @@ def delete_run(run_id):
     if not run:
         return jsonify({'error': 'Run not found'}), 404
     
+    if run.is_completed:
+        return jsonify({'error': 'Cannot delete completed run'}), 400
+    
     try:
         db.session.delete(run)
         db.session.commit()
@@ -145,6 +190,13 @@ def update_rsvp(run_id):
     run = Run.query.get(run_id)
     if not run:
         return jsonify({'error': 'Run not found'}), 404
+    
+    if run.is_completed:
+        return jsonify({'error': 'Cannot change RSVP for completed run'}), 400
+    
+    # Check if user is verified
+    if not request.current_user.is_verified:
+        return jsonify({'error': 'Account must be verified to RSVP for runs'}), 403
     
     data = request.get_json()
     status = data.get('status')

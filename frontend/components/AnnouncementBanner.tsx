@@ -31,8 +31,8 @@ export default function AnnouncementBanner() {
     <div className="bg-basketball-orange text-white py-3 px-4 shadow-md">
       <div className="container mx-auto">
         <div className="flex items-center gap-2">
-          <span className="font-semibold">Announcement:</span>
-          <span>{announcement.message}</span>
+          <span className="font-semibold text-white">Announcement:</span>
+          <span className="text-white">{announcement.message}</span>
         </div>
       </div>
     </div>

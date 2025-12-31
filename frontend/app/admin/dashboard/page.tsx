@@ -46,14 +46,38 @@ export default function AdminDashboard() {
           </Link>
 
           <Link
-            href="/admin/verify-users"
+            href="/admin/manage-runs"
             className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
           >
             <h2 className="text-xl font-bold text-basketball-black mb-2">
-              Verify Users
+              Manage Runs
             </h2>
             <p className="text-gray-600">
-              Manage user verification status
+              View, edit, complete, or delete runs
+            </p>
+          </Link>
+
+          <Link
+            href="/admin/manage-badges"
+            className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <h2 className="text-xl font-bold text-basketball-black mb-2">
+              Manage Badges
+            </h2>
+            <p className="text-gray-600">
+              Assign badges to users (VIP, Regular, Rookie, +1)
+            </p>
+          </Link>
+
+          <Link
+            href="/admin/announcements"
+            className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+          >
+            <h2 className="text-xl font-bold text-basketball-black mb-2">
+              Manage Announcements
+            </h2>
+            <p className="text-gray-600">
+              Create or update site announcements
             </p>
           </Link>
 
@@ -70,14 +94,14 @@ export default function AdminDashboard() {
           </Link>
 
           <Link
-            href="/admin/announcements"
+            href="/admin/verify-users"
             className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
           >
             <h2 className="text-xl font-bold text-basketball-black mb-2">
-              Manage Announcements
+              Verify Users
             </h2>
             <p className="text-gray-600">
-              Create or update site announcements
+              Manage user verification status
             </p>
           </Link>
         </div>
