@@ -1,0 +1,110 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { runsApi } from '@/lib/api';
+import { Run } from '@/types';
+import RunCard from '@/components/RunCard';
+import AnnouncementBanner from '@/components/AnnouncementBanner';
+
+export default function Home() {
+  const [runs, setRuns] = useState<Run[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchRuns = async () => {
+    try {
+      setLoading(true);
+      const data = await runsApi.getAll();
+      setRuns(data.runs);
+      setError(null);
+    } catch (err) {
+      setError('Failed to load runs');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRuns();
+  }, []);
+
+  // Separate upcoming and past runs
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const upcomingRuns = runs.filter((run) => {
+    const runDate = new Date(run.date);
+    runDate.setHours(0, 0, 0, 0);
+    return runDate >= today && !run.is_historical;
+  });
+
+  const pastRuns = runs.filter((run) => {
+    const runDate = new Date(run.date);
+    runDate.setHours(0, 0, 0, 0);
+    return runDate < today || run.is_historical;
+  });
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <AnnouncementBanner />
+      
+      <div className="mt-8">
+        <h1 className="text-4xl font-bold text-basketball-black mb-8 text-center">
+          Zach&apos;s Runs
+        </h1>
+
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600">Loading runs...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-red-600">{error}</p>
+            <button
+              onClick={fetchRuns}
+              className="mt-4 bg-basketball-orange text-white px-4 py-2 rounded hover:bg-orange-600"
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          <>
+            {upcomingRuns.length > 0 && (
+              <div className="mb-12">
+                <h2 className="text-2xl font-bold text-basketball-black mb-4">
+                  Upcoming Runs
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {upcomingRuns.map((run) => (
+                    <RunCard key={run.id} run={run} onUpdate={fetchRuns} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {pastRuns.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-bold text-basketball-black mb-4">
+                  Past Runs
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {pastRuns.map((run) => (
+                    <RunCard key={run.id} run={run} onUpdate={fetchRuns} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {runs.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-600">No runs scheduled yet.</p>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
