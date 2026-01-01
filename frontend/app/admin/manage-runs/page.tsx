@@ -135,7 +135,9 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
   const router = useRouter();
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    // Parse date string (YYYY-MM-DD) directly to avoid timezone issues
+    const [year, month, day] = dateString.split('T')[0].split('-').map(Number);
+    const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -179,7 +181,7 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
             )}
           </div>
           <p className="text-sm text-gray-600 mt-1">
-            {formatDate(run.date)} • {formatTimeRange(run.start_time, run.end_time)} • {run.location}
+            {formatDate(run.date)} • {formatTimeRange(run.start_time, run.end_time)} • {run.location_name}
           </p>
           <p className="text-xs text-gray-500 mt-1">
             {run.participant_counts?.confirmed || 0} confirmed

@@ -41,7 +41,9 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    // Parse date string (YYYY-MM-DD) directly to avoid timezone issues
+    const [year, month, day] = dateString.split('T')[0].split('-').map(Number);
+    const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -73,7 +75,10 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
     return `${start}-${end}`;
   };
 
-  const isPast = new Date(run.date) < new Date();
+  // Check if run is past - parse date directly to avoid timezone issues
+  const [year, month, day] = run.date.split('T')[0].split('-').map(Number);
+  const runDate = new Date(year, month - 1, day);
+  const isPast = runDate < new Date();
   const isCompleted = run.is_completed || false;
   
   // Check if run is at capacity
@@ -136,8 +141,8 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
       </div>
 
       <div className="mb-4">
-        <p className="font-semibold text-basketball-black">{run.location_name || run.location}</p>
-        <p className="text-sm text-gray-600">{run.location_address || run.address}</p>
+        <p className="font-semibold text-basketball-black">{run.location_name}</p>
+        <p className="text-sm text-gray-600">{run.location_address}</p>
         {run.description && (
           <p className="text-gray-700 mt-2">{run.description}</p>
         )}

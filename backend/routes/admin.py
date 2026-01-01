@@ -294,14 +294,39 @@ def import_runs():
                 start_time = datetime.strptime(run_data['start_time'], '%H:%M').time()
                 end_time = datetime.strptime(run_data['end_time'], '%H:%M').time()
                 
+                # Get location_id - either provided directly or match by name/address
+                location_id = run_data.get('location_id')
+                if not location_id:
+                    # Try to match by location name or address
+                    from models import Location
+                    location_name = run_data.get('location', '')
+                    location_address = run_data.get('address', '')
+                    
+                    # Try to find matching location
+                    location = None
+                    if location_name:
+                        location = Location.query.filter_by(name=location_name).first()
+                    if not location and location_address:
+                        location = Location.query.filter_by(address=location_address).first()
+                    
+                    if location:
+                        location_id = location.id
+                    else:
+                        # Default to first location if no match found
+                        first_location = Location.query.first()
+                        if first_location:
+                            location_id = first_location.id
+                        else:
+                            errors.append(f"Run '{run_data['title']}': No locations available")
+                            continue
+                
                 # Create run - historical runs are automatically completed
                 new_run = Run(
                     title=run_data['title'],
                     date=run_date,
                     start_time=start_time,
                     end_time=end_time,
-                    location=run_data['location'],
-                    address=run_data.get('address', ''),
+                    location_id=location_id,
                     description=run_data.get('description'),
                     capacity=run_data.get('capacity'),
                     cost=run_data.get('cost'),

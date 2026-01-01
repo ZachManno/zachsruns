@@ -14,6 +14,8 @@ A lightweight full-stack web application for organizing basketball pickup games 
 zachs-runs/
 ├── frontend/          # Next.js application
 ├── backend/           # Flask API
+├── api/               # Vercel serverless function entry point
+├── vercel.json        # Vercel deployment configuration
 └── requirements.md   # Project requirements
 ```
 
@@ -148,8 +150,7 @@ When importing historical runs, use the following JSON format:
       "date": "2024-01-06",
       "start_time": "19:00",
       "end_time": "21:00",
-      "location": "Phield House",
-      "address": "123 Main St, City, State",
+      "location_id": "uuid-of-location",
       "description": "Optional description",
       "capacity": 20,
       "cost": 10.00,
@@ -163,6 +164,13 @@ When importing historical runs, use the following JSON format:
 }
 ```
 
+**Location Options:**
+- `location_id` (recommended): The UUID of an existing location
+- `location` (legacy): Location name - will be matched to existing locations by name
+- `address` (legacy): Location address - will be matched if name doesn't match
+
+If no location_id is provided, the system will attempt to match by location name or address. If no match is found, it will default to the first available location.
+
 Note: Participant usernames must match existing user accounts in the database.
 
 ## Development Notes
@@ -173,13 +181,141 @@ Note: Participant usernames must match existing user accounts in the database.
 - JWT tokens are stored in localStorage on the frontend
 - CORS is configured to allow requests from `localhost:3000`
 
-## Next Steps for Deployment
 
-1. Set up Vercel Postgres database
-2. Configure environment variables in Vercel
-3. Deploy backend as Vercel serverless functions
-4. Deploy frontend to Vercel
-5. Update API URL in frontend environment variables
+
+# Deployment to Vercel
+
+This application is configured to deploy to Vercel with Vercel Postgres. Follow these steps:
+
+### Prerequisites
+
+1. **GitHub Repository**: Ensure your code is pushed to a GitHub repository
+2. **Vercel Account**: Sign up or log in at [vercel.com](https://vercel.com)
+
+### Step 1: Create Vercel Postgres Database
+
+1. In your Vercel dashboard, go to **Storage** → **Create Database**
+2. Select **Postgres**
+3. Choose a name for your database (e.g., `zachs-runs-db`)
+4. Select a region closest to your users
+5. Click **Create**
+6. Vercel will automatically create a `POSTGRES_URL` environment variable
+
+### Step 2: Connect GitHub Repository to Vercel
+
+1. In Vercel dashboard, click **Add New** → **Project**
+2. Import your GitHub repository
+3. Vercel will detect the `vercel.json` configuration file
+4. The configuration handles both frontend (Next.js) and backend (Python API)
+
+### Step 3: Configure Project Settings
+
+In the Vercel project settings:
+
+1. **Root Directory**: Leave as root (`.` - the `vercel.json` handles routing)
+2. **Build Command**: `cd frontend && npm install && npm run build` (configured in `vercel.json`)
+3. **Output Directory**: `frontend/.next` (configured in `vercel.json`)
+4. **Framework Preset**: None (or Next.js - Vercel will auto-detect from `vercel.json`)
+
+**Note**: The `vercel.json` file in the root directory configures:
+- Frontend build from `frontend/` directory
+- API routes to `/api/*` which are handled by Python serverless functions
+- Backend code is included via `includeFiles` in the function configuration
+
+### Step 4: Set Environment Variables
+
+In your Vercel project settings, go to **Settings** → **Environment Variables** and add:
+
+#### Backend Environment Variables:
+- `ADMIN_PASSWORD` - Your admin password (required)
+- `JWT_SECRET` - A strong random string for JWT signing (required)
+- `POSTGRES_URL` - Automatically provided by Vercel Postgres (already set)
+- `FRONTEND_URL` - Your Vercel frontend URL (e.g., `https://your-project.vercel.app`) - Optional, will use VERCEL_URL if not set
+
+#### Frontend Environment Variables:
+- `NEXT_PUBLIC_API_URL` - Your Vercel deployment URL (e.g., `https://your-project.vercel.app`)
+
+**Important Notes:**
+- Set these for **Production**, **Preview**, and **Development** environments as needed
+- `POSTGRES_URL` is automatically provided by Vercel Postgres - don't manually set it
+- After setting environment variables, you'll need to redeploy
+
+### Step 5: Deploy
+
+1. Click **Deploy** in Vercel
+2. Vercel will:
+   - Build your Next.js frontend
+   - Set up serverless functions for the Flask backend API
+   - Connect to your Vercel Postgres database
+
+### Step 6: Verify Deployment
+
+1. Once deployed, visit your Vercel URL
+2. The database will be initialized on first API call
+3. The default admin user will be created:
+   - Username: `zmann`
+   - Password: The value you set for `ADMIN_PASSWORD`
+
+### Post-Deployment Checklist
+
+- [ ] Verify frontend loads correctly
+- [ ] Test API endpoints (e.g., `/api/health`)
+- [ ] Log in with admin credentials
+- [ ] Verify database connection (create a test run)
+- [ ] Check that images load from `/public/locations/`
+- [ ] Test CORS is working (frontend can call backend)
+
+### Troubleshooting
+
+**Database Connection Issues:**
+- Verify `POSTGRES_URL` is set in Vercel environment variables
+- Check that Vercel Postgres database is running
+- Review Vercel function logs for connection errors
+
+**CORS Errors:**
+- Ensure `FRONTEND_URL` or `VERCEL_URL` is set correctly
+- Check that your frontend URL matches the allowed origins in `backend/app.py`
+
+**API Not Found:**
+- Verify `vercel.json` is in the root directory
+- Check that `api/index.py` exists and imports the Flask app correctly
+- Verify `api/requirements.txt` exists with all Python dependencies
+- Ensure backend code is accessible (check `includeFiles` in `vercel.json`)
+- Review Vercel function logs in the dashboard
+
+**Build Failures:**
+- Check that all dependencies are in `package.json` and `requirements.txt`
+- Verify Python version compatibility (Vercel uses Python 3.9 by default)
+- Ensure `api/requirements.txt` exists with all Python dependencies
+- Review build logs in Vercel dashboard
+
+**Python Runtime Issues:**
+- Vercel uses Python 3.9 by default (configured in `vercel.json`)
+- All Python dependencies must be in `api/requirements.txt`
+- Backend code is included via `includeFiles` in `vercel.json`
+
+### Important Notes
+
+1. **Monorepo Structure**: This is a monorepo with frontend and backend. The `vercel.json` handles routing:
+   - Frontend routes go to Next.js (built from `frontend/`)
+   - API routes (`/api/*`) go to Python serverless functions (`api/index.py`)
+
+2. **Database Migrations**: The app automatically runs migrations on startup. SQLite-specific code has been made database-agnostic to work with both SQLite (local) and Postgres (Vercel).
+
+3. **Environment Variables**: 
+   - `POSTGRES_URL` is automatically provided by Vercel Postgres
+   - `VERCEL_URL` is automatically set by Vercel for each deployment
+   - You only need to manually set `ADMIN_PASSWORD`, `JWT_SECRET`, and `NEXT_PUBLIC_API_URL`
+
+4. **Static Assets**: Location images in `frontend/public/locations/` will be served automatically by Vercel.
+
+### Environment Variable Reference
+
+For local development, see:
+- `backend/.env.example` - Backend environment variables template
+- `frontend/.env.example` - Frontend environment variables template
+
+**Note**: `.env` files are gitignored. Copy the `.env.example` files and fill in your values.
 
 
 

@@ -111,6 +111,9 @@ def create_run():
         db.session.add(new_run)
         db.session.commit()
         
+        # Refresh the object to ensure relationships are loaded
+        db.session.refresh(new_run)
+        
         return jsonify({
             'message': 'Run created successfully',
             'run': new_run.to_dict()
@@ -119,7 +122,11 @@ def create_run():
         return jsonify({'error': f'Invalid date or time format: {str(e)}'}), 400
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': 'Failed to create run'}), 500
+        # Log the actual error for debugging
+        import traceback
+        print(f"Error creating run: {str(e)}")
+        print(traceback.format_exc())
+        return jsonify({'error': f'Failed to create run: {str(e)}'}), 500
 
 @runs_bp.route('/<run_id>', methods=['PUT'])
 @require_admin

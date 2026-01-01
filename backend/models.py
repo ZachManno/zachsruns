@@ -24,9 +24,12 @@ class User(db.Model):
     referrer = db.relationship('User', remote_side=[id], backref='referred_users')
     
     def to_dict(self, include_no_shows=False):
-        # Calculate attendance rate
-        total = self.runs_attended_count + self.no_shows_count
-        attendance_rate = (self.runs_attended_count / total * 100) if total > 0 else None
+        # Calculate attendance rate as percentage of runs attended vs total completed runs
+        # Query total completed runs - import Run here to avoid circular import
+        # Since Run is defined later in this file, we'll use a lazy import
+        from models import Run
+        total_completed_runs = Run.query.filter_by(is_completed=True).count()
+        attendance_rate = (self.runs_attended_count / total_completed_runs * 100) if total_completed_runs > 0 else None
         
         # Get referrer info if exists
         referrer_info = None
@@ -86,9 +89,7 @@ class Run(db.Model):
     date = db.Column(db.Date, nullable=False)
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
-    location = db.Column(db.String(200), nullable=True)  # Keep for backward compatibility
-    address = db.Column(db.String(500), nullable=True)  # Keep for backward compatibility
-    location_id = db.Column(db.String(36), db.ForeignKey('locations.id'), nullable=True)
+    location_id = db.Column(db.String(36), db.ForeignKey('locations.id'), nullable=False)
     description = db.Column(db.Text, nullable=True)
     capacity = db.Column(db.Integer, nullable=True)
     cost = db.Column(db.Numeric(10, 2), nullable=True)  # Fixed cost per person
@@ -109,19 +110,29 @@ class Run(db.Model):
     participants = db.relationship('RunParticipant', back_populates='run', cascade='all, delete-orphan')
     
     def to_dict(self, include_participants=True):
-        # Include location object if location_id is set
+        # Load location entity
         location_data = None
         location_name = None
         location_address = None
         
-        if self.location_id and self.location_entity:
-            location_data = self.location_entity.to_dict()
-            location_name = self.location_entity.name
-            location_address = self.location_entity.address
-        else:
-            # Fallback to old location/address fields for backward compatibility
-            location_name = self.location
-            location_address = self.address
+        if self.location_id:
+            try:
+                # Access the relationship - SQLAlchemy will load it if needed
+                if self.location_entity:
+                    location_data = self.location_entity.to_dict()
+                    location_name = self.location_entity.name
+                    location_address = self.location_entity.address
+                else:
+                    # Location might not be loaded yet, try to query it
+                    from models import Location
+                    location = Location.query.get(self.location_id)
+                    if location:
+                        location_data = location.to_dict()
+                        location_name = location.name
+                        location_address = location.address
+            except Exception:
+                # If location can't be loaded, set to None
+                pass
         
         result = {
             'id': self.id,
@@ -129,8 +140,6 @@ class Run(db.Model):
             'date': self.date.isoformat() if self.date else None,
             'start_time': self.start_time.strftime('%H:%M') if self.start_time else None,
             'end_time': self.end_time.strftime('%H:%M') if self.end_time else None,
-            'location': location_name,  # Keep for backward compatibility (location name)
-            'address': location_address,  # Keep for backward compatibility
             'location_id': self.location_id,
             'location_name': location_name,
             'location_address': location_address,
@@ -145,7 +154,7 @@ class Run(db.Model):
             'is_completed': self.is_completed,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
             'completed_by': self.completed_by,
-            'guest_attendees': json.loads(self.guest_attendees) if self.guest_attendees else []
+            'guest_attendees': json.loads(self.guest_attendees) if self.guest_attendees else None
         }
         
         if include_participants:

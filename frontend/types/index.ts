@@ -34,9 +34,7 @@ export interface Run {
   date: string;
   start_time: string;
   end_time: string;
-  location?: string;  // Keep for backward compatibility (location name)
-  address?: string;  // Keep for backward compatibility
-  location_id?: string;
+  location_id: string;
   location_name?: string;
   location_address?: string;
   location_data?: Location;  // Full location object

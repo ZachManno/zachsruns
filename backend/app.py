@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
+import os
 from database import init_db
 from routes.auth import auth_bp
 from routes.runs import runs_bp
@@ -9,7 +10,19 @@ from routes.admin import admin_bp
 app = Flask(__name__)
 
 # Enable CORS for Next.js frontend
-CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000'], supports_credentials=True)
+# Allow localhost for development and production domain from environment
+allowed_origins = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+]
+# Add production domain from environment variable if set
+if os.getenv('FRONTEND_URL'):
+    allowed_origins.append(os.getenv('FRONTEND_URL'))
+# Also allow any Vercel preview/production URLs
+if os.getenv('VERCEL_URL'):
+    allowed_origins.append(f"https://{os.getenv('VERCEL_URL')}")
+
+CORS(app, origins=allowed_origins, supports_credentials=True)
 
 # Initialize database
 init_db(app)

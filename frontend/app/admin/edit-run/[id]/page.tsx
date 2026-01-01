@@ -60,8 +60,8 @@ export default function EditRunPage() {
       setRun(runData);
 
       // Pre-populate form with existing run data
-      // Format date for input (YYYY-MM-DD)
-      const dateStr = runData.date ? new Date(runData.date).toISOString().split('T')[0] : '';
+      // Format date for input (YYYY-MM-DD) - use date string directly to avoid timezone issues
+      const dateStr = runData.date ? runData.date.split('T')[0] : '';
       // Format time for input (HH:MM)
       const startTime = runData.start_time ? runData.start_time.substring(0, 5) : '';
       const endTime = runData.end_time ? runData.end_time.substring(0, 5) : '';

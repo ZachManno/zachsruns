@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash
 from sqlalchemy import create_engine
 from sqlalchemy.pool import NullPool
 import os
@@ -33,108 +34,31 @@ def init_db(app):
     db.init_app(app)
     
     with app.app_context():
+        from models import User, Run, RunParticipant, Announcement
+        # Drop all tables and recreate them (clean slate for first release)
+        # COMMENTED OUT - Database persistence enabled
+        # db.drop_all()
         db.create_all()
         
-        # Add is_variable_cost and total_cost columns if they don't exist (migration)
-        try:
-            from sqlalchemy import inspect, text
-            inspector = inspect(db.engine)
-            
-            if 'runs' in inspector.get_table_names():
-                columns = [col['name'] for col in inspector.get_columns('runs')]
-                
-                if 'is_variable_cost' not in columns:
-                    db.session.execute(text('ALTER TABLE runs ADD COLUMN is_variable_cost BOOLEAN DEFAULT 0'))
-                    db.session.commit()
-                
-                if 'total_cost' not in columns:
-                    db.session.execute(text('ALTER TABLE runs ADD COLUMN total_cost NUMERIC(10, 2)'))
-                    db.session.commit()
-        except Exception as e:
-            # Columns might already exist, ignore error
-            db.session.rollback()
-            pass
-        
-        # Add badge and referred_by columns if they don't exist (migration)
-        try:
-            from sqlalchemy import inspect, text
-            inspector = inspect(db.engine)
-            
-            if 'users' in inspector.get_table_names():
-                columns = [col['name'] for col in inspector.get_columns('users')]
-                
-                if 'badge' not in columns:
-                    db.session.execute(text('ALTER TABLE users ADD COLUMN badge VARCHAR(20)'))
-                    db.session.commit()
-                    # Set all existing users to 'regular' by default
-                    db.session.execute(text("UPDATE users SET badge = 'regular' WHERE badge IS NULL"))
-                    db.session.commit()
-                
-                if 'referred_by' not in columns:
-                    db.session.execute(text('ALTER TABLE users ADD COLUMN referred_by VARCHAR(36)'))
-                    db.session.commit()
-                
-                # Add stats columns
-                if 'runs_attended_count' not in columns:
-                    db.session.execute(text('ALTER TABLE users ADD COLUMN runs_attended_count INTEGER DEFAULT 0 NOT NULL'))
-                    db.session.commit()
-                
-                if 'no_shows_count' not in columns:
-                    db.session.execute(text('ALTER TABLE users ADD COLUMN no_shows_count INTEGER DEFAULT 0 NOT NULL'))
-                    db.session.commit()
-                
-                # Check runs table columns
-                runs_columns = [col[1] for col in db.session.execute(text("PRAGMA table_info(runs)")).fetchall()]
-                
-                if 'is_completed' not in runs_columns:
-                    db.session.execute(text('ALTER TABLE runs ADD COLUMN is_completed BOOLEAN DEFAULT 0 NOT NULL'))
-                    db.session.commit()
-                
-                if 'completed_at' not in runs_columns:
-                    db.session.execute(text('ALTER TABLE runs ADD COLUMN completed_at DATETIME'))
-                    db.session.commit()
-                
-                if 'completed_by' not in runs_columns:
-                    db.session.execute(text('ALTER TABLE runs ADD COLUMN completed_by VARCHAR(36)'))
-                    db.session.commit()
-                
-                # Check run_participants table columns
-                participants_columns = [col[1] for col in db.session.execute(text("PRAGMA table_info(run_participants)")).fetchall()]
-                
-                if 'attended' not in participants_columns:
-                    db.session.execute(text('ALTER TABLE run_participants ADD COLUMN attended BOOLEAN DEFAULT 0 NOT NULL'))
-                    db.session.commit()
-                
-                if 'no_show' not in participants_columns:
-                    db.session.execute(text('ALTER TABLE run_participants ADD COLUMN no_show BOOLEAN DEFAULT 0 NOT NULL'))
-                    db.session.commit()
-                
-                # Add location_id column to runs table if it doesn't exist
-                if 'location_id' not in runs_columns:
-                    db.session.execute(text('ALTER TABLE runs ADD COLUMN location_id VARCHAR(36)'))
-                    db.session.commit()
-                
-                # Add guest_attendees column to runs table if it doesn't exist
-                if 'guest_attendees' not in runs_columns:
-                    db.session.execute(text('ALTER TABLE runs ADD COLUMN guest_attendees TEXT'))
-                    db.session.commit()
-                
-                # Check locations table columns
-                if 'locations' in inspector.get_table_names():
-                    locations_columns = [col['name'] for col in inspector.get_columns('locations')]
-                    
-                    # Add image_url column to locations table if it doesn't exist
-                    if 'image_url' not in locations_columns:
-                        db.session.execute(text('ALTER TABLE locations ADD COLUMN image_url VARCHAR(500)'))
-                        db.session.commit()
-        except Exception as e:
-            # Columns might already exist, ignore error
-            db.session.rollback()
-            pass
+        # Clear all data for first release (remove this section after initial deployment)
+        # This ensures a clean database state for the first release
+        # COMMENTED OUT - Database clearing disabled
+        # from models import User, Run, RunParticipant, Announcement
+        # from werkzeug.security import generate_password_hash
+        # 
+        # # Delete all runs and their participants
+        # RunParticipant.query.delete()
+        # Run.query.delete()
+        # 
+        # # Delete all announcements
+        # Announcement.query.delete()
+        # 
+        # # Delete all users except admin
+        # User.query.filter(User.username != 'zmann').delete()
+        # 
+        # db.session.commit()
         
         # Create or update default admin user
-        from models import User
-        from werkzeug.security import generate_password_hash
         
         admin_password = os.getenv('ADMIN_PASSWORD')
         if not admin_password:
@@ -151,22 +75,22 @@ def init_db(app):
                 password_hash=generate_password_hash(admin_password),
                 first_name='Zach',
                 last_name='Manno',
-                badge='vip',  # Admin gets VIP badge
+                badge='regular',
                 is_admin=True,
                 is_verified=True
             )
             db.session.add(admin)
-            db.session.commit()
         else:
-            # Update existing admin with name if not set
-            if not admin.first_name or not admin.last_name:
-                admin.first_name = 'Zach'
-                admin.last_name = 'Manno'
-                db.session.commit()
-            # Set badge to regular if not set
-            if not admin.badge:
-                admin.badge = 'regular'
-                db.session.commit()
+            # Ensure admin has correct properties
+            admin.first_name = 'Zach'
+            admin.last_name = 'Manno'
+            admin.badge = 'regular'
+            admin.is_admin = True
+            admin.is_verified = True
+            # Update password if needed (in case ADMIN_PASSWORD changed)
+            admin.password_hash = generate_password_hash(admin_password)
+        
+        db.session.commit()
         
         # Seed hardcoded locations
         from models import Location
@@ -192,21 +116,18 @@ def init_db(app):
             }
         ]
         
+        # Clear and reseed locations (ensures clean state)
+        Location.query.delete()
+        db.session.commit()
+        
         for loc_data in locations_data:
-            location = Location.query.filter_by(name=loc_data['name']).first()
-            if not location:
-                location = Location(
-                    name=loc_data['name'],
-                    address=loc_data['address'],
-                    description=loc_data['description'],
-                    image_url=loc_data['image_url']
-                )
-                db.session.add(location)
-            else:
-                # Update existing location with image_url if it doesn't have one
-                if not location.image_url:
-                    location.image_url = loc_data['image_url']
-                    db.session.commit()
+            location = Location(
+                name=loc_data['name'],
+                address=loc_data['address'],
+                description=loc_data['description'],
+                image_url=loc_data['image_url']
+            )
+            db.session.add(location)
         
         db.session.commit()
 

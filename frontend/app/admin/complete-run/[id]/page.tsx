@@ -191,12 +191,17 @@ export default function CompleteRunPage() {
             Complete Run: {run.title}
           </h1>
           <p className="text-gray-600 mb-6">
-            {new Date(run.date).toLocaleDateString('en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
+            {(() => {
+              // Parse date string (YYYY-MM-DD) directly to avoid timezone issues
+              const [year, month, day] = run.date.split('T')[0].split('-').map(Number);
+              const date = new Date(year, month - 1, day);
+              return date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              });
+            })()}
           </p>
 
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
