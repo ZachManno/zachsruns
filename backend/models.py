@@ -22,7 +22,7 @@ class User(db.Model):
     # Relationships
     referrer = db.relationship('User', remote_side=[id], backref='referred_users')
     
-    def to_dict(self):
+    def to_dict(self, include_no_shows=False):
         # Calculate attendance rate
         total = self.runs_attended_count + self.no_shows_count
         attendance_rate = (self.runs_attended_count / total * 100) if total > 0 else None
@@ -37,7 +37,7 @@ class User(db.Model):
                 'last_name': self.referrer.last_name,
             }
         
-        return {
+        result = {
             'id': self.id,
             'username': self.username,
             'email': self.email,
@@ -47,11 +47,32 @@ class User(db.Model):
             'referred_by': self.referred_by,
             'referrer': referrer_info,
             'runs_attended_count': self.runs_attended_count,
-            'no_shows_count': self.no_shows_count,
             'attendance_rate': round(attendance_rate, 1) if attendance_rate is not None else None,
             'is_admin': self.is_admin,
             'is_verified': self.is_verified,
             'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+        
+        # Only include no_shows_count if explicitly requested (for admin/internal use)
+        if include_no_shows:
+            result['no_shows_count'] = self.no_shows_count
+        
+        return result
+
+class Location(db.Model):
+    __tablename__ = 'locations'
+    
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = db.Column(db.String(200), nullable=False, unique=True)
+    address = db.Column(db.String(500), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'address': self.address,
+            'description': self.description
         }
 
 class Run(db.Model):
@@ -62,8 +83,9 @@ class Run(db.Model):
     date = db.Column(db.Date, nullable=False)
     start_time = db.Column(db.Time, nullable=False)
     end_time = db.Column(db.Time, nullable=False)
-    location = db.Column(db.String(200), nullable=False)
-    address = db.Column(db.String(500), nullable=False)
+    location = db.Column(db.String(200), nullable=True)  # Keep for backward compatibility
+    address = db.Column(db.String(500), nullable=True)  # Keep for backward compatibility
+    location_id = db.Column(db.String(36), db.ForeignKey('locations.id'), nullable=True)
     description = db.Column(db.Text, nullable=True)
     capacity = db.Column(db.Integer, nullable=True)
     cost = db.Column(db.Numeric(10, 2), nullable=True)  # Fixed cost per person
@@ -77,19 +99,38 @@ class Run(db.Model):
     completed_by = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=True)
     
     # Relationships
+    location_entity = db.relationship('Location', backref='runs')
     creator = db.relationship('User', foreign_keys=[created_by], backref='created_runs')
     completer = db.relationship('User', foreign_keys=[completed_by], backref='completed_runs')
     participants = db.relationship('RunParticipant', back_populates='run', cascade='all, delete-orphan')
     
     def to_dict(self, include_participants=True):
+        # Include location object if location_id is set
+        location_data = None
+        location_name = None
+        location_address = None
+        
+        if self.location_id and self.location_entity:
+            location_data = self.location_entity.to_dict()
+            location_name = self.location_entity.name
+            location_address = self.location_entity.address
+        else:
+            # Fallback to old location/address fields for backward compatibility
+            location_name = self.location
+            location_address = self.address
+        
         result = {
             'id': self.id,
             'title': self.title,
             'date': self.date.isoformat() if self.date else None,
             'start_time': self.start_time.strftime('%H:%M') if self.start_time else None,
             'end_time': self.end_time.strftime('%H:%M') if self.end_time else None,
-            'location': self.location,
-            'address': self.address,
+            'location': location_name,  # Keep for backward compatibility (location name)
+            'address': location_address,  # Keep for backward compatibility
+            'location_id': self.location_id,
+            'location_name': location_name,
+            'location_address': location_address,
+            'location_data': location_data,  # Full location object
             'description': self.description,
             'capacity': int(self.capacity) if self.capacity else None,
             'created_by': self.created_by,

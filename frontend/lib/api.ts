@@ -1,5 +1,5 @@
 import { getToken, removeToken } from './auth';
-import { User, Run, Announcement, ApiError } from '@/types';
+import { User, Run, Announcement, ApiError, Location } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
@@ -8,9 +8,9 @@ async function fetchApi<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const token = getToken();
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...(options.headers as Record<string, string> || {}),
   };
 
   if (token) {
@@ -125,14 +125,23 @@ export const usersApi = {
   getCommunity: async () => {
     return fetchApi<{
       users: {
-        vip: User[];
         regular: User[];
-        rookie: User[];
         plus_one: User[];
         none: User[];
         unverified: User[];
       };
     }>('/api/users/community');
+  },
+
+  getUserProfile: async (userId: string) => {
+    return fetchApi<{ user: User }>(`/api/users/${userId}/profile`);
+  },
+};
+
+// Locations endpoints
+export const locationsApi = {
+  getAll: async () => {
+    return fetchApi<Location[]>('/api/runs/locations');
   },
 };
 
@@ -179,7 +188,7 @@ export const adminApi = {
     });
   },
 
-  assignBadge: async (userId: string, badge: 'vip' | 'regular' | 'rookie' | 'plus_one' | null, referredBy?: string) => {
+  assignBadge: async (userId: string, badge: 'regular' | 'plus_one' | null, referredBy?: string) => {
     return fetchApi<{ message: string; user: User }>(
       `/api/admin/users/${userId}/badge`,
       {
@@ -189,7 +198,7 @@ export const adminApi = {
     );
   },
 
-  bulkAssignBadge: async (userIds: string[], badge: 'vip' | 'regular' | 'rookie' | 'plus_one') => {
+  bulkAssignBadge: async (userIds: string[], badge: 'regular') => {
     return fetchApi<{ message: string; updated_count: number }>(
       '/api/admin/users/bulk-badge',
       {

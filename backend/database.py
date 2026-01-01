@@ -108,6 +108,11 @@ def init_db(app):
                 if 'no_show' not in participants_columns:
                     db.session.execute(text('ALTER TABLE run_participants ADD COLUMN no_show BOOLEAN DEFAULT 0 NOT NULL'))
                     db.session.commit()
+                
+                # Add location_id column to runs table if it doesn't exist
+                if 'location_id' not in runs_columns:
+                    db.session.execute(text('ALTER TABLE runs ADD COLUMN location_id VARCHAR(36)'))
+                    db.session.commit()
         except Exception as e:
             # Columns might already exist, ignore error
             db.session.rollback()
@@ -144,8 +149,41 @@ def init_db(app):
                 admin.first_name = 'Zach'
                 admin.last_name = 'Manno'
                 db.session.commit()
-            # Set badge to VIP if not set
+            # Set badge to regular if not set
             if not admin.badge:
-                admin.badge = 'vip'
+                admin.badge = 'regular'
                 db.session.commit()
+        
+        # Seed hardcoded locations
+        from models import Location
+        
+        locations_data = [
+            {
+                'name': 'Phield House',
+                'address': '814 Spring Garden St',
+                'description': '8th and Spring Garden publically available court rentals. $125 per hour.'
+            },
+            {
+                'name': "St Gab's Gym",
+                'address': '3000 Dickinson St',
+                'description': "South Philly Catholic School Gym, original hoop home of the Sheeran Bros and Leem. $10 per person."
+            },
+            {
+                'name': 'Lloyd Hall Recreation Center',
+                'address': '1 Boathouse Row',
+                'description': 'Philly Public Court on Boathouse Row, where Championships are won. $free.99'
+            }
+        ]
+        
+        for loc_data in locations_data:
+            location = Location.query.filter_by(name=loc_data['name']).first()
+            if not location:
+                location = Location(
+                    name=loc_data['name'],
+                    address=loc_data['address'],
+                    description=loc_data['description']
+                )
+                db.session.add(location)
+        
+        db.session.commit()
 

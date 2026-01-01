@@ -31,9 +31,10 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
       if (onUpdate) {
         onUpdate();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update RSVP:', error);
-      alert('Failed to update RSVP. Please try again.');
+      const errorMessage = error?.message || 'Failed to update RSVP. Please try again.';
+      alert(errorMessage);
     } finally {
       setUpdating(false);
     }
@@ -74,6 +75,16 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
 
   const isPast = new Date(run.date) < new Date();
   const isCompleted = run.is_completed || false;
+  
+  // Check if run is at capacity
+  const isAtCapacity = run.capacity !== undefined && run.capacity !== null && 
+    (run.participant_counts?.confirmed || 0) >= run.capacity;
+  
+  // Check if user is already confirmed (they should still be able to interact with the button)
+  const isUserConfirmed = currentStatus === 'confirmed';
+  
+  // Disable confirm button if at capacity and user is not already confirmed
+  const isConfirmDisabled = isAtCapacity && !isUserConfirmed;
 
   // Helper function to format participant names with badges
   const formatParticipantNames = (
@@ -106,27 +117,27 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+    <div className="bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition-shadow">
       <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="text-xl font-bold text-basketball-black mb-1">
+        <div className="flex-1 min-w-0 pr-2">
+          <h3 className="text-lg md:text-xl font-bold text-basketball-black mb-1">
             {run.title}
           </h3>
-          <p className="text-gray-600">{formatDate(run.date)}</p>
-          <p className="text-gray-600">
+          <p className="text-sm md:text-base text-gray-600">{formatDate(run.date)}</p>
+          <p className="text-sm md:text-base text-gray-600">
             {formatTimeRange(run.start_time, run.end_time)}
           </p>
         </div>
         {run.is_historical && (
-          <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-sm">
+          <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs md:text-sm flex-shrink-0">
             Historical
           </span>
         )}
       </div>
 
       <div className="mb-4">
-        <p className="font-semibold text-basketball-black">{run.location}</p>
-        <p className="text-sm text-gray-600">{run.address}</p>
+        <p className="font-semibold text-basketball-black">{run.location_name || run.location}</p>
+        <p className="text-sm text-gray-600">{run.location_address || run.address}</p>
         {run.description && (
           <p className="text-gray-700 mt-2">{run.description}</p>
         )}
@@ -160,8 +171,8 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
             </span>
           </div>
         )}
-        <div className="flex gap-4 text-sm">
-          <div>
+        <div className="flex flex-col md:flex-row gap-3 md:gap-4 text-sm">
+          <div className="flex-1">
             <span className="font-semibold text-green-600">
               Confirmed: {run.participant_counts?.confirmed || 0}
             </span>
@@ -171,7 +182,7 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
               </div>
             )}
           </div>
-          <div>
+          <div className="flex-1">
             <span className="font-semibold text-yellow-600">
               Interested: {run.participant_counts?.interested || 0}
             </span>
@@ -181,7 +192,7 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
               </div>
             )}
           </div>
-          <div>
+          <div className="flex-1">
             <span className="font-semibold text-red-600">
               Out: {run.participant_counts?.out || 0}
             </span>
@@ -192,7 +203,7 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
             )}
           </div>
           {isCompleted && run.participants?.no_show && run.participants.no_show.length > 0 && (
-            <div>
+            <div className="flex-1">
               <span className="font-semibold text-orange-600">
                 No Show: {run.participant_counts?.no_show || 0}
               </span>
@@ -216,10 +227,12 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
             <div className="flex gap-2 overflow-hidden">
               <button
                 onClick={() => handleRsvp('confirmed')}
-                disabled={updating}
+                disabled={updating || isConfirmDisabled}
                 className={`flex-1 min-w-0 px-2 py-2 text-xs sm:text-sm rounded transition-all truncate ${
                   currentStatus === 'confirmed'
                     ? 'bg-green-600 text-white border-2 border-green-700 ring-2 ring-green-300'
+                    : isConfirmDisabled
+                    ? 'bg-gray-200 text-gray-500 border-2 border-transparent cursor-not-allowed'
                     : 'bg-green-100 text-green-700 hover:bg-green-200 border-2 border-transparent'
                 } ${updating ? 'opacity-50 cursor-not-allowed' : ''}`}
               >

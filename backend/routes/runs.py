@@ -1,10 +1,16 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime, date, time
 from database import db
-from models import Run, RunParticipant
+from models import Run, RunParticipant, Location
 from middleware import require_auth, require_admin, verify_token
 
 runs_bp = Blueprint('runs', __name__)
+
+@runs_bp.route('/locations', methods=['GET'])
+def get_locations():
+    """Get all locations"""
+    locations = Location.query.order_by(Location.name).all()
+    return jsonify([location.to_dict() for location in locations]), 200
 
 @runs_bp.route('', methods=['GET'])
 def get_runs():
@@ -71,10 +77,15 @@ def create_run():
     data = request.get_json()
     
     # Validate required fields
-    required_fields = ['title', 'date', 'start_time', 'end_time', 'location', 'address']
+    required_fields = ['title', 'date', 'start_time', 'end_time', 'location_id']
     for field in required_fields:
         if not data.get(field):
             return jsonify({'error': f'{field} is required'}), 400
+    
+    # Validate location_id exists
+    location = Location.query.get(data['location_id'])
+    if not location:
+        return jsonify({'error': 'Invalid location_id'}), 400
     
     try:
         # Parse date and times
@@ -87,8 +98,7 @@ def create_run():
             date=run_date,
             start_time=start_time,
             end_time=end_time,
-            location=data['location'],
-            address=data['address'],
+            location_id=data['location_id'],
             description=data.get('description'),
             capacity=data.get('capacity'),
             cost=data.get('cost') if not data.get('is_variable_cost') else None,
@@ -133,10 +143,12 @@ def update_run(run_id):
             run.start_time = datetime.strptime(data['start_time'], '%H:%M').time()
         if 'end_time' in data:
             run.end_time = datetime.strptime(data['end_time'], '%H:%M').time()
-        if 'location' in data:
-            run.location = data['location']
-        if 'address' in data:
-            run.address = data['address']
+        if 'location_id' in data:
+            # Validate location_id exists
+            location = Location.query.get(data['location_id'])
+            if not location:
+                return jsonify({'error': 'Invalid location_id'}), 400
+            run.location_id = data['location_id']
         if 'description' in data:
             run.description = data['description']
         if 'capacity' in data:
@@ -203,6 +215,25 @@ def update_rsvp(run_id):
     
     if status not in ['confirmed', 'interested', 'out']:
         return jsonify({'error': 'Status must be confirmed, interested, or out'}), 400
+    
+    # Check capacity if trying to confirm
+    if status == 'confirmed' and run.capacity:
+        # Count current confirmed participants
+        current_confirmed_count = RunParticipant.query.filter_by(
+            run_id=run_id,
+            status='confirmed'
+        ).count()
+        
+        # Check if user is already confirmed (they should be able to stay confirmed)
+        existing_participant = RunParticipant.query.filter_by(
+            run_id=run_id,
+            user_id=request.current_user.id
+        ).first()
+        
+        # If user is not already confirmed, check if there's space
+        if not existing_participant or existing_participant.status != 'confirmed':
+            if current_confirmed_count >= run.capacity:
+                return jsonify({'error': 'Run is at capacity'}), 400
     
     try:
         # Find or create participant record

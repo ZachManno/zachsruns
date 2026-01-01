@@ -1,10 +1,17 @@
+export interface Location {
+  id: string;
+  name: string;
+  address: string;
+  description?: string;
+}
+
 export interface User {
   id: string;
   username: string;
   email: string;
   first_name?: string;
   last_name?: string;
-  badge?: 'vip' | 'regular' | 'rookie' | 'plus_one' | null;
+  badge?: 'regular' | 'plus_one' | null;
   referred_by?: string;
   referrer?: {
     id: string;
@@ -13,7 +20,6 @@ export interface User {
     last_name?: string;
   };
   runs_attended_count?: number;
-  no_shows_count?: number;
   attendance_rate?: number;
   is_admin: boolean;
   is_verified: boolean;
@@ -27,8 +33,12 @@ export interface Run {
   date: string;
   start_time: string;
   end_time: string;
-  location: string;
-  address: string;
+  location?: string;  // Keep for backward compatibility (location name)
+  address?: string;  // Keep for backward compatibility
+  location_id?: string;
+  location_name?: string;
+  location_address?: string;
+  location_data?: Location;  // Full location object
   description?: string;
   capacity?: number;
   cost?: number;

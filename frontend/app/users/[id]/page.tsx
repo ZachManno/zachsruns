@@ -1,41 +1,43 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
 import { usersApi } from '@/lib/api';
-import { Run } from '@/types';
-import UserBadge from '@/components/UserBadge';
-import RunCard from '@/components/RunCard';
+import { User } from '@/types';
 import BadgeIcon from '@/components/BadgeIcon';
+import Link from 'next/link';
 
-export default function ProfilePage() {
-  const { user, loading: authLoading } = useAuth();
+export default function UserProfilePage() {
+  const params = useParams();
   const router = useRouter();
-  const [runs, setRuns] = useState<{ upcoming: Run[]; history: Run[] }>({
-    upcoming: [],
-    history: [],
-  });
+  const { user: currentUser, loading: authLoading } = useAuth();
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const userId = params.id as string;
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !currentUser) {
       router.push('/login');
       return;
     }
 
-    if (user) {
-      fetchRuns();
+    if (currentUser) {
+      fetchUserProfile();
     }
-  }, [user, authLoading, router]);
+  }, [currentUser, authLoading, userId, router]);
 
-  const fetchRuns = async () => {
+  const fetchUserProfile = async () => {
     try {
       setLoading(true);
-      const data = await usersApi.getMyRuns();
-      setRuns(data);
-    } catch (error) {
-      console.error('Failed to fetch runs:', error);
+      setError(null);
+      const data = await usersApi.getUserProfile(userId);
+      setUser(data.user);
+    } catch (err: any) {
+      console.error('Failed to fetch user profile:', err);
+      setError(err.message || 'Failed to load user profile');
     } finally {
       setLoading(false);
     }
@@ -51,17 +53,44 @@ export default function ProfilePage() {
     );
   }
 
-  if (!user) {
-    return null;
+  if (error || !user) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+            <p className="text-red-600 mb-4">{error || 'User not found'}</p>
+            <Link
+              href="/community"
+              className="text-basketball-orange hover:underline"
+            >
+              ← Back to Community
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
+  const displayName = user.first_name && user.last_name
+    ? `${user.first_name} ${user.last_name}`
+    : user.username;
+
   return (
-    <div className="container mx-auto px-4 py-6 md:py-12">
+    <div className="container mx-auto px-4 py-12">
       <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-4 md:p-8 mb-6 md:mb-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-4 md:mb-6">
-            <h1 className="text-2xl md:text-3xl font-bold text-basketball-black">
-              Profile
+        <div className="mb-4">
+          <Link
+            href="/community"
+            className="text-basketball-orange hover:underline"
+          >
+            ← Back to Community
+          </Link>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
+          <div className="flex items-center gap-4 mb-6">
+            <h1 className="text-3xl font-bold text-basketball-black">
+              {displayName}
             </h1>
             {user.badge && (
               <div className="flex items-center gap-2">
@@ -73,7 +102,7 @@ export default function ProfilePage() {
               </div>
             )}
           </div>
-          <UserBadge user={user} />
+          
           <div className="mt-4 text-gray-600">
             <p>Email: {user.email}</p>
             {user.badge === 'plus_one' && user.referrer && (
@@ -114,36 +143,6 @@ export default function ProfilePage() {
                 </div>
               </div>
             </div>
-          )}
-        </div>
-
-        <div className="mb-6 md:mb-8">
-          <h2 className="text-xl md:text-2xl font-bold text-basketball-black mb-3 md:mb-4">
-            My Runs
-          </h2>
-          {runs.upcoming.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {runs.upcoming.map((run) => (
-                <RunCard key={run.id} run={run} onUpdate={fetchRuns} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-600">No upcoming runs.</p>
-          )}
-        </div>
-
-        <div>
-          <h2 className="text-xl md:text-2xl font-bold text-basketball-black mb-3 md:mb-4">
-            Completed Runs
-          </h2>
-          {runs.history.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {runs.history.map((run) => (
-                <RunCard key={run.id} run={run} onUpdate={fetchRuns} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-600">No completed runs.</p>
           )}
         </div>
       </div>

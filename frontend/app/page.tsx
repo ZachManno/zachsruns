@@ -32,11 +32,11 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-4 md:py-8">
       <AnnouncementBanner />
       
-      <div className="mt-8">
-        <h1 className="text-4xl font-bold text-basketball-black mb-8 text-center">
+      <div className="mt-4 md:mt-8">
+        <h1 className="text-2xl md:text-4xl font-bold text-basketball-black mb-4 md:mb-8 text-center">
           Zach&apos;s Runs
         </h1>
 
@@ -57,11 +57,11 @@ export default function Home() {
         ) : (
           <>
             {upcomingRuns.length > 0 && (
-              <div className="mb-12">
-                <h2 className="text-2xl font-bold text-basketball-black mb-4">
+              <div className="mb-8 md:mb-12">
+                <h2 className="text-xl md:text-2xl font-bold text-basketball-black mb-3 md:mb-4">
                   Upcoming Runs
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {upcomingRuns.map((run) => (
                     <RunCard key={run.id} run={run} onUpdate={fetchRuns} />
                   ))}
@@ -71,10 +71,10 @@ export default function Home() {
 
             {pastRuns.length > 0 && (
               <div>
-                <h2 className="text-2xl font-bold text-basketball-black mb-4">
+                <h2 className="text-xl md:text-2xl font-bold text-basketball-black mb-3 md:mb-4">
                   Past Runs
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                   {pastRuns.map((run) => (
                     <RunCard key={run.id} run={run} onUpdate={fetchRuns} />
                   ))}

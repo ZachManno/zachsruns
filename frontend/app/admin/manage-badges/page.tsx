@@ -34,11 +34,11 @@ export default function ManageBadgesPage() {
       const data = await adminApi.getUsers();
       setUsers(data.users);
       
-      // Get Regular and VIP users for referrer dropdown
-      const regularAndVip = data.users.filter(
-        (u) => u.badge === 'regular' || u.badge === 'vip'
+      // Get Regular users for referrer dropdown
+      const regularUsers = data.users.filter(
+        (u) => u.badge === 'regular'
       );
-      setReferrers(regularAndVip);
+      setReferrers(regularUsers);
     } catch (error) {
       console.error('Failed to fetch users:', error);
     } finally {
@@ -194,9 +194,7 @@ export default function ManageBadgesPage() {
                           <span className="flex items-center gap-1">
                             <BadgeIcon badge={u.badge} size="small" />
                             <span className="text-sm">
-                              {u.badge === 'vip' ? 'VIP' :
-                               u.badge === 'regular' ? 'Regular' :
-                               u.badge === 'rookie' ? 'Rookie' :
+                              {u.badge === 'regular' ? 'Regular' :
                                u.badge === 'plus_one' ? '+1' : ''}
                             </span>
                           </span>
@@ -220,9 +218,7 @@ export default function ManageBadgesPage() {
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900 text-sm"
                           >
                             <option value="none">None</option>
-                            <option value="vip">VIP</option>
                             <option value="regular">Regular</option>
-                            <option value="rookie">Rookie</option>
                             <option value="plus_one">+1</option>
                           </select>
                           {needsReferrer && (
@@ -240,7 +236,7 @@ export default function ManageBadgesPage() {
                                 <option key={ref.id} value={ref.id}>
                                   {ref.first_name && ref.last_name
                                     ? `${ref.first_name} ${ref.last_name}`
-                                    : ref.username} ({ref.badge === 'vip' ? 'VIP' : 'Regular'})
+                                    : ref.username} (Regular)
                                 </option>
                               ))}
                             </select>

@@ -93,8 +93,8 @@ def assign_badge(user_id):
     badge = data.get('badge')
     referred_by_id = data.get('referred_by')
     
-    # Validate badge value
-    valid_badges = ['vip', 'regular', 'rookie', 'plus_one', None]
+    # Validate badge value (only regular and plus_one allowed)
+    valid_badges = ['regular', 'plus_one', None]
     if badge not in valid_badges:
         return jsonify({'error': f'Invalid badge. Must be one of: {valid_badges}'}), 400
     
@@ -107,8 +107,8 @@ def assign_badge(user_id):
         if not referrer:
             return jsonify({'error': 'Referrer user not found'}), 404
         
-        if referrer.badge not in ['regular', 'vip']:
-            return jsonify({'error': 'Referrer must be Regular or VIP'}), 400
+        if referrer.badge != 'regular':
+            return jsonify({'error': 'Referrer must be Regular'}), 400
     else:
         # Clear referred_by if not plus_one
         referred_by_id = None
@@ -138,10 +138,10 @@ def bulk_assign_badge():
     badge = data.get('badge')
     user_ids = data.get('user_ids', [])
     
-    # Validate badge value
-    valid_badges = ['vip', 'regular', 'rookie', 'plus_one']
+    # Validate badge value (only regular allowed for bulk assignment)
+    valid_badges = ['regular']
     if badge not in valid_badges:
-        return jsonify({'error': f'Invalid badge. Must be one of: {valid_badges}'}), 400
+        return jsonify({'error': f'Invalid badge. Must be one of: {valid_badges}. Note: plus_one requires individual assignment with referrer.'}), 400
     
     try:
         updated_count = 0

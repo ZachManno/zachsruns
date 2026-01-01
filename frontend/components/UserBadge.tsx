@@ -12,9 +12,7 @@ export default function UserBadge({ user }: UserBadgeProps) {
     ? `${user.first_name} ${user.last_name}`
     : user.username;
   
-  const badgeName = user.badge === 'vip' ? 'VIP' :
-                    user.badge === 'regular' ? 'Regular' :
-                    user.badge === 'rookie' ? 'Rookie' :
+  const badgeName = user.badge === 'regular' ? 'Regular' :
                     user.badge === 'plus_one' ? '+1' : null;
 
   return (

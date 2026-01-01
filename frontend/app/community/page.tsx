@@ -11,16 +11,12 @@ export default function CommunityPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [communityData, setCommunityData] = useState<{
-    vip: User[];
     regular: User[];
-    rookie: User[];
     plus_one: User[];
     none: User[];
     unverified: User[];
   }>({
-    vip: [],
     regular: [],
-    rookie: [],
     plus_one: [],
     none: [],
     unverified: [],
@@ -72,8 +68,15 @@ export default function CommunityPage() {
       ? `${user.first_name} ${user.last_name}`
       : user.username;
 
+    const handleClick = () => {
+      router.push(`/users/${user.id}`);
+    };
+
     return (
-      <div className="bg-white rounded-lg shadow-md p-4 border border-gray-200 hover:shadow-lg transition-shadow">
+      <div 
+        className="bg-white rounded-lg shadow-md p-4 border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer"
+        onClick={handleClick}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {user.badge && <BadgeIcon badge={user.badge} size="medium" />}
@@ -96,11 +99,6 @@ export default function CommunityPage() {
             <p className="text-sm font-semibold text-gray-700">
               {user.runs_attended_count || 0} {user.runs_attended_count === 1 ? 'run' : 'runs'} attended
             </p>
-            {user.no_shows_count !== undefined && user.no_shows_count > 0 && (
-              <p className="text-xs text-orange-600">
-                {user.no_shows_count} no-show{user.no_shows_count === 1 ? '' : 's'}
-              </p>
-            )}
             <p className="text-xs text-gray-600">
               {user.attendance_rate !== undefined && user.attendance_rate !== null ? `${user.attendance_rate}%` : '0%'} attendance
             </p>
@@ -133,9 +131,9 @@ export default function CommunityPage() {
     }
 
     return (
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-basketball-black mb-4">{title}</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="mb-6 md:mb-8">
+        <h2 className="text-xl md:text-2xl font-bold text-basketball-black mb-3 md:mb-4">{title}</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           {filtered.map((user) => (
             <UserCard key={user.id} user={user} />
           ))}
@@ -159,14 +157,14 @@ export default function CommunityPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="container mx-auto px-4 py-6 md:py-12">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold text-basketball-black mb-8 text-center">
+        <h1 className="text-2xl md:text-4xl font-bold text-basketball-black mb-4 md:mb-8 text-center">
           Community
         </h1>
 
         {/* Search and Filter Bar */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 md:mb-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -190,12 +188,8 @@ export default function CommunityPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
               >
                 <option value="all">All Badges</option>
-                <option value="vip">VIP</option>
                 <option value="regular">Regular</option>
-                <option value="rookie">Rookie</option>
                 <option value="plus_one">+1</option>
-                <option value="none">No Badge</option>
-                <option value="unverified">Unverified</option>
               </select>
             </div>
             <div className="flex items-end">
@@ -214,22 +208,12 @@ export default function CommunityPage() {
 
         {/* Badge Sections */}
         <BadgeSection
-          title="🏆 VIP Members"
-          users={communityData.vip}
-          badgeType="vip"
-        />
-        <BadgeSection
           title="⭐ Regular Members"
           users={communityData.regular}
           badgeType="regular"
         />
         <BadgeSection
-          title="🌱 Rookie Members"
-          users={communityData.rookie}
-          badgeType="rookie"
-        />
-        <BadgeSection
-          title="➕ +1 Members"
+          title="👥 +1 Members"
           users={communityData.plus_one}
           badgeType="plus_one"
         />

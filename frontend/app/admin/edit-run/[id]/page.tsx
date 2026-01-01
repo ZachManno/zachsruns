@@ -2,16 +2,21 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { runsApi, locationsApi } from '@/lib/api';
-import { Location } from '@/types';
+import { Location, Run } from '@/types';
 import Link from 'next/link';
 
-export default function CreateRunPage() {
+export default function EditRunPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const params = useParams();
+  const runId = params?.id as string;
+  
   const [locations, setLocations] = useState<Location[]>([]);
   const [loadingLocations, setLoadingLocations] = useState(true);
+  const [loadingRun, setLoadingRun] = useState(true);
+  const [run, setRun] = useState<Run | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     date: '',
@@ -28,10 +33,11 @@ export default function CreateRunPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (user && user.is_admin) {
+    if (user && user.is_admin && runId) {
       fetchLocations();
+      fetchRun();
     }
-  }, [user]);
+  }, [user, runId]);
 
   const fetchLocations = async () => {
     try {
@@ -46,7 +52,41 @@ export default function CreateRunPage() {
     }
   };
 
-  if (authLoading) {
+  const fetchRun = async () => {
+    try {
+      setLoadingRun(true);
+      const data = await runsApi.getById(runId);
+      const runData = data.run;
+      setRun(runData);
+
+      // Pre-populate form with existing run data
+      // Format date for input (YYYY-MM-DD)
+      const dateStr = runData.date ? new Date(runData.date).toISOString().split('T')[0] : '';
+      // Format time for input (HH:MM)
+      const startTime = runData.start_time ? runData.start_time.substring(0, 5) : '';
+      const endTime = runData.end_time ? runData.end_time.substring(0, 5) : '';
+
+      setFormData({
+        title: runData.title || '',
+        date: dateStr,
+        start_time: startTime,
+        end_time: endTime,
+        location_id: runData.location_id || '',
+        description: runData.description || '',
+        capacity: runData.capacity?.toString() || '',
+        cost: runData.cost?.toString() || '',
+        is_variable_cost: runData.is_variable_cost || false,
+        total_cost: runData.total_cost?.toString() || '',
+      });
+    } catch (err: any) {
+      console.error('Failed to fetch run:', err);
+      setError(err.message || 'Failed to load run');
+    } finally {
+      setLoadingRun(false);
+    }
+  };
+
+  if (authLoading || loadingRun || loadingLocations) {
     return (
       <div className="container mx-auto px-4 py-12">
         <div className="text-center">
@@ -59,6 +99,28 @@ export default function CreateRunPage() {
   if (!user || !user.is_admin) {
     router.push('/');
     return null;
+  }
+
+  if (run?.is_completed) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-2xl mx-auto">
+          <div className="mb-4">
+            <Link
+              href="/admin/manage-runs"
+              className="text-basketball-orange hover:underline"
+            >
+              ← Back to Manage Runs
+            </Link>
+          </div>
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+              Cannot edit completed runs
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,10 +142,10 @@ export default function CreateRunPage() {
         description: formData.description || undefined,
       };
 
-      await runsApi.create(runData);
-      router.push('/');
+      await runsApi.update(runId, runData);
+      router.push('/admin/manage-runs');
     } catch (err: any) {
-      setError(err.message || 'Failed to create run');
+      setError(err.message || 'Failed to update run');
     } finally {
       setSubmitting(false);
     }
@@ -103,16 +165,16 @@ export default function CreateRunPage() {
       <div className="max-w-2xl mx-auto">
         <div className="mb-4">
           <Link
-            href="/admin/dashboard"
+            href="/admin/manage-runs"
             className="text-basketball-orange hover:underline"
           >
-            ← Back to Dashboard
+            ← Back to Manage Runs
           </Link>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-4 md:p-8">
           <h1 className="text-2xl md:text-3xl font-bold text-basketball-black mb-4 md:mb-6">
-            Create New Run
+            Edit Run
           </h1>
 
           {error && (
@@ -339,7 +401,7 @@ export default function CreateRunPage() {
               disabled={submitting}
               className="w-full bg-basketball-orange text-white py-2 px-4 rounded-md hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? 'Creating...' : 'Create Run'}
+              {submitting ? 'Updating...' : 'Update Run'}
             </button>
           </form>
         </div>

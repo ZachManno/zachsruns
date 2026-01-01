@@ -45,11 +45,14 @@ def update_user_profile():
 @users_bp.route('/me/runs', methods=['GET'])
 @require_auth
 def get_user_runs():
-    """Get user's runs (signed up + history)"""
+    """Get user's runs (signed up + history) - only shows confirmed or interested, not out"""
     user = request.current_user
     
-    # Get all runs where user is a participant
-    participations = RunParticipant.query.filter_by(user_id=user.id).all()
+    # Get only runs where user is confirmed or interested (exclude 'out')
+    participations = RunParticipant.query.filter(
+        RunParticipant.user_id == user.id,
+        RunParticipant.status.in_(['confirmed', 'interested'])
+    ).all()
     run_ids = [p.run_id for p in participations]
     
     runs = Run.query.filter(Run.id.in_(run_ids)).all()
@@ -83,6 +86,18 @@ def get_user_runs():
         'history': history
     }), 200
 
+@users_bp.route('/<user_id>/profile', methods=['GET'])
+def get_user_profile(user_id):
+    """Get public profile for any user (read-only)"""
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    # Return public profile (excludes no_shows_count by default)
+    return jsonify({
+        'user': user.to_dict(include_no_shows=False)
+    }), 200
+
 @users_bp.route('/community', methods=['GET'])
 @require_auth
 def get_community():
@@ -97,11 +112,9 @@ def get_community():
         user_dict['run_count'] = user.runs_attended_count  # Use attended count instead of confirmed
         user_data.append(user_dict)
     
-    # Group by badge
+    # Group by badge (only regular and plus_one now)
     grouped = {
-        'vip': [],
         'regular': [],
-        'rookie': [],
         'plus_one': [],
         'none': [],
         'unverified': []
@@ -111,6 +124,9 @@ def get_community():
         if not user['is_verified']:
             grouped['unverified'].append(user)
         elif user['badge']:
+            # Convert old badges to regular
+            if user['badge'] in ['vip', 'rookie']:
+                user['badge'] = 'regular'
             if user['badge'] in grouped:
                 grouped[user['badge']].append(user)
             else:
