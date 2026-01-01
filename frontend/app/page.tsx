@@ -37,7 +37,7 @@ export default function Home() {
       
       <div className="mt-4 md:mt-8">
         <h1 className="text-2xl md:text-4xl font-bold text-basketball-black mb-4 md:mb-8 text-center">
-          Zach&apos;s Runs
+          Zach&apos;s Organized Runs
         </h1>
 
         {loading ? (

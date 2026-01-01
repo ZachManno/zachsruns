@@ -80,19 +80,37 @@ export default function LocationsPage() {
             {locations.map((location) => (
               <div
                 key={location.id}
-                className="bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition-shadow"
+                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
               >
-                <h2 className="text-xl md:text-2xl font-bold text-basketball-black mb-2 md:mb-3">
-                  {location.name}
-                </h2>
-                <p className="text-gray-700 mb-2">
-                  <span className="font-semibold">Address:</span> {location.address}
-                </p>
-                {location.description && (
-                  <p className="text-gray-600 text-sm mt-4">
-                    {location.description}
-                  </p>
+                {location.image_url && (
+                  <div className="w-full h-48 md:h-64 bg-gray-200 overflow-hidden relative">
+                    <img
+                      src={location.image_url}
+                      alt={location.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        // Hide image container if image fails to load
+                        const container = (e.target as HTMLImageElement).parentElement;
+                        if (container) {
+                          container.style.display = 'none';
+                        }
+                      }}
+                    />
+                  </div>
                 )}
+                <div className="p-4 md:p-6">
+                  <h2 className="text-xl md:text-2xl font-bold text-basketball-black mb-2 md:mb-3">
+                    {location.name}
+                  </h2>
+                  <p className="text-gray-700 mb-2">
+                    <span className="font-semibold">Address:</span> {location.address}
+                  </p>
+                  {location.description && (
+                    <p className="text-gray-600 text-sm mt-4">
+                      {location.description}
+                    </p>
+                  )}
+                </div>
               </div>
             ))}
           </div>

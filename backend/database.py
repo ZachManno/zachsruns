@@ -113,6 +113,20 @@ def init_db(app):
                 if 'location_id' not in runs_columns:
                     db.session.execute(text('ALTER TABLE runs ADD COLUMN location_id VARCHAR(36)'))
                     db.session.commit()
+                
+                # Add guest_attendees column to runs table if it doesn't exist
+                if 'guest_attendees' not in runs_columns:
+                    db.session.execute(text('ALTER TABLE runs ADD COLUMN guest_attendees TEXT'))
+                    db.session.commit()
+                
+                # Check locations table columns
+                if 'locations' in inspector.get_table_names():
+                    locations_columns = [col['name'] for col in inspector.get_columns('locations')]
+                    
+                    # Add image_url column to locations table if it doesn't exist
+                    if 'image_url' not in locations_columns:
+                        db.session.execute(text('ALTER TABLE locations ADD COLUMN image_url VARCHAR(500)'))
+                        db.session.commit()
         except Exception as e:
             # Columns might already exist, ignore error
             db.session.rollback()
@@ -161,17 +175,20 @@ def init_db(app):
             {
                 'name': 'Phield House',
                 'address': '814 Spring Garden St',
-                'description': '8th and Spring Garden publically available court rentals. $125 per hour.'
+                'description': '8th and Spring Garden publically available court rentals. $125 per hour.',
+                'image_url': '/locations/phield-house.jpg'
             },
             {
                 'name': "St Gab's Gym",
                 'address': '3000 Dickinson St',
-                'description': "South Philly Catholic School Gym, original hoop home of the Sheeran Bros and Leem. $10 per person."
+                'description': "South Philly Catholic School Gym, original hoop home of the Sheeran Bros and Leem. $10 per person.",
+                'image_url': '/locations/st-gabs-gym.jpg'
             },
             {
                 'name': 'Lloyd Hall Recreation Center',
                 'address': '1 Boathouse Row',
-                'description': 'Philly Public Court on Boathouse Row, where Championships are won. $free.99'
+                'description': 'Philly Public Court on Boathouse Row, where Championships are won. $free.99',
+                'image_url': '/locations/lloyd-hall.jpg'
             }
         ]
         
@@ -181,9 +198,15 @@ def init_db(app):
                 location = Location(
                     name=loc_data['name'],
                     address=loc_data['address'],
-                    description=loc_data['description']
+                    description=loc_data['description'],
+                    image_url=loc_data['image_url']
                 )
                 db.session.add(location)
+            else:
+                # Update existing location with image_url if it doesn't have one
+                if not location.image_url:
+                    location.image_url = loc_data['image_url']
+                    db.session.commit()
         
         db.session.commit()
 

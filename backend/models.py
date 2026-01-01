@@ -1,6 +1,7 @@
 from database import db
 from datetime import datetime
 import uuid
+import json
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -66,13 +67,15 @@ class Location(db.Model):
     name = db.Column(db.String(200), nullable=False, unique=True)
     address = db.Column(db.String(500), nullable=False)
     description = db.Column(db.Text, nullable=True)
+    image_url = db.Column(db.String(500), nullable=True)  # Path to image in public folder
     
     def to_dict(self):
         return {
             'id': self.id,
             'name': self.name,
             'address': self.address,
-            'description': self.description
+            'description': self.description,
+            'image_url': self.image_url
         }
 
 class Run(db.Model):
@@ -97,6 +100,7 @@ class Run(db.Model):
     is_completed = db.Column(db.Boolean, default=False, nullable=False)
     completed_at = db.Column(db.DateTime, nullable=True)
     completed_by = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=True)
+    guest_attendees = db.Column(db.Text, nullable=True)  # JSON array of guest names
     
     # Relationships
     location_entity = db.relationship('Location', backref='runs')
@@ -140,7 +144,8 @@ class Run(db.Model):
             'total_cost': float(self.total_cost) if self.total_cost else None,
             'is_completed': self.is_completed,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
-            'completed_by': self.completed_by
+            'completed_by': self.completed_by,
+            'guest_attendees': json.loads(self.guest_attendees) if self.guest_attendees else []
         }
         
         if include_participants:

@@ -101,7 +101,7 @@ export default function Navbar() {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="text-xl md:text-2xl font-bold text-basketball-orange">
-            Zach&apos;s Runs
+            Zach&apos;s Organized Runs
           </Link>
           
           {/* Desktop Menu - hidden on mobile */}

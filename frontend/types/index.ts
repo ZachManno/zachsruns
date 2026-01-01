@@ -3,6 +3,7 @@ export interface Location {
   name: string;
   address: string;
   description?: string;
+  image_url?: string;
 }
 
 export interface User {
@@ -50,6 +51,7 @@ export interface Run {
   is_completed?: boolean;
   completed_at?: string;
   completed_by?: string;
+  guest_attendees?: string[];
   participants?: {
     confirmed: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean; no_show?: boolean}>;
     interested: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean; no_show?: boolean}>;

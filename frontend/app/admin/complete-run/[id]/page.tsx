@@ -22,7 +22,9 @@ export default function CompleteRunPage() {
   // Track attendance
   const [attendedUserIds, setAttendedUserIds] = useState<Set<string>>(new Set());
   const [noShowUserIds, setNoShowUserIds] = useState<Set<string>>(new Set());
-  const [extraAttendees, setExtraAttendees] = useState<string[]>([]);
+  const [extraAttendees, setExtraAttendees] = useState<string[]>([]);  // User IDs
+  const [guestAttendees, setGuestAttendees] = useState<string[]>([]);  // Guest names
+  const [newGuestName, setNewGuestName] = useState('');
 
   useEffect(() => {
     if (!authLoading && (!user || !user.is_admin)) {
@@ -101,6 +103,18 @@ export default function CompleteRunPage() {
     setExtraAttendees(extraAttendees.filter(id => id !== userId));
   };
 
+  const handleAddGuest = () => {
+    const trimmedName = newGuestName.trim();
+    if (trimmedName && !guestAttendees.includes(trimmedName)) {
+      setGuestAttendees([...guestAttendees, trimmedName]);
+      setNewGuestName('');
+    }
+  };
+
+  const handleRemoveGuest = (name: string) => {
+    setGuestAttendees(guestAttendees.filter(n => n !== name));
+  };
+
   const handleComplete = async () => {
     if (!run) return;
     
@@ -114,7 +128,8 @@ export default function CompleteRunPage() {
         runId,
         Array.from(attendedUserIds),
         Array.from(noShowUserIds),
-        extraAttendees
+        extraAttendees,
+        guestAttendees
       );
       router.push('/admin/manage-runs');
     } catch (error: any) {
@@ -244,8 +259,11 @@ export default function CompleteRunPage() {
             <h2 className="text-xl font-bold text-basketball-black mb-4">
               Extra Attendees (Didn't RSVP)
             </h2>
+            
+            {/* Existing Users */}
             {extraAttendees.length > 0 && (
               <div className="space-y-2 mb-4">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">Existing Users</h3>
                 {extraAttendees.map((userId) => {
                   const user = allUsers.find(u => u.id === userId);
                   if (!user) return null;
@@ -274,37 +292,98 @@ export default function CompleteRunPage() {
                 })}
               </div>
             )}
-            {availableUsersForExtra.length > 0 && (
-              <select
-                onChange={(e) => {
-                  if (e.target.value) {
-                    handleAddExtraAttendee(e.target.value);
-                    e.target.value = '';
-                  }
-                }}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
-              >
-                <option value="">Add extra attendee...</option>
-                {availableUsersForExtra.map((user) => {
-                  const displayName = user.first_name && user.last_name
-                    ? `${user.first_name} ${user.last_name}`
-                    : user.username;
-                  return (
-                    <option key={user.id} value={user.id}>
-                      {displayName} (@{user.username})
-                    </option>
-                  );
-                })}
-              </select>
+            
+            {/* Guest Attendees (Non-users) */}
+            {guestAttendees.length > 0 && (
+              <div className="space-y-2 mb-4">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">Guests (Not Registered)</h3>
+                {guestAttendees.map((name, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-blue-50"
+                  >
+                    <span className="font-medium text-gray-900">{name}</span>
+                    <button
+                      onClick={() => handleRemoveGuest(name)}
+                      className="text-red-600 hover:text-red-800 text-sm"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
+            
+            {/* Add Existing User */}
+            {availableUsersForExtra.length > 0 && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Add Existing User
+                </label>
+                <select
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      handleAddExtraAttendee(e.target.value);
+                      e.target.value = '';
+                    }
+                  }}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                >
+                  <option value="">Select a user...</option>
+                  {availableUsersForExtra.map((user) => {
+                    const displayName = user.first_name && user.last_name
+                      ? `${user.first_name} ${user.last_name}`
+                      : user.username;
+                    return (
+                      <option key={user.id} value={user.id}>
+                        {displayName} (@{user.username})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            )}
+            
+            {/* Add Guest (Non-user) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Add Guest (Not Registered)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newGuestName}
+                  onChange={(e) => setNewGuestName(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddGuest();
+                    }
+                  }}
+                  placeholder="Enter guest name..."
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                />
+                <button
+                  onClick={handleAddGuest}
+                  className="bg-basketball-orange text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Summary */}
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
             <h3 className="font-semibold text-basketball-black mb-2">Summary</h3>
             <p className="text-sm text-gray-600">
-              Attended: {attendedUserIds.size + extraAttendees.length} • No Shows: {noShowUserIds.size}
+              Attended: {attendedUserIds.size + extraAttendees.length + guestAttendees.length} • No Shows: {noShowUserIds.size}
             </p>
+            {guestAttendees.length > 0 && (
+              <p className="text-xs text-gray-500 mt-1">
+                ({guestAttendees.length} guest{guestAttendees.length !== 1 ? 's' : ''} included)
+              </p>
+            )}
           </div>
 
           {/* Actions */}

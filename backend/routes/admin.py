@@ -81,6 +81,24 @@ def create_announcement():
         db.session.rollback()
         return jsonify({'error': 'Failed to create announcement'}), 500
 
+@admin_bp.route('/announcements', methods=['DELETE'])
+@require_admin
+def clear_announcement():
+    """Clear/deactivate current active announcement"""
+    try:
+        # Deactivate all active announcements
+        active_announcements = Announcement.query.filter_by(is_active=True).all()
+        for announcement in active_announcements:
+            announcement.is_active = False
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Announcement cleared successfully'
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Failed to clear announcement'}), 500
+
 @admin_bp.route('/users/<user_id>/badge', methods=['PUT'])
 @require_admin
 def assign_badge(user_id):
@@ -188,6 +206,7 @@ def complete_run(run_id):
     attended_user_ids = data.get('attended_user_ids', [])
     no_show_user_ids = data.get('no_show_user_ids', [])
     extra_attendees = data.get('extra_attendees', [])  # List of user_ids
+    guest_attendees = data.get('guest_attendees', [])  # List of guest names (non-users)
     
     try:
         # Update confirmed participants
@@ -226,6 +245,13 @@ def complete_run(run_id):
                     no_show=False
                 )
                 db.session.add(extra_participant)
+        
+        # Store guest attendees (non-users) as JSON
+        import json
+        if guest_attendees:
+            run.guest_attendees = json.dumps(guest_attendees)
+        else:
+            run.guest_attendees = None
         
         # Mark run as completed
         run.is_completed = True

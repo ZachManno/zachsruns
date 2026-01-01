@@ -177,6 +177,12 @@ export const adminApi = {
     );
   },
 
+  clearAnnouncement: async () => {
+    return fetchApi<{ message: string }>('/api/admin/announcements', {
+      method: 'DELETE',
+    });
+  },
+
   importRuns: async (runsData: any) => {
     return fetchApi<{
       message: string;
@@ -216,7 +222,8 @@ export const adminApi = {
     runId: string,
     attendedUserIds: string[],
     noShowUserIds: string[],
-    extraAttendees: string[] = []
+    extraAttendees: string[] = [],
+    guestAttendees: string[] = []
   ) => {
     return fetchApi<{ message: string; run: Run }>(
       `/api/admin/runs/${runId}/complete`,
@@ -226,6 +233,7 @@ export const adminApi = {
           attended_user_ids: attendedUserIds,
           no_show_user_ids: noShowUserIds,
           extra_attendees: extraAttendees,
+          guest_attendees: guestAttendees,
         }),
       }
     );

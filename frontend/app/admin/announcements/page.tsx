@@ -60,6 +60,30 @@ export default function AnnouncementsPage() {
     }
   };
 
+  const handleClear = async () => {
+    if (!announcement) return;
+    
+    if (!confirm('Are you sure you want to clear the current announcement? This will remove it from the banner.')) {
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+    setSubmitting(true);
+
+    try {
+      await adminApi.clearAnnouncement();
+      setSuccess('Announcement cleared successfully');
+      setAnnouncement(null);
+      setMessage('');
+      await fetchAnnouncement();
+    } catch (err: any) {
+      setError(err.message || 'Failed to clear announcement');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="container mx-auto px-4 py-12">
@@ -93,12 +117,23 @@ export default function AnnouncementsPage() {
 
           {announcement && (
             <div className="mb-6 p-4 bg-gray-100 rounded">
-              <p className="text-sm text-gray-600 mb-2">Current Announcement:</p>
-              <p className="text-gray-800">{announcement.message}</p>
-              <p className="text-xs text-gray-500 mt-2">
-                Created:{' '}
-                {new Date(announcement.created_at).toLocaleString()}
-              </p>
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-gray-600 mb-2">Current Announcement:</p>
+                  <p className="text-gray-800">{announcement.message}</p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Created:{' '}
+                    {new Date(announcement.created_at).toLocaleString()}
+                  </p>
+                </div>
+                <button
+                  onClick={handleClear}
+                  disabled={submitting}
+                  className="ml-4 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                >
+                  Clear
+                </button>
+              </div>
             </div>
           )}
 
