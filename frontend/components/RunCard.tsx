@@ -76,10 +76,12 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
     return `${start}-${end}`;
   };
 
-  // Check if run is past - parse date directly to avoid timezone issues
+  // Check if run is past - compare dates only, not times
   const [year, month, day] = run.date.split('T')[0].split('-').map(Number);
   const runDate = new Date(year, month - 1, day);
-  const isPast = runDate < new Date();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set to midnight for date-only comparison
+  const isPast = runDate < today; // Only past if run date is BEFORE today (not same day)
   const isCompleted = run.is_completed || false;
   
   // Check if run is at capacity
