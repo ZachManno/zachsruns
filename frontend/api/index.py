@@ -6,8 +6,9 @@ import sys
 import os
 
 # Add backend directory to Python path
-# Vercel packages files as: /var/task/api/index.py and /var/task/backend/
-# So from api/, we go up one level (../) to get to backend/
+# Backend is copied to frontend/backend during build (see vercel.json buildCommand)
+# Vercel packages as: /var/task/api/index.py and /var/task/backend/
+# From api/, go up one level to find backend/
 backend_path = os.path.join(os.path.dirname(__file__), '..', 'backend')
 if backend_path not in sys.path:
     sys.path.insert(0, backend_path)
