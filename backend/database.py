@@ -12,8 +12,23 @@ db = SQLAlchemy()
 
 def get_database_url():
     """Get database URL from environment or use local SQLite for development"""
-    if os.getenv('POSTGRES_URL'):
-        return os.getenv('POSTGRES_URL')
+    # Check for various Postgres URL environment variable names
+    postgres_url = (
+        os.getenv('POSTGRES_URL') or 
+        os.getenv('STORAGE_POSTGRES_URL') or
+        os.getenv('DATABASE_URL')
+    )
+    if postgres_url:
+        return postgres_url
+    
+    # On Vercel without Postgres URL, raise an error
+    if os.getenv('VERCEL'):
+        raise ValueError(
+            "Postgres URL environment variable is required for Vercel deployment. "
+            "Please set POSTGRES_URL, STORAGE_POSTGRES_URL, or DATABASE_URL. "
+            "Add a Postgres database via Vercel Marketplace (e.g., Neon)."
+        )
+    
     # For local development, use SQLite
     return 'sqlite:///zachs_runs.db'
 
@@ -30,6 +45,10 @@ def init_db(app):
         app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
             'poolclass': NullPool
         }
+    
+    # On Vercel (read-only filesystem), set instance path to /tmp
+    if os.getenv('VERCEL'):
+        app.instance_path = '/tmp'
     
     db.init_app(app)
     
