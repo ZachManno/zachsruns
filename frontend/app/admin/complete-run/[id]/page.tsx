@@ -49,7 +49,8 @@ export default function CompleteRunPage() {
       setAllUsers(usersData.users);
       
       // Initialize with all confirmed participants as attended by default
-      const confirmedIds = (runData.run.participants?.confirmed || []).map(p => {
+      const confirmedParticipants = runData.run.participants?.confirmed || [];
+      const confirmedIds = confirmedParticipants.map(p => {
         // Find user ID from username
         const user = usersData.users.find(u => u.username === p.username);
         return user?.id;
