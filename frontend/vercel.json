@@ -3,12 +3,12 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/../api/index.py"
+      "destination": "/api/index.py"
     }
   ],
   "functions": {
-    "../api/index.py": {
-      "includeFiles": "../backend/**",
+    "api/index.py": {
+      "includeFiles": "backend/**",
       "maxDuration": 30
     }
   }
