@@ -1,7 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm install && npm run build",
-  "outputDirectory": "frontend/.next",
   "rewrites": [
     {
       "source": "/api/(.*)",
@@ -10,7 +8,7 @@
   ],
   "functions": {
     "api/index.py": {
-      "includeFiles": "backend/**",
+      "includeFiles": "../backend/**",
       "maxDuration": 30
     }
   }
