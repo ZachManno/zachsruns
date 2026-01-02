@@ -210,52 +210,152 @@ export default function CompleteRunPage() {
             </p>
           </div>
 
-          {/* Confirmed Participants */}
+          {/* Attended Participants */}
           <div className="mb-8">
             <h2 className="text-xl font-bold text-basketball-black mb-4">
-              Confirmed Participants ({confirmedParticipants.length})
+              Attended ({attendedUserIds.size + extraAttendees.length + guestAttendees.length})
             </h2>
             <div className="space-y-2">
-              {confirmedParticipants.map((participant) => {
-                const userId = allUsers.find(u => u.username === participant.username)?.id;
-                if (!userId) return null;
-                
-                const displayName = participant.first_name && participant.last_name
-                  ? `${participant.first_name} ${participant.last_name}`
-                  : participant.username;
+              {/* Show confirmed participants who attended */}
+              {confirmedParticipants
+                .filter((participant) => {
+                  const userId = allUsers.find(u => u.username === participant.username)?.id;
+                  return userId && attendedUserIds.has(userId);
+                })
+                .map((participant) => {
+                  const userId = allUsers.find(u => u.username === participant.username)?.id;
+                  if (!userId) return null;
+                  
+                  const displayName = participant.first_name && participant.last_name
+                    ? `${participant.first_name} ${participant.last_name}`
+                    : participant.username;
 
-                return (
-                  <div
-                    key={participant.username}
-                    className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      {participant.badge && <BadgeIcon badge={participant.badge as any} size="small" />}
-                      <span className="font-medium text-gray-900">{displayName}</span>
+                  return (
+                    <div
+                      key={participant.username}
+                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-green-50"
+                    >
+                      <div className="flex items-center gap-3">
+                        {participant.badge && <BadgeIcon badge={participant.badge as any} size="small" />}
+                        <span className="font-medium text-gray-900">{displayName}</span>
+                      </div>
+                      <div className="flex gap-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={attendedUserIds.has(userId)}
+                            onChange={() => handleToggleAttended(userId)}
+                            className="rounded"
+                          />
+                          <span className="text-sm text-green-600">Attended</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={noShowUserIds.has(userId)}
+                            onChange={() => handleToggleNoShow(userId)}
+                            className="rounded"
+                          />
+                          <span className="text-sm text-orange-600">No Show</span>
+                        </label>
+                      </div>
                     </div>
-                    <div className="flex gap-4">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={attendedUserIds.has(userId)}
-                          onChange={() => handleToggleAttended(userId)}
-                          className="rounded"
-                        />
-                        <span className="text-sm text-green-600">Attended</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={noShowUserIds.has(userId)}
-                          onChange={() => handleToggleNoShow(userId)}
-                          className="rounded"
-                        />
-                        <span className="text-sm text-orange-600">No Show</span>
-                      </label>
+                  );
+                })}
+              
+              {/* Show confirmed participants who didn't attend yet (for toggling) */}
+              {confirmedParticipants
+                .filter((participant) => {
+                  const userId = allUsers.find(u => u.username === participant.username)?.id;
+                  return userId && !attendedUserIds.has(userId) && !noShowUserIds.has(userId);
+                })
+                .map((participant) => {
+                  const userId = allUsers.find(u => u.username === participant.username)?.id;
+                  if (!userId) return null;
+                  
+                  const displayName = participant.first_name && participant.last_name
+                    ? `${participant.first_name} ${participant.last_name}`
+                    : participant.username;
+
+                  return (
+                    <div
+                      key={participant.username}
+                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        {participant.badge && <BadgeIcon badge={participant.badge as any} size="small" />}
+                        <span className="font-medium text-gray-900">{displayName}</span>
+                      </div>
+                      <div className="flex gap-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={attendedUserIds.has(userId)}
+                            onChange={() => handleToggleAttended(userId)}
+                            className="rounded"
+                          />
+                          <span className="text-sm text-green-600">Attended</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={noShowUserIds.has(userId)}
+                            onChange={() => handleToggleNoShow(userId)}
+                            className="rounded"
+                          />
+                          <span className="text-sm text-orange-600">No Show</span>
+                        </label>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              
+              {/* Show no-shows */}
+              {confirmedParticipants
+                .filter((participant) => {
+                  const userId = allUsers.find(u => u.username === participant.username)?.id;
+                  return userId && noShowUserIds.has(userId);
+                })
+                .map((participant) => {
+                  const userId = allUsers.find(u => u.username === participant.username)?.id;
+                  if (!userId) return null;
+                  
+                  const displayName = participant.first_name && participant.last_name
+                    ? `${participant.first_name} ${participant.last_name}`
+                    : participant.username;
+
+                  return (
+                    <div
+                      key={participant.username}
+                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-orange-50"
+                    >
+                      <div className="flex items-center gap-3">
+                        {participant.badge && <BadgeIcon badge={participant.badge as any} size="small" />}
+                        <span className="font-medium text-gray-900">{displayName}</span>
+                      </div>
+                      <div className="flex gap-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={attendedUserIds.has(userId)}
+                            onChange={() => handleToggleAttended(userId)}
+                            className="rounded"
+                          />
+                          <span className="text-sm text-green-600">Attended</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={noShowUserIds.has(userId)}
+                            onChange={() => handleToggleNoShow(userId)}
+                            className="rounded"
+                          />
+                          <span className="text-sm text-orange-600">No Show</span>
+                        </label>
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
           </div>
 
@@ -381,14 +481,26 @@ export default function CompleteRunPage() {
           {/* Summary */}
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
             <h3 className="font-semibold text-basketball-black mb-2">Summary</h3>
-            <p className="text-sm text-gray-600">
-              Attended: {attendedUserIds.size + extraAttendees.length + guestAttendees.length} • No Shows: {noShowUserIds.size}
-            </p>
-            {guestAttendees.length > 0 && (
-              <p className="text-xs text-gray-500 mt-1">
-                ({guestAttendees.length} guest{guestAttendees.length !== 1 ? 's' : ''} included)
+            <div className="space-y-2">
+              <p className="text-sm text-gray-600">
+                Total Attended: {attendedUserIds.size + extraAttendees.length + guestAttendees.length} • No Shows: {noShowUserIds.size}
               </p>
-            )}
+              {guestAttendees.length > 0 && (
+                <p className="text-xs text-gray-500">
+                  ({guestAttendees.length} guest{guestAttendees.length !== 1 ? 's' : ''} included)
+                </p>
+              )}
+              {run.is_variable_cost && run.total_cost && (
+                <p className="text-sm font-semibold text-basketball-black mt-2">
+                  Final Cost: ${((Number(run.total_cost) || 0) / (attendedUserIds.size + extraAttendees.length + guestAttendees.length || 1)).toFixed(2)} per person
+                </p>
+              )}
+              {!run.is_variable_cost && run.cost && (
+                <p className="text-sm font-semibold text-basketball-black mt-2">
+                  Final Cost: ${Number(run.cost).toFixed(2)} per person
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Actions */}

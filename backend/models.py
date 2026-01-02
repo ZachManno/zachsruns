@@ -158,51 +158,77 @@ class Run(db.Model):
         }
         
         if include_participants:
-            # Format participant names with badge info and attendance
-            # Sort confirmed participants by updated_at (earliest confirmed first)
-            confirmed_participants_list = sorted(
-                [p for p in self.participants if p.status == 'confirmed'],
-                key=lambda p: p.updated_at or datetime.utcnow()
-            )
-            interested_participants_list = [p for p in self.participants if p.status == 'interested']
-            out_participants_list = [p for p in self.participants if p.status == 'out']
-            no_show_participants_list = [p for p in self.participants if p.no_show]
-            
-            # Get participant user objects with names (confirmed in sorted order)
-            confirmed_users = [p.user for p in confirmed_participants_list]
-            interested_users = [p.user for p in interested_participants_list]
-            out_users = [p.user for p in out_participants_list]
-            no_show_users = [p.user for p in no_show_participants_list]
-            
-            confirmed_count = len(confirmed_users)
-            
-            # Calculate cost: if variable, divide total by confirmed participants; otherwise use fixed cost
-            if self.is_variable_cost and self.total_cost:
-                if confirmed_count > 0:
-                    result['cost'] = round(float(self.total_cost) / confirmed_count, 2)
-                else:
-                    result['cost'] = round(float(self.total_cost), 2)  # Show total if no participants yet
-            else:
+            if self.is_completed:
+                # For completed runs, only show attended participants
+                # Get all participants who attended (including extra attendees)
+                attended_participants_list = sorted(
+                    [p for p in self.participants if p.attended],
+                    key=lambda p: p.updated_at or datetime.utcnow()
+                )
+                attended_users = [p.user for p in attended_participants_list]
+                
+                # Include guest attendees in the count
+                guest_count = len(json.loads(self.guest_attendees)) if self.guest_attendees else 0
+                total_attended = len(attended_users) + guest_count
+                
+                # Use the final cost (already calculated per person)
                 result['cost'] = round(float(self.cost), 2) if self.cost else None
-            
-            confirmed = [{'username': u.username, 'first_name': u.first_name, 'last_name': u.last_name, 'badge': u.badge, 'attended': p.attended, 'no_show': p.no_show} for u, p in zip(confirmed_users, confirmed_participants_list)]
-            interested = [{'username': u.username, 'first_name': u.first_name, 'last_name': u.last_name, 'badge': u.badge, 'attended': p.attended, 'no_show': p.no_show} for u, p in zip(interested_users, interested_participants_list)]
-            out = [{'username': u.username, 'first_name': u.first_name, 'last_name': u.last_name, 'badge': u.badge, 'attended': p.attended, 'no_show': p.no_show} for u, p in zip(out_users, out_participants_list)]
-            no_show = [{'username': p.user.username, 'first_name': p.user.first_name, 'last_name': p.user.last_name, 'badge': p.user.badge, 'attended': False, 'no_show': True} for p in no_show_participants_list]
-            
-            result['participants'] = {
-                'confirmed': confirmed,
-                'interested': interested,
-                'out': out,
-                'no_show': no_show
-            }
-            
-            result['participant_counts'] = {
-                'confirmed': len(confirmed),
-                'interested': len(interested),
-                'out': len(out),
-                'no_show': len(no_show)
-            }
+                
+                attended = [{'username': u.username, 'first_name': u.first_name, 'last_name': u.last_name, 'badge': u.badge, 'attended': True} for u, p in zip(attended_users, attended_participants_list)]
+                
+                result['participants'] = {
+                    'attended': attended
+                }
+                
+                result['participant_counts'] = {
+                    'attended': total_attended
+                }
+            else:
+                # For non-completed runs, show all statuses
+                # Sort confirmed participants by updated_at (earliest confirmed first)
+                confirmed_participants_list = sorted(
+                    [p for p in self.participants if p.status == 'confirmed'],
+                    key=lambda p: p.updated_at or datetime.utcnow()
+                )
+                interested_participants_list = [p for p in self.participants if p.status == 'interested']
+                out_participants_list = [p for p in self.participants if p.status == 'out']
+                no_show_participants_list = [p for p in self.participants if p.no_show]
+                
+                # Get participant user objects with names (confirmed in sorted order)
+                confirmed_users = [p.user for p in confirmed_participants_list]
+                interested_users = [p.user for p in interested_participants_list]
+                out_users = [p.user for p in out_participants_list]
+                no_show_users = [p.user for p in no_show_participants_list]
+                
+                confirmed_count = len(confirmed_users)
+                
+                # Calculate cost: if variable, divide total by confirmed participants; otherwise use fixed cost
+                if self.is_variable_cost and self.total_cost:
+                    if confirmed_count > 0:
+                        result['cost'] = round(float(self.total_cost) / confirmed_count, 2)
+                    else:
+                        result['cost'] = round(float(self.total_cost), 2)  # Show total if no participants yet
+                else:
+                    result['cost'] = round(float(self.cost), 2) if self.cost else None
+                
+                confirmed = [{'username': u.username, 'first_name': u.first_name, 'last_name': u.last_name, 'badge': u.badge, 'attended': p.attended, 'no_show': p.no_show} for u, p in zip(confirmed_users, confirmed_participants_list)]
+                interested = [{'username': u.username, 'first_name': u.first_name, 'last_name': u.last_name, 'badge': u.badge, 'attended': p.attended, 'no_show': p.no_show} for u, p in zip(interested_users, interested_participants_list)]
+                out = [{'username': u.username, 'first_name': u.first_name, 'last_name': u.last_name, 'badge': u.badge, 'attended': p.attended, 'no_show': p.no_show} for u, p in zip(out_users, out_participants_list)]
+                no_show = [{'username': p.user.username, 'first_name': p.user.first_name, 'last_name': p.user.last_name, 'badge': p.user.badge, 'attended': False, 'no_show': True} for p in no_show_participants_list]
+                
+                result['participants'] = {
+                    'confirmed': confirmed,
+                    'interested': interested,
+                    'out': out,
+                    'no_show': no_show
+                }
+                
+                result['participant_counts'] = {
+                    'confirmed': len(confirmed),
+                    'interested': len(interested),
+                    'out': len(out),
+                    'no_show': len(no_show)
+                }
         
         return result
 

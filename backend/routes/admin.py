@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime, date, time
+from sqlalchemy import func
 from database import db
 from models import User, Run, RunParticipant, Announcement
 from middleware import require_admin
@@ -253,6 +254,21 @@ def complete_run(run_id):
         else:
             run.guest_attendees = None
         
+        # Calculate total attendees (attended users + extra attendees + guests)
+        total_attended = len(attended_user_ids) + len(extra_attendees) + len(guest_attendees)
+        
+        # Don't overwrite capacity - keep the original capacity for display
+        # The attended count will be shown separately in the frontend
+        
+        # Calculate and update final cost per person if variable cost
+        if run.is_variable_cost and run.total_cost:
+            # Calculate cost per person based on actual attendees
+            final_cost_per_person = float(run.total_cost) / total_attended if total_attended > 0 else 0
+            run.cost = final_cost_per_person
+        elif not run.is_variable_cost and run.cost:
+            # For fixed cost, cost per person stays the same
+            pass
+        
         # Mark run as completed
         run.is_completed = True
         run.completed_at = datetime.utcnow()
@@ -346,7 +362,7 @@ def import_runs():
                     
                     # Process confirmed participants - mark as attended for historical runs
                     for username in participants_data.get('confirmed', []):
-                        user = User.query.filter_by(username=username).first()
+                        user = User.query.filter(func.lower(User.username) == func.lower(username)).first()
                         if user:
                             participant = RunParticipant(
                                 run_id=new_run.id,
@@ -359,7 +375,7 @@ def import_runs():
                     
                     # Process interested participants - not attended for historical runs
                     for username in participants_data.get('interested', []):
-                        user = User.query.filter_by(username=username).first()
+                        user = User.query.filter(func.lower(User.username) == func.lower(username)).first()
                         if user:
                             participant = RunParticipant(
                                 run_id=new_run.id,
@@ -372,7 +388,7 @@ def import_runs():
                     
                     # Process out participants - not attended for historical runs
                     for username in participants_data.get('out', []):
-                        user = User.query.filter_by(username=username).first()
+                        user = User.query.filter(func.lower(User.username) == func.lower(username)).first()
                         if user:
                             participant = RunParticipant(
                                 run_id=new_run.id,

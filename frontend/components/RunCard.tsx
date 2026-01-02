@@ -4,6 +4,7 @@ import { Run } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { runsApi } from '@/lib/api';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import BadgeIcon from './BadgeIcon';
 
 interface RunCardProps {
@@ -141,24 +142,44 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
       </div>
 
       <div className="mb-4">
-        <p className="font-semibold text-basketball-black">{run.location_name}</p>
+        {run.location_name && (
+          <Link 
+            href="/locations" 
+            className="font-semibold text-basketball-black hover:text-basketball-orange hover:underline transition-colors inline-block"
+          >
+            {run.location_name}
+          </Link>
+        )}
         <p className="text-sm text-gray-600">{run.location_address}</p>
         {run.description && (
           <p className="text-gray-700 mt-2">{run.description}</p>
         )}
-        {(run.capacity || run.cost) && (
+        {((run.capacity || isCompleted) || (run.cost !== undefined && run.cost !== null && (!run.is_variable_cost || (run.participant_counts?.confirmed || 0) >= 10 || isCompleted))) && (
           <div className="mt-4 flex gap-4">
-            {run.capacity && (
+            {(run.capacity || isCompleted) && (
               <div className="flex-1 bg-gray-50 rounded-lg p-3 border border-gray-200">
-                <p className="text-xs text-gray-500 mb-1">Capacity</p>
-                <p className="text-lg font-semibold text-basketball-black">
-                  {run.participant_counts?.confirmed || 0}/{run.capacity}
-                </p>
+                {isCompleted ? (
+                  <>
+                    <p className="text-xs text-gray-500 mb-1">Attended</p>
+                    <p className="text-lg font-semibold text-basketball-black">
+                      {run.participant_counts?.attended || 0}/{run.capacity || 0}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs text-gray-500 mb-1">Capacity</p>
+                    <p className="text-lg font-semibold text-basketball-black">
+                      {run.participant_counts?.confirmed || 0}/{run.capacity}
+                    </p>
+                  </>
+                )}
               </div>
             )}
-            {(run.cost !== undefined && run.cost !== null) && (
+            {(run.cost !== undefined && run.cost !== null) && 
+             // For variable cost runs, show cost if at least 10 people have confirmed OR if run is completed
+             (!run.is_variable_cost || (run.participant_counts?.confirmed || 0) >= 10 || isCompleted) && (
               <div className="flex-1 bg-gray-50 rounded-lg p-3 border border-gray-200">
-                <p className="text-xs text-gray-500 mb-1">Cost</p>
+                <p className="text-xs text-gray-500 mb-1">{isCompleted ? 'Final Cost' : 'Cost'}</p>
                 <p className="text-lg font-semibold text-basketball-black">
                   ${Number(run.cost).toFixed(2)}
                 </p>
@@ -176,48 +197,62 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
             </span>
           </div>
         )}
-        <div className="flex flex-col md:flex-row gap-3 md:gap-4 text-sm">
-          <div className="flex-1">
-            <span className="font-semibold text-green-600">
-              Confirmed: {run.participant_counts?.confirmed || 0}
-            </span>
-            {run.participants?.confirmed && run.participants.confirmed.length > 0 && (
-              <div className="text-gray-600 text-xs mt-1 space-y-1">
-                {formatParticipantNames(run.participants.confirmed)}
-              </div>
-            )}
-          </div>
-          <div className="flex-1">
-            <span className="font-semibold text-yellow-600">
-              Interested: {run.participant_counts?.interested || 0}
-            </span>
-            {run.participants?.interested && run.participants.interested.length > 0 && (
-              <div className="text-gray-600 text-xs mt-1 space-y-1">
-                {formatParticipantNames(run.participants.interested)}
-              </div>
-            )}
-          </div>
-          <div className="flex-1">
-            <span className="font-semibold text-red-600">
-              Out: {run.participant_counts?.out || 0}
-            </span>
-            {run.participants?.out && run.participants.out.length > 0 && (
-              <div className="text-gray-600 text-xs mt-1 space-y-1">
-                {formatParticipantNames(run.participants.out)}
-              </div>
-            )}
-          </div>
-          {isCompleted && run.participants?.no_show && run.participants.no_show.length > 0 && (
+        {isCompleted ? (
+          // For completed runs, only show attended
+          <div className="flex flex-col md:flex-row gap-3 md:gap-4 text-sm">
             <div className="flex-1">
-              <span className="font-semibold text-orange-600">
-                No Show: {run.participant_counts?.no_show || 0}
+              <span className="font-semibold text-green-600">
+                Attended: {run.participant_counts?.attended || 0}
               </span>
-              <div className="text-gray-600 text-xs mt-1 space-y-1">
-                {formatParticipantNames(run.participants.no_show)}
-              </div>
+              {run.participants?.attended && run.participants.attended.length > 0 && (
+                <div className="text-gray-600 text-xs mt-1 space-y-1">
+                  {formatParticipantNames(run.participants.attended)}
+                </div>
+              )}
+              {run.guest_attendees && run.guest_attendees.length > 0 && (
+                <div className="text-gray-600 text-xs mt-1 space-y-1">
+                  {run.guest_attendees.map((guest, idx) => (
+                    <div key={idx}>{guest}</div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          // For non-completed runs, show all statuses
+          <div className="flex flex-col md:flex-row gap-3 md:gap-4 text-sm">
+            <div className="flex-1">
+              <span className="font-semibold text-green-600">
+                Confirmed: {run.participant_counts?.confirmed || 0}
+              </span>
+              {run.participants?.confirmed && run.participants.confirmed.length > 0 && (
+                <div className="text-gray-600 text-xs mt-1 space-y-1">
+                  {formatParticipantNames(run.participants.confirmed)}
+                </div>
+              )}
+            </div>
+            <div className="flex-1">
+              <span className="font-semibold text-yellow-600">
+                Interested: {run.participant_counts?.interested || 0}
+              </span>
+              {run.participants?.interested && run.participants.interested.length > 0 && (
+                <div className="text-gray-600 text-xs mt-1 space-y-1">
+                  {formatParticipantNames(run.participants.interested)}
+                </div>
+              )}
+            </div>
+            <div className="flex-1">
+              <span className="font-semibold text-red-600">
+                Out: {run.participant_counts?.out || 0}
+              </span>
+              {run.participants?.out && run.participants.out.length > 0 && (
+                <div className="text-gray-600 text-xs mt-1 space-y-1">
+                  {formatParticipantNames(run.participants.out)}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {user && !isPast && !isCompleted && (

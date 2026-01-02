@@ -51,16 +51,18 @@ export interface Run {
   completed_by?: string;
   guest_attendees?: string[];
   participants?: {
-    confirmed: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean; no_show?: boolean}>;
-    interested: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean; no_show?: boolean}>;
-    out: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean; no_show?: boolean}>;
+    confirmed?: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean; no_show?: boolean}>;
+    interested?: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean; no_show?: boolean}>;
+    out?: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean; no_show?: boolean}>;
     no_show?: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean; no_show?: boolean}>;
+    attended?: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean}>;
   };
   participant_counts?: {
-    confirmed: number;
-    interested: number;
-    out: number;
+    confirmed?: number;
+    interested?: number;
+    out?: number;
     no_show?: number;
+    attended?: number;
   };
   user_status?: 'confirmed' | 'interested' | 'out';
 }

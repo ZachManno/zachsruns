@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import check_password_hash, generate_password_hash
+from sqlalchemy import func
 from database import db
 from models import User
 from middleware import generate_token, require_auth
@@ -24,8 +25,8 @@ def signup():
     first_name = data['first_name'].strip()
     last_name = data['last_name'].strip()
     
-    # Check if user already exists
-    if User.query.filter_by(username=username).first():
+    # Check if user already exists (case-insensitive)
+    if User.query.filter(func.lower(User.username) == func.lower(username)).first():
         return jsonify({'error': 'Username already exists'}), 400
     
     if User.query.filter_by(email=email).first():
@@ -68,8 +69,8 @@ def login():
     username = data['username'].strip()
     password = data['password']
     
-    # Find user
-    user = User.query.filter_by(username=username).first()
+    # Find user (case-insensitive)
+    user = User.query.filter(func.lower(User.username) == func.lower(username)).first()
     
     if not user or not check_password_hash(user.password_hash, password):
         return jsonify({'error': 'Invalid username or password'}), 401
