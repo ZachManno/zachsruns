@@ -192,14 +192,27 @@ This application is configured to deploy to Vercel with Vercel Postgres. Follow 
 1. **GitHub Repository**: Ensure your code is pushed to a GitHub repository
 2. **Vercel Account**: Sign up or log in at [vercel.com](https://vercel.com)
 
-### Step 1: Create Vercel Postgres Database
+### Step 1: Create Postgres Database via Vercel Marketplace
 
-1. In your Vercel dashboard, go to **Storage** → **Create Database**
-2. Select **Postgres**
-3. Choose a name for your database (e.g., `zachs-runs-db`)
-4. Select a region closest to your users
-5. Click **Create**
-6. Vercel will automatically create a `POSTGRES_URL` environment variable
+Since Vercel now offers Postgres through the marketplace, you have several options:
+
+**Option A: Neon (Recommended for serverless)**
+1. In your Vercel dashboard, go to your project
+2. Navigate to **Storage** tab or go to [Vercel Marketplace](https://vercel.com/marketplace/category/storage?category=storage&search=postgres)
+3. Click **Add Integration** on **Neon** (or another Postgres provider)
+4. Follow the setup wizard to create a new Neon database
+5. The connection string will be automatically added as `POSTGRES_URL` environment variable
+
+**Option B: Supabase**
+1. Similar process - add Supabase integration from the marketplace
+2. Create a new Supabase project
+3. Connection string will be added automatically
+
+**Option C: Other Marketplace Providers**
+- Any Postgres provider from the marketplace will work
+- Just ensure the connection string is set as `POSTGRES_URL` environment variable
+
+**Note:** Your code already supports Postgres - no code changes needed! SQLAlchemy works perfectly with any Postgres database.
 
 ### Step 2: Connect GitHub Repository to Vercel
 
