@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { runsApi } from '@/lib/api';
 import { Run } from '@/types';
 import RunCard from '@/components/RunCard';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
 
-export default function Home() {
+function HomeContent() {
   const searchParams = useSearchParams();
   const [upcomingRuns, setUpcomingRuns] = useState<Run[]>([]);
   const [pastRuns, setPastRuns] = useState<Run[]>([]);
@@ -113,6 +113,20 @@ export default function Home() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-4 md:py-8">
+        <div className="text-center py-12">
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }
 
