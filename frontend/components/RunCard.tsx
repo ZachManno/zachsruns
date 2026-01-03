@@ -262,7 +262,7 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
           {!user.is_verified ? (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
               <p className="text-sm text-yellow-800">
-                Please verify your account to RSVP for runs
+                Please notify the admin to verify your account in order to RSVP for runs
               </p>
             </div>
           ) : (

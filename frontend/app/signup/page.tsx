@@ -23,7 +23,7 @@ export default function SignupPage() {
 
     try {
       await signup(username, email, password, firstName, lastName);
-      router.push('/');
+      router.push('/?signup=success');
     } catch (err: any) {
       setError(err.message || 'Signup failed. Please try again.');
     } finally {

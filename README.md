@@ -4,17 +4,17 @@ A lightweight full-stack web application for organizing basketball pickup games 
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14 with TypeScript and Tailwind CSS
+- **Frontend**: Next.js 16 with TypeScript and Tailwind CSS
 - **Backend**: Flask (Python) with SQLAlchemy
-- **Database**: SQLite (local development) / Vercel Postgres (production)
+- **Database**: SQLite (local development) / Vercel Serverless Postgres (Neon) (production)
 
 ## Project Structure
 
 ```
 zachs-runs/
 ├── frontend/          # Next.js application
+   ├── api/               # Vercel serverless function entry point
 ├── backend/           # Flask API
-├── api/               # Vercel serverless function entry point
 ├── vercel.json        # Vercel deployment configuration
 └── requirements.md   # Project requirements
 ```
@@ -87,13 +87,12 @@ For local development, the app uses SQLite by default. The database file will be
 
 ### Frontend
 
-Create a `.env.local` file in the `frontend` directory (optional):
 
+Set env variable for local:
 ```
 NEXT_PUBLIC_API_URL=http://localhost:5001
 ```
 
-If not set, it defaults to `http://localhost:5001`.
 
 ## Features
 
@@ -203,16 +202,7 @@ Since Vercel now offers Postgres through the marketplace, you have several optio
 4. Follow the setup wizard to create a new Neon database
 5. The connection string will be automatically added as `POSTGRES_URL` environment variable
 
-**Option B: Supabase**
-1. Similar process - add Supabase integration from the marketplace
-2. Create a new Supabase project
-3. Connection string will be added automatically
 
-**Option C: Other Marketplace Providers**
-- Any Postgres provider from the marketplace will work
-- Just ensure the connection string is set as `POSTGRES_URL` environment variable
-
-**Note:** Your code already supports Postgres - no code changes needed! SQLAlchemy works perfectly with any Postgres database.
 
 ### Step 2: Connect GitHub Repository to Vercel
 
@@ -225,7 +215,7 @@ Since Vercel now offers Postgres through the marketplace, you have several optio
 
 In the Vercel project settings:
 
-1. **Root Directory**: Leave as root (`.` - the `vercel.json` handles routing)
+1. **Root Directory**: `frontend` (`.` - the `vercel.json` handles routing)
 2. **Build Command**: `cd frontend && npm install && npm run build` (configured in `vercel.json`)
 3. **Output Directory**: `frontend/.next` (configured in `vercel.json`)
 4. **Framework Preset**: None (or Next.js - Vercel will auto-detect from `vercel.json`)
@@ -298,12 +288,12 @@ In your Vercel project settings, go to **Settings** → **Environment Variables*
 
 **Build Failures:**
 - Check that all dependencies are in `package.json` and `requirements.txt`
-- Verify Python version compatibility (Vercel uses Python 3.9 by default)
+- Verify Python version compatibility (Vercel uses Python 3.12)
 - Ensure `api/requirements.txt` exists with all Python dependencies
 - Review build logs in Vercel dashboard
 
 **Python Runtime Issues:**
-- Vercel uses Python 3.9 by default (configured in `vercel.json`)
+- Vercel uses Python 3.12 (configured in `vercel.json`)
 - All Python dependencies must be in `api/requirements.txt`
 - Backend code is included via `includeFiles` in `vercel.json`
 

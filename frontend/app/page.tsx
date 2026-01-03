@@ -1,16 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { runsApi } from '@/lib/api';
 import { Run } from '@/types';
 import RunCard from '@/components/RunCard';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
 
 export default function Home() {
+  const searchParams = useSearchParams();
   const [upcomingRuns, setUpcomingRuns] = useState<Run[]>([]);
   const [pastRuns, setPastRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showSignupSuccess, setShowSignupSuccess] = useState(false);
 
   const fetchRuns = async () => {
     try {
@@ -29,11 +32,30 @@ export default function Home() {
 
   useEffect(() => {
     fetchRuns();
-  }, []);
+    
+    // Check for signup success parameter
+    if (searchParams.get('signup') === 'success') {
+      setShowSignupSuccess(true);
+      // Auto-dismiss after 10 seconds
+      const timer = setTimeout(() => {
+        setShowSignupSuccess(false);
+      }, 10000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams]);
 
   return (
     <div className="container mx-auto px-4 py-4 md:py-8">
       <AnnouncementBanner />
+      
+      {showSignupSuccess && (
+        <div className="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
+          <p className="text-sm md:text-base">
+            The admin will need to verify your account before you can RSVP for runs.
+          </p>
+        </div>
+      )}
       
       <div className="mt-4 md:mt-8">
         <h1 className="text-2xl md:text-4xl font-bold text-basketball-black mb-4 md:mb-8 text-center">
