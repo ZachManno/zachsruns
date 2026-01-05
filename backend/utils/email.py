@@ -225,6 +225,13 @@ def _enqueue_email_production(to: str, subject: str, html_content: str, text_con
         if delay_seconds > 0:
             publish_kwargs['delay'] = delay_seconds
         
+        # Add Vercel deployment protection bypass header if configured
+        bypass_secret = os.getenv('VERCEL_AUTOMATION_BYPASS_SECRET')
+        if bypass_secret:
+            publish_kwargs['headers'] = {
+                'x-vercel-protection-bypass': bypass_secret
+            }
+        
         qstash_client.message.publish_json(**publish_kwargs)
         
         logger.info(f"Email enqueued to QStash for {to} (delay: {delay_seconds}s)")
