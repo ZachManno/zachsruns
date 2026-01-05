@@ -6,8 +6,9 @@ from routes.auth import auth_bp
 from routes.runs import runs_bp
 from routes.users import users_bp
 from routes.admin import admin_bp
+from routes.email_worker import email_worker_bp
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates')
 
 # Enable CORS for Next.js frontend
 # Allow localhost for development and production domain from environment
@@ -32,6 +33,7 @@ app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(runs_bp, url_prefix='/api/runs')
 app.register_blueprint(users_bp, url_prefix='/api/users')
 app.register_blueprint(admin_bp, url_prefix='/api/admin')
+app.register_blueprint(email_worker_bp, url_prefix='/api')
 
 @app.route('/api/health', methods=['GET'])
 def health_check():

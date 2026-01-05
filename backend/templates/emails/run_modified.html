@@ -1,0 +1,41 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<h2 style="color: #333333; margin-top: 0;">Run Modified</h2>
+
+<p>Hi {{ user.first_name or user.username }},</p>
+
+<p>The following run has been modified:</p>
+
+<div style="background-color: #fff5f0; padding: 15px; border-left: 3px solid #ff6b35; margin: 20px 0;">
+    <p style="margin: 0 0 10px 0;"><strong>Changes:</strong></p>
+    {% if changes_list %}
+        {% for change in changes_list %}
+        <p style="margin: 5px 0 0 0;">- {{ change }}.</p>
+        {% endfor %}
+    {% else %}
+        <p style="margin: 0;">Run details updated.</p>
+    {% endif %}
+</div>
+
+<div style="background-color: #f8f8f8; padding: 15px; border-radius: 4px; margin: 20px 0;">
+    <h3 style="margin-top: 0; color: #ff6b35;">{{ run.title }}</h3>
+    <p style="margin: 5px 0;"><strong>Date:</strong> {{ run.date.strftime('%B %d, %Y') }}</p>
+    <p style="margin: 5px 0;"><strong>Time:</strong> {{ run.start_time.strftime('%I:%M %p') }} - {{ run.end_time.strftime('%I:%M %p') }}</p>
+    <p style="margin: 5px 0;"><strong>Location:</strong> {{ location_name }}</p>
+    {% if location_address %}
+    <p style="margin: 5px 0; color: #666666; font-size: 14px;">{{ location_address }}</p>
+    {% endif %}
+    {% if run.capacity %}
+    <p style="margin: 5px 0;"><strong>Capacity:</strong> {{ run.capacity }} players</p>
+    {% endif %}
+    {% if run.cost %}
+    <p style="margin: 5px 0;"><strong>Cost:</strong> ${{ "%.2f"|format(run.cost|float) }} per person</p>
+    {% endif %}
+</div>
+
+<p>
+    <a href="{{ frontend_url }}/" class="button">View Runs →</a>
+</p>
+{% endblock %}
+

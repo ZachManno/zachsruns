@@ -69,21 +69,73 @@ zachs-runs/
 
    The frontend will run on `http://localhost:3000`
 
+### Local Email Testing with QStash (Optional)
+
+To test the full email queue system locally (as it works in production), you need to expose your local backend via ngrok so QStash can call back to it.
+
+**Terminal 1: Start ngrok tunnel**
+```bash
+ngrok http 5001
+```
+Copy the HTTPS URL (e.g., `https://abc123.ngrok-free.dev`)
+
+**Terminal 2: Update `.env` and start backend**
+```bash
+cd backend
+# Edit .env and set:
+#   LOCAL_USE_QSTASH=true
+#   FRONTEND_URL=http://localhost:3000
+#   QSTASH_CALLBACK_URL=https://your-ngrok-url.ngrok-free.dev
+python3 app.py
+```
+
+**Terminal 3: Start frontend**
+```bash
+cd frontend
+npm run dev
+```
+
+**How it works:**
+1. Your backend enqueues emails to QStash (external service)
+2. QStash calls back to your ngrok URL → your local backend
+3. Your backend sends the email via Resend
+4. Email links point to `localhost:3000` (your local frontend)
+
+**Note:** If you don't need to test QStash specifically, the default local setup uses simple background threading for emails (no ngrok required). Just don't set `LOCAL_USE_QSTASH=true`.
+
 ## Environment Variables
 
 ### Backend
 
 Create a `.env` file in the `backend` directory:
 
-```
+```bash
+# Required
 ADMIN_PASSWORD=your-admin-password-here
 JWT_SECRET=your-secret-key-change-in-production
-POSTGRES_URL=your-postgres-url  # Only needed for Vercel Postgres
+
+# Database (optional locally - defaults to SQLite)
+DATABASE_URL=your-postgres-url  # Only needed for Vercel Postgres
+
+# Email (Resend)
+RESEND_API_KEY=your-resend-api-key
+EMAIL_FROM_ADDRESS=notifications@yourdomain.com
+EMAIL_FROM_NAME=Your App Name
+
+# QStash (for production email queue)
+QSTASH_TOKEN=your-qstash-token
+QSTASH_CURRENT_SIGNING_KEY=your-signing-key
+QSTASH_NEXT_SIGNING_KEY=your-next-signing-key
+
+# Local QStash testing (optional)
+LOCAL_USE_QSTASH=true                    # Set to test QStash locally
+FRONTEND_URL=http://localhost:3000       # For email links
+QSTASH_CALLBACK_URL=https://your.ngrok.url  # For QStash callbacks
 ```
 
 **Required**: `ADMIN_PASSWORD` - The password for the default admin user (username: `zmann`). This is used when creating the admin account on first run.
 
-For local development, the app uses SQLite by default. The database file will be created as `zachs_runs.db` in the backend directory.
+For local development, the app uses SQLite by default. The database file will be created as `instance/zachs_runs.db` in the backend directory.
 
 ### Frontend
 

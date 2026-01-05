@@ -1,8 +1,12 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime, date, time
+import logging
 from database import db
-from models import Run, RunParticipant, Location
+from models import Run, RunParticipant, Location, User
 from middleware import require_auth, require_admin, verify_token
+from utils.email import send_run_created_email, send_run_modified_email, send_run_cancelled_email
+
+logger = logging.getLogger(__name__)
 
 runs_bp = Blueprint('runs', __name__)
 
@@ -114,6 +118,14 @@ def create_run():
         # Refresh the object to ensure relationships are loaded
         db.session.refresh(new_run)
         
+        # Send email to all verified users (fire-and-forget)
+        try:
+            verified_users = User.query.filter_by(is_verified=True).all()
+            send_run_created_email(new_run, verified_users)
+        except Exception as e:
+            # Log error but don't fail run creation
+            logger.error(f"Failed to send run created emails: {str(e)}")
+        
         return jsonify({
             'message': 'Run created successfully',
             'run': new_run.to_dict()
@@ -141,25 +153,45 @@ def update_run(run_id):
     
     data = request.get_json()
     
+    # Track changes for email notification
+    changes = {}
+    old_location_name = run.location_entity.name if run.location_entity else None
+    
     try:
-        if 'title' in data:
+        if 'title' in data and data['title'] != run.title:
+            changes['title'] = {'old': run.title, 'new': data['title']}
             run.title = data['title']
         if 'date' in data:
-            run.date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+            new_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+            if new_date != run.date:
+                changes['date'] = {'old': run.date, 'new': new_date}
+                run.date = new_date
         if 'start_time' in data:
-            run.start_time = datetime.strptime(data['start_time'], '%H:%M').time()
+            new_start_time = datetime.strptime(data['start_time'], '%H:%M').time()
+            if new_start_time != run.start_time:
+                changes['start_time'] = {'old': run.start_time, 'new': new_start_time}
+                run.start_time = new_start_time
         if 'end_time' in data:
-            run.end_time = datetime.strptime(data['end_time'], '%H:%M').time()
+            new_end_time = datetime.strptime(data['end_time'], '%H:%M').time()
+            if new_end_time != run.end_time:
+                changes['end_time'] = {'old': run.end_time, 'new': new_end_time}
+                run.end_time = new_end_time
         if 'location_id' in data:
             # Validate location_id exists
             location = Location.query.get(data['location_id'])
             if not location:
                 return jsonify({'error': 'Invalid location_id'}), 400
-            run.location_id = data['location_id']
-        if 'description' in data:
+            if location.id != run.location_id:
+                changes['location'] = {'old': old_location_name, 'new': location.name}
+                run.location_id = location.id
+        if 'description' in data and data['description'] != run.description:
+            changes['description'] = {'old': run.description, 'new': data['description']}
             run.description = data['description']
         if 'capacity' in data:
-            run.capacity = data['capacity']
+            new_capacity = data['capacity']
+            if new_capacity != run.capacity:
+                changes['capacity'] = {'old': run.capacity, 'new': new_capacity}
+                run.capacity = new_capacity
         if 'is_variable_cost' in data:
             run.is_variable_cost = data['is_variable_cost']
         if 'total_cost' in data:
@@ -172,6 +204,22 @@ def update_run(run_id):
                 run.cost = None
         
         db.session.commit()
+        
+        # Send modification email if any changes detected (fire-and-forget)
+        if changes:
+            try:
+                # Ensure location relationship is loaded
+                db.session.refresh(run)
+                # Get confirmed and interested participants
+                participants = RunParticipant.query.filter(
+                    RunParticipant.run_id == run_id,
+                    RunParticipant.status.in_(['confirmed', 'interested'])
+                ).all()
+                recipients = [p.user for p in participants if p.user]
+                send_run_modified_email(run, recipients, changes)
+            except Exception as e:
+                # Log error but don't fail update
+                logger.error(f"Failed to send run modified emails: {str(e)}")
         
         return jsonify({
             'message': 'Run updated successfully',
@@ -195,8 +243,45 @@ def delete_run(run_id):
         return jsonify({'error': 'Cannot delete completed run'}), 400
     
     try:
+        # Get confirmed and interested participants before deleting
+        participants = RunParticipant.query.filter(
+            RunParticipant.run_id == run_id,
+            RunParticipant.status.in_(['confirmed', 'interested'])
+        ).all()
+        recipients = [p.user for p in participants if p.user]
+        
+        # Ensure location relationship is loaded before deleting
+        db.session.refresh(run)
+        
+        # Store run data for email (since we'll delete it)
+        run_data = {
+            'title': run.title,
+            'date': run.date,
+            'start_time': run.start_time,
+            'end_time': run.end_time,
+            'location_entity': run.location_entity
+        }
+        
         db.session.delete(run)
         db.session.commit()
+        
+        # Send cancellation email (fire-and-forget)
+        try:
+            # Create a simple object for email (since run is deleted)
+            class RunData:
+                def __init__(self, data):
+                    self.title = data['title']
+                    self.date = data['date']
+                    self.start_time = data['start_time']
+                    self.end_time = data['end_time']
+                    self.location_entity = data['location_entity']
+            
+            run_data_obj = RunData(run_data)
+            send_run_cancelled_email(run_data_obj, recipients)
+        except Exception as e:
+            # Log error but don't fail deletion
+            logger.error(f"Failed to send run cancelled emails: {str(e)}")
+        
         return jsonify({'message': 'Run deleted successfully'}), 200
     except Exception as e:
         db.session.rollback()

@@ -1,9 +1,13 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime, date, time
 from sqlalchemy import func
+import logging
 from database import db
 from models import User, Run, RunParticipant, Announcement
 from middleware import require_admin
+from utils.email import send_account_verified_email, send_run_completed_email, send_run_reminder_email, send_announcement_email
+
+logger = logging.getLogger(__name__)
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -30,6 +34,14 @@ def verify_user(user_id):
     try:
         user.is_verified = is_verified
         db.session.commit()
+        
+        # Send verification email if user was just verified
+        if is_verified:
+            try:
+                send_account_verified_email(user)
+            except Exception as e:
+                # Log error but don't fail verification
+                logger.error(f"Failed to send verification email: {str(e)}")
         
         return jsonify({
             'message': f'User {"verified" if is_verified else "unverified"} successfully',
@@ -73,6 +85,14 @@ def create_announcement():
         
         db.session.add(new_announcement)
         db.session.commit()
+        
+        # Send announcement email to all verified users (fire-and-forget)
+        try:
+            verified_users = User.query.filter_by(is_verified=True).all()
+            send_announcement_email(data['message'], verified_users)
+        except Exception as e:
+            # Log error but don't fail announcement creation
+            logger.error(f"Failed to send announcement emails: {str(e)}")
         
         return jsonify({
             'message': 'Announcement created successfully',
@@ -277,10 +297,29 @@ def complete_run(run_id):
         db.session.commit()
         
         # Recalculate stats for all affected users
-        from utils import recalculate_user_stats
-        all_affected_users = set(attended_user_ids + no_show_user_ids + extra_attendees)
-        for user_id in all_affected_users:
-            recalculate_user_stats(user_id)
+        # Import utils.py directly (not utils package) by using importlib
+        import importlib.util
+        import os
+        # Get backend directory - works in both local and Vercel
+        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        utils_file_path = os.path.join(backend_dir, 'utils.py')
+        if os.path.exists(utils_file_path):
+            spec = importlib.util.spec_from_file_location("utils_stats", utils_file_path)
+            utils_stats = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(utils_stats)
+            all_affected_users = set(attended_user_ids + no_show_user_ids + extra_attendees)
+            for user_id in all_affected_users:
+                utils_stats.recalculate_user_stats(user_id)
+        
+        # Send completion email to all attendees
+        try:
+            # Ensure location relationship is loaded
+            db.session.refresh(run)
+            attended_users = User.query.filter(User.id.in_(attended_user_ids + extra_attendees)).all()
+            send_run_completed_email(run, attended_users)
+        except Exception as e:
+            # Log error but don't fail completion
+            logger.error(f"Failed to send completion emails: {str(e)}")
         
         return jsonify({
             'message': 'Run completed successfully',
@@ -289,6 +328,52 @@ def complete_run(run_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Failed to complete run: {str(e)}'}), 500
+
+@admin_bp.route('/runs/<run_id>/remind', methods=['POST'])
+@require_admin
+def remind_run(run_id):
+    """Send reminder email to confirmed and interested users"""
+    run = Run.query.get(run_id)
+    if not run:
+        return jsonify({'error': 'Run not found'}), 404
+    
+    if run.is_completed:
+        return jsonify({'error': 'Cannot send reminders for completed runs'}), 400
+    
+    data = request.get_json()
+    reminder_message = data.get('reminder_message', '').strip()
+    
+    # Validate reminder message
+    if not reminder_message:
+        return jsonify({'error': 'reminder_message is required'}), 400
+    
+    if len(reminder_message) > 100:
+        return jsonify({'error': 'reminder_message must be 100 characters or less'}), 400
+    
+    try:
+        # Get confirmed and interested participants
+        participants = RunParticipant.query.filter(
+            RunParticipant.run_id == run_id,
+            RunParticipant.status.in_(['confirmed', 'interested'])
+        ).all()
+        
+        recipients = [p.user for p in participants if p.user]
+        
+        # Send reminder emails (fire-and-forget)
+        try:
+            # Ensure location relationship is loaded
+            db.session.refresh(run)
+            send_run_reminder_email(run, recipients, reminder_message)
+        except Exception as e:
+            # Log error but don't fail the API call
+            logger.error(f"Failed to send reminder emails: {str(e)}")
+        
+        return jsonify({
+            'message': f'Reminder sent to {len(recipients)} users',
+            'recipient_count': len(recipients)
+        }), 200
+    except Exception as e:
+        return jsonify({'error': f'Failed to send reminders: {str(e)}'}), 500
 
 @admin_bp.route('/runs/import', methods=['POST'])
 @require_admin
@@ -407,8 +492,17 @@ def import_runs():
         db.session.commit()
         
         # Recalculate stats for all users who participated in imported runs
-        from utils import recalculate_all_user_stats
-        recalculate_all_user_stats()
+        # Import utils.py directly (not utils package) by using importlib
+        import importlib.util
+        import os
+        # Get backend directory - works in both local and Vercel
+        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        utils_file_path = os.path.join(backend_dir, 'utils.py')
+        if os.path.exists(utils_file_path):
+            spec = importlib.util.spec_from_file_location("utils_stats", utils_file_path)
+            utils_stats = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(utils_stats)
+            utils_stats.recalculate_all_user_stats()
         
         return jsonify({
             'message': f'Successfully imported {imported_count} runs',

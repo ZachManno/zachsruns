@@ -1,0 +1,26 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<h2 style="color: #333333; margin-top: 0;">Run Completed</h2>
+
+<p>Hi {{ user.first_name or user.username }},</p>
+
+<p>The run has been completed:</p>
+
+<div style="background-color: #f8f8f8; padding: 15px; border-radius: 4px; margin: 20px 0;">
+    <h3 style="margin-top: 0; color: #ff6b35;">{{ run.title }}</h3>
+    <p style="margin: 5px 0;"><strong>Date:</strong> {{ run.date.strftime('%B %d, %Y') }}</p>
+    <p style="margin: 5px 0;"><strong>Location:</strong> {{ location_name }}</p>
+    {% if attended_count %}
+    <p style="margin: 5px 0;"><strong>Attended:</strong> {{ attended_count }} players</p>
+    {% endif %}
+    {% if run.cost %}
+    <p style="margin: 5px 0;"><strong>Final Cost:</strong> ${{ "%.2f"|format(run.cost|float) }} per person</p>
+    {% endif %}
+</div>
+
+<p>
+    <a href="{{ frontend_url }}/" class="button">View Runs →</a>
+</p>
+{% endblock %}
+

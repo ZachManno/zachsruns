@@ -1,9 +1,13 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import check_password_hash, generate_password_hash
 from sqlalchemy import func
+import logging
 from database import db
 from models import User
 from middleware import generate_token, require_auth
+from utils.email import send_welcome_email, send_admin_new_user_notification
+
+logger = logging.getLogger(__name__)
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -45,6 +49,22 @@ def signup():
         )
         db.session.add(new_user)
         db.session.commit()
+        
+        # Send welcome email (exception: sent even if not verified)
+        try:
+            send_welcome_email(new_user)
+        except Exception as e:
+            # Log error but don't fail signup
+            logger.error(f"Failed to send welcome email: {str(e)}")
+        
+        # Send admin notification to all admin users
+        try:
+            admin_users = User.query.filter_by(is_admin=True).all()
+            if admin_users:
+                send_admin_new_user_notification(new_user, admin_users)
+        except Exception as e:
+            # Log error but don't fail signup
+            logger.error(f"Failed to send admin notification: {str(e)}")
         
         # Generate token
         token = generate_token(new_user)

@@ -1,6 +1,8 @@
 # Neon database
 neon-details.env
 
+backend/.env
+
 # Python
 __pycache__/
 *.py[cod]

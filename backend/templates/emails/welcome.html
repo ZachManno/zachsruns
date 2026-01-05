@@ -1,0 +1,25 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<h2 style="color: #333333; margin-top: 0;">Welcome to Zach's Organized Runs!</h2>
+
+<p>Hi {{ user.first_name or user.username }},</p>
+
+<p>Your account has been created successfully. The admin will need to verify your account before you can RSVP for runs.</p>
+
+<p>Once verified, you'll be able to:</p>
+<ul>
+    <li>RSVP for upcoming runs</li>
+    <li>View your run history</li>
+    <li>See your attendance statistics</li>
+</ul>
+
+<p>
+    <a href="{{ frontend_url }}/" class="button">View Runs →</a>
+</p>
+
+<p style="color: #666666; font-size: 14px; margin-top: 30px;">
+    We'll notify you once your account has been verified.
+</p>
+{% endblock %}
+

@@ -133,6 +133,9 @@ export default function ManageRunsPage() {
 
 function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string) => void; onRefresh: () => void }) {
   const router = useRouter();
+  const [showRemindModal, setShowRemindModal] = useState(false);
+  const [reminderMessage, setReminderMessage] = useState('');
+  const [sendingReminder, setSendingReminder] = useState(false);
 
   const formatDate = (dateString: string) => {
     // Parse date string (YYYY-MM-DD) directly to avoid timezone issues
@@ -166,6 +169,31 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
     const endStr = `${formatHour(endHour)}${endMin > 0 ? `:${endMin.toString().padStart(2, '0')}` : ''}${getPeriod(endHour)}`;
     
     return `${startStr}-${endStr}`;
+  };
+
+  const handleRemind = async () => {
+    if (!reminderMessage.trim()) {
+      alert('Please enter a reminder message');
+      return;
+    }
+
+    if (reminderMessage.length > 100) {
+      alert('Reminder message must be 100 characters or less');
+      return;
+    }
+
+    setSendingReminder(true);
+    try {
+      await adminApi.sendRunReminder(run.id, reminderMessage);
+      setShowRemindModal(false);
+      setReminderMessage('');
+      alert('Reminder sent successfully!');
+    } catch (error: any) {
+      console.error('Failed to send reminder:', error);
+      alert(error.message || 'Failed to send reminder');
+    } finally {
+      setSendingReminder(false);
+    }
   };
 
   return (
@@ -209,6 +237,17 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
             Edit
           </Link>
           <button
+            onClick={() => setShowRemindModal(true)}
+            disabled={run.is_completed}
+            className={`px-3 py-1 rounded text-sm ${
+              run.is_completed
+                ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                : 'bg-purple-600 text-white hover:bg-purple-700'
+            }`}
+          >
+            Remind
+          </button>
+          <button
             onClick={() => onDelete(run.id)}
             disabled={run.is_completed}
             className={`px-3 py-1 rounded text-sm ${
@@ -221,6 +260,57 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
           </button>
         </div>
       </div>
+
+      {/* Remind Modal */}
+      {showRemindModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-xl font-bold text-basketball-black mb-4">
+              Send Reminder: {run.title}
+            </h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Reminder Message <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={reminderMessage}
+                onChange={(e) => {
+                  if (e.target.value.length <= 100) {
+                    setReminderMessage(e.target.value);
+                  }
+                }}
+                placeholder="Enter reminder message (max 100 characters)"
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                maxLength={100}
+                autoFocus
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {reminderMessage.length}/100 characters
+              </p>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowRemindModal(false);
+                  setReminderMessage('');
+                }}
+                disabled={sendingReminder}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRemind}
+                disabled={sendingReminder || !reminderMessage.trim()}
+                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {sendingReminder ? 'Sending...' : 'Send Reminder'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

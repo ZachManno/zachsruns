@@ -238,5 +238,17 @@ export const adminApi = {
       }
     );
   },
+
+  sendRunReminder: async (runId: string, reminderMessage: string) => {
+    return fetchApi<{ message: string; recipient_count: number }>(
+      `/api/admin/runs/${runId}/remind`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          reminder_message: reminderMessage,
+        }),
+      }
+    );
+  },
 };
 

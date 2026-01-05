@@ -1,0 +1,18 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<h2 style="color: #333333; margin-top: 0;">Your Account Has Been Verified!</h2>
+
+<p>Hi {{ user.first_name or user.username }},</p>
+
+<p>Great news! Your account has been verified. You can now RSVP for runs.</p>
+
+<p>
+    <a href="{{ frontend_url }}/" class="button">View Runs →</a>
+</p>
+
+<p style="color: #666666; font-size: 14px; margin-top: 30px;">
+    See you on the court!
+</p>
+{% endblock %}
+
