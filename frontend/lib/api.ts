@@ -250,5 +250,28 @@ export const adminApi = {
       }
     );
   },
+
+  getRunRsvps: async (runId: string) => {
+    return fetchApi<{
+      run_id: string;
+      participants: {
+        confirmed: Array<{ id: string; username: string; first_name?: string; last_name?: string; badge?: string; status: string }>;
+        interested: Array<{ id: string; username: string; first_name?: string; last_name?: string; badge?: string; status: string }>;
+        out: Array<{ id: string; username: string; first_name?: string; last_name?: string; badge?: string; status: string }>;
+      };
+      available_users: Array<{ id: string; username: string; first_name?: string; last_name?: string; badge?: string }>;
+      capacity: number | null;
+    }>(`/api/admin/runs/${runId}/rsvps`);
+  },
+
+  setUserRsvp: async (runId: string, userId: string, status: 'confirmed' | 'interested' | 'out' | null) => {
+    return fetchApi<{ message: string; run: Run }>(
+      `/api/admin/runs/${runId}/rsvp/${userId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
+      }
+    );
+  },
 };
 

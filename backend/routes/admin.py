@@ -375,6 +375,145 @@ def remind_run(run_id):
     except Exception as e:
         return jsonify({'error': f'Failed to send reminders: {str(e)}'}), 500
 
+@admin_bp.route('/runs/<run_id>/rsvps', methods=['GET'])
+@require_admin
+def get_run_rsvps(run_id):
+    """Get all RSVPs for a run plus list of verified users without RSVP"""
+    run = Run.query.get(run_id)
+    if not run:
+        return jsonify({'error': 'Run not found'}), 404
+    
+    # Get all current participants for this run
+    participants = RunParticipant.query.filter_by(run_id=run_id).all()
+    participant_user_ids = {p.user_id for p in participants}
+    
+    # Build participants by status
+    confirmed = []
+    interested = []
+    out = []
+    
+    for p in participants:
+        user = p.user
+        if not user:
+            continue
+        user_data = {
+            'id': user.id,
+            'username': user.username,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'badge': user.badge,
+            'status': p.status
+        }
+        if p.status == 'confirmed':
+            confirmed.append(user_data)
+        elif p.status == 'interested':
+            interested.append(user_data)
+        elif p.status == 'out':
+            out.append(user_data)
+    
+    # Get all verified users who don't have an RSVP for this run
+    available_users = User.query.filter(
+        User.is_verified == True,
+        ~User.id.in_(participant_user_ids) if participant_user_ids else True
+    ).order_by(User.first_name, User.last_name, User.username).all()
+    
+    available = [{
+        'id': u.id,
+        'username': u.username,
+        'first_name': u.first_name,
+        'last_name': u.last_name,
+        'badge': u.badge
+    } for u in available_users]
+    
+    return jsonify({
+        'run_id': run_id,
+        'participants': {
+            'confirmed': confirmed,
+            'interested': interested,
+            'out': out
+        },
+        'available_users': available,
+        'capacity': run.capacity
+    }), 200
+
+
+@admin_bp.route('/runs/<run_id>/rsvp/<user_id>', methods=['PUT'])
+@require_admin
+def admin_set_rsvp(run_id, user_id):
+    """Set a user's RSVP status (admin only)"""
+    run = Run.query.get(run_id)
+    if not run:
+        return jsonify({'error': 'Run not found'}), 404
+    
+    if run.is_completed:
+        return jsonify({'error': 'Cannot change RSVP for completed run'}), 400
+    
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    if not user.is_verified:
+        return jsonify({'error': 'User must be verified to RSVP'}), 400
+    
+    data = request.get_json()
+    status = data.get('status')  # 'confirmed', 'interested', 'out', or null to remove
+    
+    # Validate status
+    if status is not None and status not in ['confirmed', 'interested', 'out']:
+        return jsonify({'error': 'Status must be confirmed, interested, out, or null'}), 400
+    
+    try:
+        # Find existing participant record
+        participant = RunParticipant.query.filter_by(
+            run_id=run_id,
+            user_id=user_id
+        ).first()
+        
+        if status is None:
+            # Remove RSVP entirely
+            if participant:
+                db.session.delete(participant)
+                db.session.commit()
+            return jsonify({
+                'message': 'RSVP removed successfully',
+                'run': run.to_dict()
+            }), 200
+        
+        # Check capacity if trying to confirm
+        if status == 'confirmed' and run.capacity:
+            current_confirmed_count = RunParticipant.query.filter_by(
+                run_id=run_id,
+                status='confirmed'
+            ).count()
+            
+            # If user is not already confirmed, check if there's space
+            if not participant or participant.status != 'confirmed':
+                if current_confirmed_count >= run.capacity:
+                    return jsonify({'error': 'Run is at capacity'}), 400
+        
+        if participant:
+            participant.status = status
+            participant.updated_at = datetime.utcnow()
+        else:
+            participant = RunParticipant(
+                run_id=run_id,
+                user_id=user_id,
+                status=status
+            )
+            db.session.add(participant)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'RSVP updated successfully',
+            'run': run.to_dict()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Failed to update RSVP: {str(e)}")
+        return jsonify({'error': 'Failed to update RSVP'}), 500
+
+
 @admin_bp.route('/runs/import', methods=['POST'])
 @require_admin
 def import_runs():

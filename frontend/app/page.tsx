@@ -7,6 +7,8 @@ import { Run } from '@/types';
 import RunCard from '@/components/RunCard';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
 
+const PAST_RUNS_LIMIT = 3;
+
 function HomeContent() {
   const searchParams = useSearchParams();
   const [upcomingRuns, setUpcomingRuns] = useState<Run[]>([]);
@@ -14,6 +16,7 @@ function HomeContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSignupSuccess, setShowSignupSuccess] = useState(false);
+  const [showAllPastRuns, setShowAllPastRuns] = useState(false);
 
   const fetchRuns = async () => {
     try {
@@ -97,10 +100,20 @@ function HomeContent() {
                   Past Runs
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                  {pastRuns.map((run) => (
+                  {(showAllPastRuns ? pastRuns : pastRuns.slice(0, PAST_RUNS_LIMIT)).map((run) => (
                     <RunCard key={run.id} run={run} onUpdate={fetchRuns} />
                   ))}
                 </div>
+                {pastRuns.length > PAST_RUNS_LIMIT && (
+                  <button
+                    onClick={() => setShowAllPastRuns(!showAllPastRuns)}
+                    className="mt-6 w-full py-4 text-base md:text-lg font-semibold bg-basketball-orange text-white hover:bg-orange-600 rounded-lg transition-colors shadow-md active:scale-[0.98]"
+                  >
+                    {showAllPastRuns 
+                      ? `Show less` 
+                      : `Show all ${pastRuns.length} past runs`}
+                  </button>
+                )}
               </div>
             )}
 
