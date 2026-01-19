@@ -285,18 +285,20 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
 
   return (
     <div className={`border rounded-lg ${run.is_completed ? 'bg-gray-50 border-gray-300' : 'bg-white border-gray-200'}`}>
-      <div className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <h3 className="text-lg font-semibold text-basketball-black">{run.title}</h3>
+      <div className="p-3 md:p-4">
+        {/* Mobile: Stack vertically, Desktop: Side by side */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          {/* Run Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start md:items-center gap-2 flex-wrap">
+              <h3 className="text-base md:text-lg font-semibold text-basketball-black">{run.title}</h3>
               {run.is_completed && (
-                <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">
+                <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap">
                   Completed
                 </span>
               )}
             </div>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-xs md:text-sm text-gray-600 mt-1">
               {formatDate(run.date)} • {formatTimeRange(run.start_time, run.end_time)} • {run.location_name}
             </p>
             <p className="text-xs text-gray-500 mt-1">
@@ -304,28 +306,30 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
               {run.capacity && ` / ${run.capacity}`}
             </p>
           </div>
-          <div className="flex gap-2">
+          
+          {/* Action Buttons - Grid on mobile, flex on desktop */}
+          <div className="grid grid-cols-3 md:flex gap-1.5 md:gap-2">
             {!run.is_completed && (
               <button
                 onClick={handleToggleExpand}
-                className="px-3 py-1 rounded text-sm bg-basketball-orange text-white hover:bg-orange-600"
+                className="px-2 md:px-3 py-1.5 md:py-1 rounded text-xs md:text-sm bg-basketball-orange text-white hover:bg-orange-600 whitespace-nowrap"
               >
-                {expanded ? 'Hide RSVPs' : 'RSVPs'}
+                {expanded ? 'Hide' : 'RSVPs'}
               </button>
             )}
             <Link
               href={`/admin/complete-run/${run.id}`}
-              className={`px-3 py-1 rounded text-sm ${
+              className={`px-2 md:px-3 py-1.5 md:py-1 rounded text-xs md:text-sm text-center ${
                 run.is_completed
                   ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
                   : 'bg-green-600 text-white hover:bg-green-700'
               }`}
             >
-              {run.is_completed ? 'Completed' : 'Complete'}
+              {run.is_completed ? 'Done' : 'Complete'}
             </Link>
             <Link
               href={`/admin/edit-run/${run.id}`}
-              className={`px-3 py-1 rounded text-sm ${
+              className={`px-2 md:px-3 py-1.5 md:py-1 rounded text-xs md:text-sm text-center ${
                 run.is_completed
                   ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
                   : 'bg-blue-600 text-white hover:bg-blue-700'
@@ -336,7 +340,7 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
             <button
               onClick={() => setShowRemindModal(true)}
               disabled={run.is_completed}
-              className={`px-3 py-1 rounded text-sm ${
+              className={`px-2 md:px-3 py-1.5 md:py-1 rounded text-xs md:text-sm ${
                 run.is_completed
                   ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
                   : 'bg-purple-600 text-white hover:bg-purple-700'
@@ -347,7 +351,7 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
             <button
               onClick={() => onDelete(run.id)}
               disabled={run.is_completed}
-              className={`px-3 py-1 rounded text-sm ${
+              className={`px-2 md:px-3 py-1.5 md:py-1 rounded text-xs md:text-sm ${
                 run.is_completed
                   ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
                   : 'bg-red-600 text-white hover:bg-red-700'
@@ -444,14 +448,14 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
 
               {/* Add User Section */}
               {rsvpData.available_users.length > 0 && (
-                <div className="pt-2 border-t border-gray-200">
+                <div className="pt-3 border-t border-gray-200">
                   <h4 className="text-sm font-semibold text-basketball-black mb-2">
                     Add User
                   </h4>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex flex-col md:flex-row gap-2">
                     <select
                       id={`add-user-${run.id}`}
-                      className="flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-900 focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm text-gray-900 focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
                       defaultValue=""
                     >
                       <option value="" disabled>Select a user...</option>
@@ -461,32 +465,34 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
                         </option>
                       ))}
                     </select>
-                    <select
-                      id={`add-status-${run.id}`}
-                      className="px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-900 focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
-                      defaultValue="confirmed"
-                    >
-                      <option value="confirmed" disabled={isAtCapacity}>Confirmed</option>
-                      <option value="interested">Interested</option>
-                      <option value="out">Out</option>
-                    </select>
-                    <button
-                      onClick={() => {
-                        const userSelect = document.getElementById(`add-user-${run.id}`) as HTMLSelectElement;
-                        const statusSelect = document.getElementById(`add-status-${run.id}`) as HTMLSelectElement;
-                        const userId = userSelect.value;
-                        const status = statusSelect.value as 'confirmed' | 'interested' | 'out';
-                        if (userId) {
-                          const selectedOption = userSelect.options[userSelect.selectedIndex];
-                          const userName = selectedOption.text.split(' (@')[0]; // Extract name from "Name (@username)"
-                          handleAddUser(userId, status, userName);
-                          userSelect.value = '';
-                        }
-                      }}
-                      className="px-3 py-1.5 bg-basketball-orange text-white rounded text-sm hover:bg-orange-600"
-                    >
-                      Add
-                    </button>
+                    <div className="flex gap-2">
+                      <select
+                        id={`add-status-${run.id}`}
+                        className="flex-1 md:flex-none px-3 py-2 border border-gray-300 rounded text-sm text-gray-900 focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
+                        defaultValue="confirmed"
+                      >
+                        <option value="confirmed" disabled={isAtCapacity}>Confirmed</option>
+                        <option value="interested">Interested</option>
+                        <option value="out">Out</option>
+                      </select>
+                      <button
+                        onClick={() => {
+                          const userSelect = document.getElementById(`add-user-${run.id}`) as HTMLSelectElement;
+                          const statusSelect = document.getElementById(`add-status-${run.id}`) as HTMLSelectElement;
+                          const userId = userSelect.value;
+                          const status = statusSelect.value as 'confirmed' | 'interested' | 'out';
+                          if (userId) {
+                            const selectedOption = userSelect.options[userSelect.selectedIndex];
+                            const userName = selectedOption.text.split(' (@')[0]; // Extract name from "Name (@username)"
+                            handleAddUser(userId, status, userName);
+                            userSelect.value = '';
+                          }
+                        }}
+                        className="px-4 py-2 bg-basketball-orange text-white rounded text-sm hover:bg-orange-600 whitespace-nowrap"
+                      >
+                        Add
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -569,13 +575,15 @@ function UserRsvpRow({
     : user.username;
 
   return (
-    <div className="flex items-center justify-between p-2 bg-white rounded border border-gray-200">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-col md:flex-row md:items-center justify-between p-2 bg-white rounded border border-gray-200 gap-2">
+      {/* User Info */}
+      <div className="flex items-center gap-2 min-w-0">
         {user.badge && <BadgeIcon badge={user.badge as 'regular' | 'plus_one'} size="small" />}
-        <span className="text-sm text-gray-900">{displayName}</span>
-        <span className="text-xs text-gray-500">@{user.username}</span>
+        <span className="text-sm text-gray-900 truncate">{displayName}</span>
+        <span className="text-xs text-gray-500 hidden md:inline">@{user.username}</span>
       </div>
-      <div className="flex items-center gap-2">
+      {/* Controls */}
+      <div className="flex items-center gap-2 justify-end">
         <select
           value={currentStatus}
           onChange={(e) => {
@@ -585,7 +593,7 @@ function UserRsvpRow({
             }
           }}
           disabled={isUpdating}
-          className="px-2 py-1 border border-gray-300 rounded text-xs text-gray-900 focus:ring-2 focus:ring-basketball-orange focus:border-transparent disabled:opacity-50"
+          className="px-2 py-1.5 border border-gray-300 rounded text-xs text-gray-900 focus:ring-2 focus:ring-basketball-orange focus:border-transparent disabled:opacity-50"
         >
           <option value="confirmed" disabled={isAtCapacity && currentStatus !== 'confirmed'}>
             Confirmed
@@ -596,7 +604,7 @@ function UserRsvpRow({
         <button
           onClick={() => onStatusChange(user.id, null, displayName, currentStatus)}
           disabled={isUpdating}
-          className="text-red-600 hover:text-red-800 text-xs disabled:opacity-50"
+          className="text-red-600 hover:text-red-800 text-xs disabled:opacity-50 whitespace-nowrap"
           title="Remove RSVP"
         >
           Remove

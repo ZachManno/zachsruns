@@ -81,37 +81,39 @@ export default function VerifyUsersPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="container mx-auto px-4 py-6 md:py-12">
       <div className="max-w-4xl mx-auto">
         <div className="mb-4">
           <Link
             href="/admin/dashboard"
-            className="text-basketball-orange hover:underline"
+            className="text-basketball-orange hover:underline text-sm md:text-base"
           >
             ← Back to Dashboard
           </Link>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-basketball-black mb-6">
+        <div className="bg-white rounded-lg shadow-lg p-4 md:p-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-basketball-black mb-4 md:mb-6">
             Verify Users
           </h1>
 
-          <div className="space-y-4">
+          <div className="space-y-3 md:space-y-4">
             {users.map((u) => (
               <div
                 key={u.id}
-                className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                className="flex flex-col md:flex-row md:items-center justify-between p-3 md:p-4 border border-gray-200 rounded-lg gap-3"
               >
-                <div className="flex items-center gap-4">
+                {/* User Info */}
+                <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4 min-w-0">
                   <UserBadge user={u} />
-                  <span className="text-gray-600 text-sm">{u.email}</span>
+                  <span className="text-gray-600 text-xs md:text-sm truncate">{u.email}</span>
                 </div>
 
+                {/* Action Button */}
                 <button
                   onClick={() => handleVerify(u.id, !u.is_verified)}
                   disabled={updating === u.id}
-                  className={`px-4 py-2 rounded transition-colors ${
+                  className={`px-4 py-2 rounded transition-colors text-sm md:text-base whitespace-nowrap ${
                     u.is_verified
                       ? 'bg-red-100 text-red-700 hover:bg-red-200'
                       : 'bg-green-100 text-green-700 hover:bg-green-200'
