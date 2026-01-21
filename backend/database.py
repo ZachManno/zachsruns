@@ -119,7 +119,8 @@ def init_db(app):
             'Phield House': '668edc53-2fb0-48bc-8b6a-fe008778c439',
             "St Gab's Gym": '54144c55-f0c2-441e-bd10-34d0a2369ca5',
             'Lloyd Hall Recreation Center': '2dd794cd-3c23-45bb-8c08-b4fe88bc034f',
-            'Schuylkill River Park': 'a1b2c3d4-e5f6-4789-a0b1-c2d3e4f5a6b7'
+            'Schuylkill River Park': 'a1b2c3d4-e5f6-4789-a0b1-c2d3e4f5a6b7',
+            'Sixth Man Center': 'b2c3d4e5-f6a7-4890-b1c2-d3e4f5a6b7c8'
         }
         
         locations_data = [
@@ -150,6 +151,13 @@ def init_db(app):
                 'address': '300 S 25th St',
                 'description': 'The birthplace of the runs, the Center City outdoor court that is welcoming to all hoopers, and home to many.',
                 'image_url': '/locations/schuylkill-river-park.jpg'
+            },
+            {
+                'id': LOCATION_IDS['Sixth Man Center'],
+                'name': 'Sixth Man Center',
+                'address': '4250 Wissahickon Avenue',
+                'description': 'Brand new hoops facility with 8 pristine courts in North Philly. $100 per hour.',
+                'image_url': '/locations/sixth-man-center.jpg'
             }
         ]
         
