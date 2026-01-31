@@ -1,11 +1,13 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import check_password_hash, generate_password_hash
 from sqlalchemy import func
+from datetime import datetime, timedelta
+import secrets
 import logging
 from database import db
 from models import User
 from middleware import generate_token, require_auth
-from utils.email import send_welcome_email, send_admin_new_user_notification
+from utils.email import send_welcome_email, send_admin_new_user_notification, send_password_reset_email
 
 logger = logging.getLogger(__name__)
 
@@ -111,4 +113,80 @@ def get_current_user():
     return jsonify({
         'user': request.current_user.to_dict()
     }), 200
+
+@auth_bp.route('/forgot-password', methods=['POST'])
+def forgot_password():
+    """Request password reset - sends email with reset link"""
+    data = request.get_json()
+    
+    if not data or not data.get('email'):
+        return jsonify({'error': 'Email is required'}), 400
+    
+    email = data['email'].strip().lower()
+    
+    # Find user by email
+    user = User.query.filter_by(email=email).first()
+    
+    # Always return success message (don't reveal if email exists)
+    success_message = 'If an account with that email exists, a password reset link has been sent.'
+    
+    if user:
+        try:
+            # Generate secure token (32 bytes = 43 characters in base64)
+            token = secrets.token_urlsafe(32)
+            
+            # Set token and expiry (15 minutes)
+            user.reset_token = token
+            user.reset_token_expires = datetime.utcnow() + timedelta(minutes=15)
+            db.session.commit()
+            
+            # Send reset email
+            try:
+                send_password_reset_email(user, token)
+            except Exception as e:
+                logger.error(f"Failed to send password reset email: {str(e)}")
+                # Don't fail the request if email fails
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Failed to create reset token: {str(e)}")
+    
+    return jsonify({'message': success_message}), 200
+
+@auth_bp.route('/reset-password', methods=['POST'])
+def reset_password():
+    """Reset password using token from email"""
+    data = request.get_json()
+    
+    if not data or not data.get('token') or not data.get('password'):
+        return jsonify({'error': 'Token and new password are required'}), 400
+    
+    token = data['token'].strip()
+    new_password = data['password']
+    
+    # Find user by token
+    user = User.query.filter_by(reset_token=token).first()
+    
+    if not user:
+        return jsonify({'error': 'Invalid or expired reset link'}), 400
+    
+    # Check if token has expired
+    if not user.reset_token_expires or user.reset_token_expires < datetime.utcnow():
+        # Clear expired token
+        user.reset_token = None
+        user.reset_token_expires = None
+        db.session.commit()
+        return jsonify({'error': 'Reset link has expired. Please request a new one.'}), 400
+    
+    try:
+        # Update password and clear token (single-use)
+        user.password_hash = generate_password_hash(new_password)
+        user.reset_token = None
+        user.reset_token_expires = None
+        db.session.commit()
+        
+        return jsonify({'message': 'Password has been reset successfully. Please log in with your new password.'}), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Failed to reset password: {str(e)}")
+        return jsonify({'error': 'Failed to reset password'}), 500
 

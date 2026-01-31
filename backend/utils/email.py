@@ -338,6 +338,25 @@ def send_account_verified_email(user):
     )
 
 
+def send_password_reset_email(user, reset_token):
+    """Send password reset email with link"""
+    # Password reset email is exception - always sent even if not verified, but still filter for local
+    recipients = _filter_recipients_for_local([user])
+    if not recipients:
+        return False
+    
+    user = recipients[0]
+    reset_url = f"{FRONTEND_URL}/reset-password?token={reset_token}"
+    html_content = render_email_template('password_reset.html', user=user, reset_url=reset_url, frontend_url=FRONTEND_URL)
+    text_content = f"Reset Your Password\n\nWe received a request to reset your password for your Zach's Runs account.\n\nClick the link below to set a new password:\n{reset_url}\n\nThis link will expire in 15 minutes.\n\nIf you didn't request a password reset, you can safely ignore this email."
+    return send_email(
+        to=user.email,
+        subject="Reset Your Password - Zach's Organized Runs",
+        html_content=html_content,
+        text_content=text_content
+    )
+
+
 def send_admin_new_user_notification(user, admin_users):
     """Send notification to all admin users when a new user signs up"""
     # Filter admin users for local testing

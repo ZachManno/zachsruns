@@ -19,6 +19,8 @@ class User(db.Model):
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     is_verified = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    reset_token = db.Column(db.String(64), nullable=True, unique=True)
+    reset_token_expires = db.Column(db.DateTime, nullable=True)
     
     # Relationships
     referrer = db.relationship('User', remote_side=[id], backref='referred_users')

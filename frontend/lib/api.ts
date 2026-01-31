@@ -65,6 +65,26 @@ export const authApi = {
   getMe: async () => {
     return fetchApi<{ user: User }>('/api/auth/me');
   },
+
+  forgotPassword: async (email: string) => {
+    return fetchApi<{ message: string }>(
+      '/api/auth/forgot-password',
+      {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      }
+    );
+  },
+
+  resetPassword: async (token: string, password: string) => {
+    return fetchApi<{ message: string }>(
+      '/api/auth/reset-password',
+      {
+        method: 'POST',
+        body: JSON.stringify({ token, password }),
+      }
+    );
+  },
 };
 
 // Runs endpoints
