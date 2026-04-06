@@ -5,6 +5,7 @@ from database import db
 from models import Run, RunParticipant, Location, User
 from middleware import require_auth, require_admin, verify_token
 from utils.email import send_run_created_email, send_run_modified_email, send_run_cancelled_email
+from utils.run_access import get_optional_user_from_request, user_can_view_runs
 
 logger = logging.getLogger(__name__)
 
@@ -19,18 +20,13 @@ def get_locations():
 @runs_bp.route('', methods=['GET'])
 def get_runs():
     """Get all runs, separated into upcoming and past"""
+    current_user = get_optional_user_from_request(request, verify_token)
+
+    if not user_can_view_runs(current_user):
+        return jsonify({'upcoming': [], 'past': []}), 200
+
     today = date.today()
     runs = Run.query.all()
-    
-    # Optionally get current user if authenticated
-    current_user = None
-    auth_header = request.headers.get('Authorization')
-    if auth_header:
-        try:
-            token = auth_header.split(' ')[1]  # Bearer <token>
-            current_user = verify_token(token)
-        except (IndexError, Exception):
-            pass  # Not authenticated, continue without user
     
     upcoming = []
     past = []
@@ -38,15 +34,11 @@ def get_runs():
     for run in runs:
         run_dict = run.to_dict()
         
-        # Add user_status if user is authenticated
-        if current_user:
-            participation = RunParticipant.query.filter_by(
-                run_id=run.id,
-                user_id=current_user.id
-            ).first()
-            run_dict['user_status'] = participation.status if participation else None
-        else:
-            run_dict['user_status'] = None
+        participation = RunParticipant.query.filter_by(
+            run_id=run.id,
+            user_id=current_user.id
+        ).first()
+        run_dict['user_status'] = participation.status if participation else None
         
         if run.is_completed or run.date < today:
             past.append(run_dict)
@@ -66,6 +58,10 @@ def get_runs():
 @runs_bp.route('/<run_id>', methods=['GET'])
 def get_run(run_id):
     """Get single run by ID"""
+    current_user = get_optional_user_from_request(request, verify_token)
+    if not user_can_view_runs(current_user):
+        return jsonify({'error': 'Run not found'}), 404
+
     run = Run.query.get(run_id)
     if not run:
         return jsonify({'error': 'Run not found'}), 404

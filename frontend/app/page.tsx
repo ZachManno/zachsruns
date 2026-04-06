@@ -1,16 +1,19 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { runsApi } from '@/lib/api';
 import { Run } from '@/types';
 import RunCard from '@/components/RunCard';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
+import { useAuth } from '@/context/AuthContext';
 
 const PAST_RUNS_LIMIT = 3;
 
 function HomeContent() {
   const searchParams = useSearchParams();
+  const { user, loading: authLoading } = useAuth();
   const [upcomingRuns, setUpcomingRuns] = useState<Run[]>([]);
   const [pastRuns, setPastRuns] = useState<Run[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +21,9 @@ function HomeContent() {
   const [showSignupSuccess, setShowSignupSuccess] = useState(false);
   const [showAllPastRuns, setShowAllPastRuns] = useState(false);
 
-  const fetchRuns = async () => {
+  const canViewRuns = user && (user.is_verified || user.is_admin);
+
+  const fetchRuns = useCallback(async () => {
     try {
       setLoading(true);
       const data = await runsApi.getAll();
@@ -31,27 +36,29 @@ function HomeContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchRuns();
-    
-    // Check for signup success parameter
     if (searchParams.get('signup') === 'success') {
       setShowSignupSuccess(true);
-      // Auto-dismiss after 10 seconds
-      const timer = setTimeout(() => {
-        setShowSignupSuccess(false);
-      }, 10000);
-      
+      const timer = setTimeout(() => setShowSignupSuccess(false), 10000);
       return () => clearTimeout(timer);
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    if (authLoading) return;
+    if (!canViewRuns) {
+      setLoading(false);
+      return;
+    }
+    fetchRuns();
+  }, [authLoading, canViewRuns, fetchRuns]);
+
   return (
     <div className="container mx-auto px-4 py-4 md:py-8">
       <AnnouncementBanner />
-      
+
       {showSignupSuccess && (
         <div className="mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative">
           <p className="text-sm md:text-base">
@@ -59,13 +66,60 @@ function HomeContent() {
           </p>
         </div>
       )}
-      
+
       <div className="mt-4 md:mt-8">
         <h1 className="text-2xl md:text-4xl font-bold text-basketball-black mb-4 md:mb-8 text-center">
           Zach&apos;s Organized Runs
         </h1>
 
-        {loading ? (
+        {authLoading ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600">Loading...</p>
+          </div>
+        ) : !user ? (
+          /* ── Guest (not logged in) ── */
+          <div className="max-w-md mx-auto py-10">
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8 text-center space-y-5">
+              <div className="text-4xl">&#127936;</div>
+              <p className="text-gray-600 text-base md:text-lg leading-relaxed">
+                Sign up for an account to see upcoming runs and RSVP once an admin verifies you.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                <Link
+                  href="/signup"
+                  className="inline-flex justify-center items-center rounded-lg bg-basketball-orange text-white font-semibold px-6 py-3 hover:bg-orange-600 transition-colors shadow-sm"
+                >
+                  Sign Up
+                </Link>
+                <Link
+                  href="/login"
+                  className="inline-flex justify-center items-center rounded-lg border-2 border-basketball-orange text-basketball-orange font-semibold px-6 py-3 hover:bg-orange-50 transition-colors"
+                >
+                  Log In
+                </Link>
+              </div>
+            </div>
+          </div>
+        ) : !canViewRuns ? (
+          /* ── Logged in but not verified ── */
+          <div className="max-w-md mx-auto py-10">
+            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8 text-center space-y-5">
+              <div className="text-4xl">&#9203;</div>
+              <p className="text-gray-700 text-base md:text-lg font-medium">
+                Your account is pending verification
+              </p>
+              <p className="text-gray-500 text-sm md:text-base leading-relaxed">
+                Once an admin verifies you, you&apos;ll be able to see upcoming runs and RSVP.
+              </p>
+              <Link
+                href="/profile"
+                className="inline-flex justify-center items-center rounded-lg border-2 border-basketball-orange text-basketball-orange font-semibold px-5 py-2.5 hover:bg-orange-50 transition-colors"
+              >
+                View your profile
+              </Link>
+            </div>
+          </div>
+        ) : loading ? (
           <div className="text-center py-12">
             <p className="text-gray-600">Loading runs...</p>
           </div>
@@ -109,8 +163,8 @@ function HomeContent() {
                     onClick={() => setShowAllPastRuns(!showAllPastRuns)}
                     className="mt-6 w-full py-4 text-base md:text-lg font-semibold bg-basketball-orange text-white hover:bg-orange-600 rounded-lg transition-colors shadow-md active:scale-[0.98]"
                   >
-                    {showAllPastRuns 
-                      ? `Show less` 
+                    {showAllPastRuns
+                      ? `Show less`
                       : `Show all ${pastRuns.length} past runs`}
                   </button>
                 )}
@@ -142,4 +196,3 @@ export default function Home() {
     </Suspense>
   );
 }
-

@@ -1,6 +1,7 @@
 # Neon database
 neon-details.env
 
+frontend/tsconfig.tsbuildinfo
 backend/.env
 
 # Python

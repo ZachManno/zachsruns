@@ -3,6 +3,7 @@ from datetime import datetime
 from database import db
 from models import User, Run, RunParticipant
 from middleware import require_auth
+from utils.run_access import user_can_view_runs
 
 users_bp = Blueprint('users', __name__)
 
@@ -47,7 +48,10 @@ def update_user_profile():
 def get_user_runs():
     """Get user's runs (signed up + history) - only shows confirmed or interested, not out"""
     user = request.current_user
-    
+
+    if not user_can_view_runs(user):
+        return jsonify({'upcoming': [], 'history': []}), 200
+
     # Get only runs where user is confirmed or interested (exclude 'out')
     participations = RunParticipant.query.filter(
         RunParticipant.user_id == user.id,
