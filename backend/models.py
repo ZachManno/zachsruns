@@ -26,12 +26,19 @@ class User(db.Model):
     referrer = db.relationship('User', remote_side=[id], backref='referred_users')
     
     def to_dict(self, include_no_shows=False):
-        # Calculate attendance rate as percentage of runs attended vs total completed runs
-        # Query total completed runs - import Run here to avoid circular import
-        # Since Run is defined later in this file, we'll use a lazy import
-        from models import Run
-        total_completed_runs = Run.query.filter_by(is_completed=True).count()
-        attendance_rate = (self.runs_attended_count / total_completed_runs * 100) if total_completed_runs > 0 else None
+        from models import Run, RunParticipant
+        # Public-only stats: count completed public runs and this user's attendance in them
+        total_public_completed = Run.query.filter(
+            Run.is_completed == True,
+            Run.private_group_id.is_(None)
+        ).count()
+        public_attended = db.session.query(RunParticipant).join(Run).filter(
+            Run.is_completed == True,
+            Run.private_group_id.is_(None),
+            RunParticipant.user_id == self.id,
+            RunParticipant.attended == True
+        ).count()
+        attendance_rate = (public_attended / total_public_completed * 100) if total_public_completed > 0 else None
         
         # Get referrer info if exists
         referrer_info = None
@@ -52,7 +59,7 @@ class User(db.Model):
             'badge': self.badge,
             'referred_by': self.referred_by,
             'referrer': referrer_info,
-            'runs_attended_count': self.runs_attended_count,
+            'runs_attended_count': public_attended,
             'attendance_rate': round(attendance_rate, 1) if attendance_rate is not None else None,
             'is_admin': self.is_admin,
             'is_verified': self.is_verified,
@@ -104,6 +111,7 @@ class Run(db.Model):
     completed_at = db.Column(db.DateTime, nullable=True)
     completed_by = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=True)
     guest_attendees = db.Column(db.Text, nullable=True)  # JSON array of guest names
+    private_group_id = db.Column(db.String(36), db.ForeignKey('private_groups.id'), nullable=True)
     
     # Relationships
     location_entity = db.relationship('Location', backref='runs')
@@ -156,7 +164,9 @@ class Run(db.Model):
             'is_completed': self.is_completed,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
             'completed_by': self.completed_by,
-            'guest_attendees': json.loads(self.guest_attendees) if self.guest_attendees else None
+            'guest_attendees': json.loads(self.guest_attendees) if self.guest_attendees else None,
+            'private_group_id': self.private_group_id,
+            'private_group_name': self.private_group.name if self.private_group_id and self.private_group else None
         }
         
         if include_participants:
@@ -261,6 +271,63 @@ class RunParticipant(db.Model):
             'no_show': self.no_show,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
+
+class PrivateGroup(db.Model):
+    __tablename__ = 'private_groups'
+    
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    created_by = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Relationships
+    creator = db.relationship('User', foreign_keys=[created_by], backref='created_groups')
+    members = db.relationship('PrivateGroupMember', back_populates='group', cascade='all, delete-orphan')
+    runs = db.relationship('Run', backref='private_group', cascade='all, delete-orphan')
+    
+    def to_dict(self, include_members=False):
+        result = {
+            'id': self.id,
+            'name': self.name,
+            'description': self.description,
+            'created_by': self.created_by,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'member_count': len(self.members) if self.members else 0
+        }
+        if include_members:
+            result['members'] = [m.to_dict() for m in self.members]
+        return result
+
+
+class PrivateGroupMember(db.Model):
+    __tablename__ = 'private_group_members'
+    
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    group_id = db.Column(db.String(36), db.ForeignKey('private_groups.id'), nullable=False)
+    user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
+    added_by = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
+    added_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Relationships
+    group = db.relationship('PrivateGroup', back_populates='members')
+    user = db.relationship('User', foreign_keys=[user_id], backref='group_memberships')
+    adder = db.relationship('User', foreign_keys=[added_by])
+    
+    __table_args__ = (db.UniqueConstraint('group_id', 'user_id', name='unique_group_user'),)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'group_id': self.group_id,
+            'user_id': self.user_id,
+            'username': self.user.username if self.user else None,
+            'first_name': self.user.first_name if self.user else None,
+            'last_name': self.user.last_name if self.user else None,
+            'badge': self.user.badge if self.user else None,
+            'added_at': self.added_at.isoformat() if self.added_at else None
+        }
+
 
 class Announcement(db.Model):
     __tablename__ = 'announcements'

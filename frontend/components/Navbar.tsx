@@ -38,8 +38,19 @@ export default function Navbar() {
     };
   }, [isMenuOpen]);
 
+  const showPrivateRuns = user && (user.private_group_count ?? 0) > 0;
+
   const menuItems = user ? (
     <>
+      {showPrivateRuns && (
+        <Link
+          href="/private-runs"
+          onClick={handleLinkClick}
+          className="block px-4 py-2 hover:bg-gray-800 transition-colors"
+        >
+          Private Groups
+        </Link>
+      )}
       <Link
         href="/community"
         onClick={handleLinkClick}
@@ -111,6 +122,14 @@ export default function Navbar() {
             ) : (
               user ? (
                 <>
+                  {showPrivateRuns && (
+                    <Link
+                      href="/private-runs"
+                      className="hover:text-basketball-orange transition-colors"
+                    >
+                      Private Groups
+                    </Link>
+                  )}
                   <Link
                     href="/community"
                     className="hover:text-basketball-orange transition-colors"

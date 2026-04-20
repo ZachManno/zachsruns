@@ -43,15 +43,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const login = async (username: string, password: string) => {
-    const data = await authApi.login(username, password);
-    setToken(data.token);
-    setUser(data.user);
+    const { token } = await authApi.login(username, password);
+    setToken(token);
+    setLoading(true);
+    await refreshUser();
   };
 
   const signup = async (username: string, email: string, password: string, first_name: string, last_name: string) => {
-    const data = await authApi.signup(username, email, password, first_name, last_name);
-    setToken(data.token);
-    setUser(data.user);
+    const { token } = await authApi.signup(username, email, password, first_name, last_name);
+    setToken(token);
+    setLoading(true);
+    await refreshUser();
   };
 
   const logout = () => {

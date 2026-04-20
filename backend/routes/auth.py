@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import secrets
 import logging
 from database import db
-from models import User
+from models import User, PrivateGroupMember
 from middleware import generate_token, require_auth
 from utils.email import send_welcome_email, send_admin_new_user_notification, send_password_reset_email
 
@@ -110,8 +110,12 @@ def login():
 @require_auth
 def get_current_user():
     """Get current authenticated user"""
+    user_dict = request.current_user.to_dict()
+    user_dict['private_group_count'] = PrivateGroupMember.query.filter_by(
+        user_id=request.current_user.id
+    ).count()
     return jsonify({
-        'user': request.current_user.to_dict()
+        'user': user_dict
     }), 200
 
 @auth_bp.route('/forgot-password', methods=['POST'])

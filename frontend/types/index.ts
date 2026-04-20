@@ -26,6 +26,7 @@ export interface User {
   is_verified: boolean;
   created_at: string;
   run_count?: number;
+  private_group_count?: number;
 }
 
 export interface Run {
@@ -49,6 +50,8 @@ export interface Run {
   is_completed?: boolean;
   completed_at?: string;
   completed_by?: string;
+  private_group_id?: string;
+  private_group_name?: string;
   guest_attendees?: string[];
   participants?: {
     confirmed?: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean; no_show?: boolean}>;
@@ -65,6 +68,38 @@ export interface Run {
     attended?: number;
   };
   user_status?: 'confirmed' | 'interested' | 'out';
+}
+
+export interface PrivateGroup {
+  id: string;
+  name: string;
+  description?: string;
+  created_by: string;
+  created_at: string;
+  member_count?: number;
+  members?: PrivateGroupMember[];
+}
+
+export interface PrivateGroupMember {
+  id: string;
+  group_id: string;
+  user_id: string;
+  username?: string;
+  first_name?: string;
+  last_name?: string;
+  badge?: string;
+  added_at: string;
+}
+
+export interface GroupCommunityMember {
+  id: string;
+  username: string;
+  first_name?: string;
+  last_name?: string;
+  badge?: string;
+  runs_attended_count: number;
+  attendance_rate?: number;
+  added_at?: string;
 }
 
 export interface Announcement {

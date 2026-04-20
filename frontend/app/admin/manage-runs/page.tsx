@@ -38,7 +38,7 @@ export default function ManageRunsPage() {
   };
 
   const handleDelete = async (runId: string) => {
-    if (!confirm('Are you sure you want to delete this run?')) return;
+    if (!confirm("Are you sure you'd like to delete this entire run?")) return;
 
     try {
       await runsApi.delete(runId);
@@ -292,6 +292,11 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
           <div className="flex-1 min-w-0">
             <div className="flex items-start md:items-center gap-2 flex-wrap">
               <h3 className="text-base md:text-lg font-semibold text-basketball-black">{run.title}</h3>
+              {run.private_group_name && (
+                <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap">
+                  {run.private_group_name}
+                </span>
+              )}
               {run.is_completed && (
                 <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap">
                   Completed

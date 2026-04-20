@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from datetime import datetime, date, time
 import logging
 from database import db
-from models import Run, RunParticipant, Location, User
+from models import Run, RunParticipant, Location, User, PrivateGroup, PrivateGroupMember
 from middleware import require_auth, require_admin, verify_token
 from utils.email import send_run_created_email, send_run_modified_email, send_run_cancelled_email
 from utils.run_access import get_optional_user_from_request, user_can_view_runs
@@ -26,7 +26,7 @@ def get_runs():
         return jsonify({'upcoming': [], 'past': []}), 200
 
     today = date.today()
-    runs = Run.query.all()
+    runs = Run.query.filter(Run.private_group_id.is_(None)).all()
     
     upcoming = []
     past = []
@@ -66,6 +66,17 @@ def get_run(run_id):
     if not run:
         return jsonify({'error': 'Run not found'}), 404
     
+    # Guard private runs: only group members or admins can view
+    if run.private_group_id:
+        if not current_user:
+            return jsonify({'error': 'Run not found'}), 404
+        if not current_user.is_admin:
+            is_member = PrivateGroupMember.query.filter_by(
+                group_id=run.private_group_id, user_id=current_user.id
+            ).first()
+            if not is_member:
+                return jsonify({'error': 'Run not found'}), 404
+    
     return jsonify({
         'run': run.to_dict()
     }), 200
@@ -93,6 +104,13 @@ def create_run():
         start_time = datetime.strptime(data['start_time'], '%H:%M').time()
         end_time = datetime.strptime(data['end_time'], '%H:%M').time()
         
+        # Validate private_group_id if provided
+        private_group_id = data.get('private_group_id')
+        if private_group_id:
+            group = PrivateGroup.query.get(private_group_id)
+            if not group:
+                return jsonify({'error': 'Invalid private group'}), 400
+        
         new_run = Run(
             title=data['title'],
             date=run_date,
@@ -105,7 +123,8 @@ def create_run():
             is_variable_cost=data.get('is_variable_cost', False),
             total_cost=data.get('total_cost') if data.get('is_variable_cost') else None,
             created_by=request.current_user.id,
-            is_historical=False
+            is_historical=False,
+            private_group_id=private_group_id
         )
         
         db.session.add(new_run)
@@ -114,12 +133,15 @@ def create_run():
         # Refresh the object to ensure relationships are loaded
         db.session.refresh(new_run)
         
-        # Send email to all verified users (fire-and-forget)
+        # Send email: group members for private runs, all verified users for public
         try:
-            verified_users = User.query.filter_by(is_verified=True).all()
-            send_run_created_email(new_run, verified_users)
+            if new_run.private_group_id:
+                members = PrivateGroupMember.query.filter_by(group_id=new_run.private_group_id).all()
+                recipients = [m.user for m in members if m.user and m.user.is_verified]
+            else:
+                recipients = User.query.filter_by(is_verified=True).all()
+            send_run_created_email(new_run, recipients)
         except Exception as e:
-            # Log error but don't fail run creation
             logger.error(f"Failed to send run created emails: {str(e)}")
         
         return jsonify({
@@ -152,6 +174,8 @@ def update_run(run_id):
     # Track changes for email notification
     changes = {}
     old_location_name = run.location_entity.name if run.location_entity else None
+    old_private_group_id = run.private_group_id
+    old_private_group_name = run.private_group.name if run.private_group else 'Public'
     
     try:
         if 'title' in data and data['title'] != run.title:
@@ -188,6 +212,17 @@ def update_run(run_id):
             if new_capacity != run.capacity:
                 changes['capacity'] = {'old': run.capacity, 'new': new_capacity}
                 run.capacity = new_capacity
+        if 'private_group_id' in data:
+            new_group_id = data['private_group_id'] or None
+            if new_group_id and not PrivateGroup.query.get(new_group_id):
+                return jsonify({'error': 'Invalid private group'}), 400
+            new_group_name = 'Public'
+            if new_group_id:
+                new_group = PrivateGroup.query.get(new_group_id)
+                new_group_name = new_group.name if new_group else 'Public'
+            if new_group_id != run.private_group_id:
+                changes['visibility'] = {'old': old_private_group_name, 'new': new_group_name}
+            run.private_group_id = new_group_id
         if 'is_variable_cost' in data:
             run.is_variable_cost = data['is_variable_cost']
         if 'total_cost' in data:
@@ -213,6 +248,18 @@ def update_run(run_id):
                 ).all()
                 recipients = [p.user for p in participants if p.user]
                 send_run_modified_email(run, recipients, changes)
+
+                # If a private run is opened to the public, notify verified users
+                # who were not already participants on the run.
+                if old_private_group_id and not run.private_group_id:
+                    participant_ids = {p.user_id for p in participants}
+                    public_recipients = User.query.filter_by(is_verified=True).all()
+                    new_public_recipients = [
+                        user for user in public_recipients
+                        if user.id not in participant_ids
+                    ]
+                    if new_public_recipients:
+                        send_run_created_email(run, new_public_recipients)
             except Exception as e:
                 # Log error but don't fail update
                 logger.error(f"Failed to send run modified emails: {str(e)}")
@@ -297,6 +344,14 @@ def update_rsvp(run_id):
     # Check if user is verified
     if not request.current_user.is_verified:
         return jsonify({'error': 'Account must be verified to RSVP for runs'}), 403
+    
+    # For private runs, check group membership
+    if run.private_group_id and not request.current_user.is_admin:
+        is_member = PrivateGroupMember.query.filter_by(
+            group_id=run.private_group_id, user_id=request.current_user.id
+        ).first()
+        if not is_member:
+            return jsonify({'error': 'Run not found'}), 404
     
     data = request.get_json()
     status = data.get('status')

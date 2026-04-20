@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
-import { runsApi, locationsApi } from '@/lib/api';
-import { Location, Run } from '@/types';
+import { runsApi, locationsApi, privateGroupsApi } from '@/lib/api';
+import { Location, Run, PrivateGroup } from '@/types';
 import Link from 'next/link';
 
 export default function EditRunPage() {
@@ -14,6 +14,7 @@ export default function EditRunPage() {
   const runId = params?.id as string;
   
   const [locations, setLocations] = useState<Location[]>([]);
+  const [groups, setGroups] = useState<PrivateGroup[]>([]);
   const [loadingLocations, setLoadingLocations] = useState(true);
   const [loadingRun, setLoadingRun] = useState(true);
   const [run, setRun] = useState<Run | null>(null);
@@ -28,6 +29,7 @@ export default function EditRunPage() {
     cost: '',
     is_variable_cost: false,
     total_cost: '',
+    private_group_id: '',
   });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -35,6 +37,7 @@ export default function EditRunPage() {
   useEffect(() => {
     if (user && user.is_admin && runId) {
       fetchLocations();
+      fetchGroups();
       fetchRun();
     }
   }, [user, runId]);
@@ -49,6 +52,15 @@ export default function EditRunPage() {
       setError('Failed to load locations');
     } finally {
       setLoadingLocations(false);
+    }
+  };
+
+  const fetchGroups = async () => {
+    try {
+      const data = await privateGroupsApi.getAllGroups();
+      setGroups(data.groups);
+    } catch (err) {
+      console.error('Failed to fetch groups:', err);
     }
   };
 
@@ -77,6 +89,7 @@ export default function EditRunPage() {
         cost: runData.cost?.toString() || '',
         is_variable_cost: runData.is_variable_cost || false,
         total_cost: runData.total_cost?.toString() || '',
+        private_group_id: runData.private_group_id || '',
       });
     } catch (err: any) {
       console.error('Failed to fetch run:', err);
@@ -129,7 +142,7 @@ export default function EditRunPage() {
     setSubmitting(true);
 
     try {
-      const runData = {
+      const runData: Record<string, any> = {
         title: formData.title,
         date: formData.date,
         start_time: formData.start_time,
@@ -140,6 +153,7 @@ export default function EditRunPage() {
         total_cost: formData.is_variable_cost ? (formData.total_cost ? parseFloat(formData.total_cost) : undefined) : undefined,
         is_variable_cost: formData.is_variable_cost,
         description: formData.description || undefined,
+        private_group_id: formData.private_group_id || null,
       };
 
       await runsApi.update(runId, runData);
@@ -201,6 +215,34 @@ export default function EditRunPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
               />
             </div>
+
+            {groups.length > 0 && (
+              <div>
+                <label
+                  htmlFor="private_group_id"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Private Group
+                </label>
+                <select
+                  id="private_group_id"
+                  name="private_group_id"
+                  value={formData.private_group_id}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                >
+                  <option value="">Public (no group)</option>
+                  {groups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Set to &quot;Public&quot; to open this run to everyone.
+                </p>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>

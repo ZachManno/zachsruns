@@ -71,9 +71,13 @@ def get_user_runs():
         run_dict = run.to_dict()
         run_dict['user_status'] = participation.status if participation else None
         
-        # Completed runs always go to history
+        # Completed runs: only include in history if the user actually attended.
+        # This prevents stale RSVPs (e.g. on runs that were later opened to the
+        # public, or runs the user RSVP'd to but never showed up for) from
+        # polluting the profile history.
         if run.is_completed:
-            history.append(run_dict)
+            if participation and participation.attended:
+                history.append(run_dict)
         elif run.date >= today:
             upcoming.append(run_dict)
         else:
@@ -113,7 +117,7 @@ def get_community():
     user_data = []
     for user in users:
         user_dict = user.to_dict()
-        user_dict['run_count'] = user.runs_attended_count  # Use attended count instead of confirmed
+        user_dict['run_count'] = user_dict['runs_attended_count']
         user_data.append(user_dict)
     
     # Group by badge (only regular and plus_one now)

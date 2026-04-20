@@ -7,6 +7,7 @@ from routes.runs import runs_bp
 from routes.users import users_bp
 from routes.admin import admin_bp
 from routes.email_worker import email_worker_bp
+from routes.private_groups import private_groups_bp
 
 app = Flask(__name__, template_folder='templates')
 
@@ -34,6 +35,7 @@ app.register_blueprint(runs_bp, url_prefix='/api/runs')
 app.register_blueprint(users_bp, url_prefix='/api/users')
 app.register_blueprint(admin_bp, url_prefix='/api/admin')
 app.register_blueprint(email_worker_bp, url_prefix='/api')
+app.register_blueprint(private_groups_bp, url_prefix='/api/private-groups')
 
 @app.route('/api/health', methods=['GET'])
 def health_check():

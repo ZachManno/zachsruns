@@ -82,6 +82,18 @@ export default function AdminDashboard() {
           </Link>
 
           <Link
+            href="/admin/private-groups"
+            className="bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition-shadow"
+          >
+            <h2 className="text-lg md:text-xl font-bold text-basketball-black mb-2">
+              Private Groups
+            </h2>
+            <p className="text-gray-600 text-sm md:text-base">
+              Manage private run groups and members
+            </p>
+          </Link>
+
+          <Link
             href="/admin/import-data"
             className="bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition-shadow"
           >

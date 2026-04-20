@@ -3,14 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { runsApi, locationsApi } from '@/lib/api';
-import { Location } from '@/types';
+import { runsApi, locationsApi, privateGroupsApi } from '@/lib/api';
+import { Location, PrivateGroup } from '@/types';
 import Link from 'next/link';
 
 export default function CreateRunPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [locations, setLocations] = useState<Location[]>([]);
+  const [groups, setGroups] = useState<PrivateGroup[]>([]);
   const [loadingLocations, setLoadingLocations] = useState(true);
   const [formData, setFormData] = useState({
     title: '',
@@ -23,6 +24,7 @@ export default function CreateRunPage() {
     cost: '',
     is_variable_cost: false,
     total_cost: '',
+    private_group_id: '',
   });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -30,6 +32,7 @@ export default function CreateRunPage() {
   useEffect(() => {
     if (user && user.is_admin) {
       fetchLocations();
+      fetchGroups();
     }
   }, [user]);
 
@@ -43,6 +46,15 @@ export default function CreateRunPage() {
       setError('Failed to load locations');
     } finally {
       setLoadingLocations(false);
+    }
+  };
+
+  const fetchGroups = async () => {
+    try {
+      const data = await privateGroupsApi.getAllGroups();
+      setGroups(data.groups);
+    } catch (err) {
+      console.error('Failed to fetch groups:', err);
     }
   };
 
@@ -67,7 +79,7 @@ export default function CreateRunPage() {
     setSubmitting(true);
 
     try {
-      const runData = {
+      const runData: Record<string, any> = {
         title: formData.title,
         date: formData.date,
         start_time: formData.start_time,
@@ -78,6 +90,7 @@ export default function CreateRunPage() {
         total_cost: formData.is_variable_cost ? (formData.total_cost ? parseFloat(formData.total_cost) : undefined) : undefined,
         is_variable_cost: formData.is_variable_cost,
         description: formData.description || undefined,
+        private_group_id: formData.private_group_id || undefined,
       };
 
       await runsApi.create(runData);
@@ -139,6 +152,34 @@ export default function CreateRunPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
               />
             </div>
+
+            {groups.length > 0 && (
+              <div>
+                <label
+                  htmlFor="private_group_id"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Private Group
+                </label>
+                <select
+                  id="private_group_id"
+                  name="private_group_id"
+                  value={formData.private_group_id}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                >
+                  <option value="">Public (no group)</option>
+                  {groups.map((group) => (
+                    <option key={group.id} value={group.id}>
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Leave as &quot;Public&quot; for a regular run, or select a group for a private run.
+                </p>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>

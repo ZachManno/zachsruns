@@ -53,11 +53,19 @@ def init_db(app):
     db.init_app(app)
     
     with app.app_context():
-        from models import User, Run, RunParticipant, Announcement
+        from models import User, Run, RunParticipant, Announcement, PrivateGroup, PrivateGroupMember
         # Drop all tables and recreate them (clean slate for first release)
         # COMMENTED OUT - Database persistence enabled
         # db.drop_all()
         db.create_all()
+        
+        # Add private_group_id column to runs table if it doesn't exist
+        try:
+            db.session.execute(db.text('ALTER TABLE runs ADD COLUMN private_group_id VARCHAR(36) REFERENCES private_groups(id)'))
+            db.session.commit()
+            print("Added private_group_id column to runs table")
+        except Exception:
+            db.session.rollback()
         
         # Clear all data for first release (remove this section after initial deployment)
         # This ensures a clean database state for the first release

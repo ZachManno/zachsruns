@@ -579,6 +579,9 @@ def send_run_modified_email(run, recipients, changes):
     
     if 'description' in changes:
         changes_text.append("Description updated")
+
+    if 'visibility' in changes:
+        changes_text.append(f"Visibility changed from {changes['visibility']['old']} to {changes['visibility']['new']}")
     
     # Format changes for text email
     if changes_text:

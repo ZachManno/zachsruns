@@ -1,5 +1,5 @@
 import { getToken, removeToken } from './auth';
-import { User, Run, Announcement, ApiError, Location } from '@/types';
+import { User, Run, Announcement, ApiError, Location, PrivateGroup, GroupCommunityMember } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -162,6 +162,76 @@ export const usersApi = {
 export const locationsApi = {
   getAll: async () => {
     return fetchApi<Location[]>('/api/runs/locations');
+  },
+};
+
+// Private Groups endpoints
+export const privateGroupsApi = {
+  getMyGroups: async () => {
+    return fetchApi<{ groups: PrivateGroup[] }>('/api/private-groups');
+  },
+
+  getGroup: async (id: string) => {
+    return fetchApi<{ group: PrivateGroup }>(`/api/private-groups/${id}`);
+  },
+
+  getGroupRuns: async (id: string) => {
+    return fetchApi<{ group: PrivateGroup; upcoming: Run[]; past: Run[] }>(
+      `/api/private-groups/${id}/runs`
+    );
+  },
+
+  getGroupCommunity: async (id: string) => {
+    return fetchApi<{
+      group: PrivateGroup;
+      members: GroupCommunityMember[];
+      total_completed_runs: number;
+    }>(`/api/private-groups/${id}/community`);
+  },
+
+  getAllGroups: async () => {
+    return fetchApi<{ groups: PrivateGroup[] }>('/api/private-groups/all');
+  },
+
+  createGroup: async (data: { name: string; description?: string }) => {
+    return fetchApi<{ message: string; group: PrivateGroup }>(
+      '/api/private-groups',
+      { method: 'POST', body: JSON.stringify(data) }
+    );
+  },
+
+  updateGroup: async (id: string, data: { name?: string; description?: string }) => {
+    return fetchApi<{ message: string; group: PrivateGroup }>(
+      `/api/private-groups/${id}`,
+      { method: 'PUT', body: JSON.stringify(data) }
+    );
+  },
+
+  deleteGroup: async (id: string) => {
+    return fetchApi<{ message: string }>(`/api/private-groups/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  addMember: async (groupId: string, userId: string) => {
+    return fetchApi<{ message: string; group: PrivateGroup }>(
+      `/api/private-groups/${groupId}/members`,
+      { method: 'POST', body: JSON.stringify({ user_id: userId }) }
+    );
+  },
+
+  addMembers: async (groupId: string, userIds: string[]) => {
+    return fetchApi<{ message: string; group: PrivateGroup }>(
+      `/api/private-groups/${groupId}/members`,
+      { method: 'POST', body: JSON.stringify({ user_ids: userIds }) }
+    );
+  },
+
+  removeMember: async (groupId: string, userId: string) => {
+    return fetchApi<{ message: string; group: PrivateGroup }>(
+      `/api/private-groups/${groupId}/members/${userId}`,
+      { method: 'DELETE' }
+    );
   },
 };
 
