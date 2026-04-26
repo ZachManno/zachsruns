@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 
+const EMAIL_WITH_DOMAIN_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 export default function SignupPage() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -19,10 +21,18 @@ export default function SignupPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    const trimmedEmail = email.trim();
+
+    if (!EMAIL_WITH_DOMAIN_PATTERN.test(trimmedEmail)) {
+      setError('Please enter a valid email address, like name@example.com.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await signup(username, email, password, firstName, lastName);
+      await signup(username, trimmedEmail, password, firstName, lastName);
       router.push('/?signup=success');
     } catch (err: any) {
       setError(err.message || 'Signup failed. Please try again.');
@@ -75,6 +85,9 @@ export default function SignupPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              pattern={EMAIL_WITH_DOMAIN_PATTERN.source}
+              placeholder="you@example.com"
+              title="Enter a valid email address, like you@example.com"
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
             />
           </div>
