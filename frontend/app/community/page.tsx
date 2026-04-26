@@ -8,7 +8,7 @@ import { User } from '@/types';
 import BadgeIcon from '@/components/BadgeIcon';
 
 export default function CommunityPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user: currentUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const [communityData, setCommunityData] = useState<{
     regular: User[];
@@ -27,15 +27,15 @@ export default function CommunityPage() {
   const [showUnverified, setShowUnverified] = useState(true);
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!authLoading && !currentUser) {
       router.push('/login');
       return;
     }
 
-    if (user) {
+    if (currentUser) {
       fetchCommunity();
     }
-  }, [user, authLoading, router]);
+  }, [currentUser, authLoading, router]);
 
   const fetchCommunity = async () => {
     try {
@@ -107,6 +107,11 @@ export default function CommunityPage() {
             ) : (
               <span className="text-xs text-gray-400">Unverified</span>
             )}
+            {currentUser?.is_admin && !user.is_active && (
+              <span className="ml-2 inline-block px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700 font-medium">
+                Inactive
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -152,7 +157,7 @@ export default function CommunityPage() {
     );
   }
 
-  if (!user) {
+  if (!currentUser) {
     return null;
   }
 

@@ -18,6 +18,7 @@ class User(db.Model):
     no_shows_count = db.Column(db.Integer, default=0, nullable=False)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     is_verified = db.Column(db.Boolean, default=False, nullable=False)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     reset_token = db.Column(db.String(64), nullable=True, unique=True)
     reset_token_expires = db.Column(db.DateTime, nullable=True)
@@ -63,6 +64,7 @@ class User(db.Model):
             'attendance_rate': round(attendance_rate, 1) if attendance_rate is not None else None,
             'is_admin': self.is_admin,
             'is_verified': self.is_verified,
+            'is_active': self.is_active,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
         

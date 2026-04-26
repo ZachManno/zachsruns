@@ -61,7 +61,7 @@ def signup():
         
         # Send admin notification to all admin users
         try:
-            admin_users = User.query.filter_by(is_admin=True).all()
+            admin_users = User.query.filter_by(is_admin=True, is_active=True).all()
             if admin_users:
                 send_admin_new_user_notification(new_user, admin_users)
         except Exception as e:

@@ -66,6 +66,25 @@ export default function VerifyUsersPage() {
     }
   };
 
+  const handleSetActive = async (userId: string, isActive: boolean) => {
+    if (!isActive) {
+      const confirmed = window.confirm(
+        'Mark this user inactive?\n\nThis will:\n- Remove their RSVPs from upcoming runs\n- Send them a notification email\n- Stop them from receiving future emails\n- Block them from RSVPing until reactivated\n\nThey can still view runs.'
+      );
+      if (!confirmed) return;
+    }
+    setUpdating(userId);
+    try {
+      await adminApi.setUserActive(userId, isActive);
+      await fetchUsers();
+    } catch (error) {
+      console.error('Failed to update active status:', error);
+      alert('Failed to update active status');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
   if (authLoading || loading) {
     return (
       <div className="container mx-auto px-4 py-12">
@@ -94,7 +113,7 @@ export default function VerifyUsersPage() {
 
         <div className="bg-white rounded-lg shadow-lg p-4 md:p-8">
           <h1 className="text-2xl md:text-3xl font-bold text-basketball-black mb-4 md:mb-6">
-            Verify Users
+            Manage Users
           </h1>
 
           <div className="space-y-3 md:space-y-4">
@@ -105,26 +124,46 @@ export default function VerifyUsersPage() {
               >
                 {/* User Info */}
                 <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4 min-w-0">
-                  <UserBadge user={u} />
+                  <div className="flex items-center gap-2">
+                    <UserBadge user={u} />
+                    {!u.is_active && (
+                      <span className="inline-block px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700 font-medium whitespace-nowrap">
+                        Inactive
+                      </span>
+                    )}
+                  </div>
                   <span className="text-gray-600 text-xs md:text-sm truncate">{u.email}</span>
                 </div>
 
-                {/* Action Button */}
-                <button
-                  onClick={() => handleVerify(u.id, !u.is_verified)}
-                  disabled={updating === u.id}
-                  className={`px-4 py-2 rounded transition-colors text-sm md:text-base whitespace-nowrap ${
-                    u.is_verified
-                      ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                      : 'bg-green-100 text-green-700 hover:bg-green-200'
-                  } ${updating === u.id ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {updating === u.id
-                    ? 'Updating...'
-                    : u.is_verified
-                    ? 'Unverify'
-                    : 'Verify'}
-                </button>
+                {/* Action Buttons */}
+                <div className="flex flex-row gap-2">
+                  <button
+                    onClick={() => handleVerify(u.id, !u.is_verified)}
+                    disabled={updating === u.id}
+                    className={`px-4 py-2 rounded transition-colors text-sm md:text-base whitespace-nowrap ${
+                      u.is_verified
+                        ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                        : 'bg-green-100 text-green-700 hover:bg-green-200'
+                    } ${updating === u.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {updating === u.id
+                      ? 'Updating...'
+                      : u.is_verified
+                      ? 'Unverify'
+                      : 'Verify'}
+                  </button>
+                  <button
+                    onClick={() => handleSetActive(u.id, !u.is_active)}
+                    disabled={updating === u.id}
+                    className={`px-4 py-2 rounded transition-colors text-sm md:text-base whitespace-nowrap ${
+                      u.is_active
+                        ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                    } ${updating === u.id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {u.is_active ? 'Mark Inactive' : 'Mark Active'}
+                  </button>
+                </div>
               </div>
             ))}
           </div>

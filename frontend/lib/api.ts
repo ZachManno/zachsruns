@@ -251,6 +251,16 @@ export const adminApi = {
     );
   },
 
+  setUserActive: async (userId: string, isActive: boolean) => {
+    return fetchApi<{ message: string; user: User }>(
+      `/api/admin/users/${userId}/active`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ is_active: isActive }),
+      }
+    );
+  },
+
   getAnnouncement: async () => {
     return fetchApi<{ announcement: Announcement | null }>(
       '/api/admin/announcements'

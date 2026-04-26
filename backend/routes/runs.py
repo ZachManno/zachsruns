@@ -137,9 +137,9 @@ def create_run():
         try:
             if new_run.private_group_id:
                 members = PrivateGroupMember.query.filter_by(group_id=new_run.private_group_id).all()
-                recipients = [m.user for m in members if m.user and m.user.is_verified]
+                recipients = [m.user for m in members if m.user and m.user.is_verified and m.user.is_active]
             else:
-                recipients = User.query.filter_by(is_verified=True).all()
+                recipients = User.query.filter_by(is_verified=True, is_active=True).all()
             send_run_created_email(new_run, recipients)
         except Exception as e:
             logger.error(f"Failed to send run created emails: {str(e)}")
@@ -253,7 +253,7 @@ def update_run(run_id):
                 # who were not already participants on the run.
                 if old_private_group_id and not run.private_group_id:
                     participant_ids = {p.user_id for p in participants}
-                    public_recipients = User.query.filter_by(is_verified=True).all()
+                    public_recipients = User.query.filter_by(is_verified=True, is_active=True).all()
                     new_public_recipients = [
                         user for user in public_recipients
                         if user.id not in participant_ids
@@ -344,6 +344,10 @@ def update_rsvp(run_id):
     # Check if user is verified
     if not request.current_user.is_verified:
         return jsonify({'error': 'Account must be verified to RSVP for runs'}), 403
+
+    # Check if user is active
+    if not request.current_user.is_active:
+        return jsonify({'error': 'Account is inactive - contact an admin'}), 403
     
     # For private runs, check group membership
     if run.private_group_id and not request.current_user.is_admin:

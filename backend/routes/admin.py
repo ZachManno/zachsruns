@@ -5,7 +5,7 @@ import logging
 from database import db
 from models import User, Run, RunParticipant, Announcement
 from middleware import require_admin
-from utils.email import send_account_verified_email, send_run_completed_email, send_run_reminder_email, send_announcement_email
+from utils.email import send_account_verified_email, send_account_inactive_email, send_account_active_email, send_run_completed_email, send_run_reminder_email, send_announcement_email
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +51,52 @@ def verify_user(user_id):
         db.session.rollback()
         return jsonify({'error': 'Failed to update user verification'}), 500
 
+@admin_bp.route('/users/<user_id>/active', methods=['PUT'])
+@require_admin
+def set_user_active(user_id):
+    """Mark a user as active or inactive"""
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    data = request.get_json() or {}
+    is_active = data.get('is_active', False)
+
+    try:
+        was_active = user.is_active
+        user.is_active = is_active
+
+        if not is_active:
+            # Remove upcoming RSVPs (preserve attendance history on completed/historical runs)
+            upcoming_participations = RunParticipant.query.join(Run).filter(
+                RunParticipant.user_id == user.id,
+                Run.is_completed == False
+            ).all()
+            for participation in upcoming_participations:
+                db.session.delete(participation)
+
+        db.session.commit()
+
+        if was_active and not is_active:
+            try:
+                send_account_inactive_email(user)
+            except Exception as e:
+                logger.error(f"Failed to send account inactive email: {str(e)}")
+        elif not was_active and is_active:
+            try:
+                send_account_active_email(user)
+            except Exception as e:
+                logger.error(f"Failed to send account active email: {str(e)}")
+
+        return jsonify({
+            'message': f'User marked {"active" if is_active else "inactive"} successfully',
+            'user': user.to_dict()
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Failed to update user active status: {str(e)}")
+        return jsonify({'error': 'Failed to update user active status'}), 500
+
 @admin_bp.route('/announcements', methods=['GET'])
 def get_announcement():
     """Get current active announcement"""
@@ -88,7 +134,7 @@ def create_announcement():
         
         # Send announcement email to all verified users (fire-and-forget)
         try:
-            verified_users = User.query.filter_by(is_verified=True).all()
+            verified_users = User.query.filter_by(is_verified=True, is_active=True).all()
             send_announcement_email(data['message'], verified_users)
         except Exception as e:
             # Log error but don't fail announcement creation
@@ -411,9 +457,10 @@ def get_run_rsvps(run_id):
         elif p.status == 'out':
             out.append(user_data)
     
-    # Get all verified users who don't have an RSVP for this run
+    # Get all verified active users who don't have an RSVP for this run
     available_users = User.query.filter(
         User.is_verified == True,
+        User.is_active == True,
         ~User.id.in_(participant_user_ids) if participant_user_ids else True
     ).order_by(User.first_name, User.last_name, User.username).all()
     
@@ -454,6 +501,9 @@ def admin_set_rsvp(run_id, user_id):
     
     if not user.is_verified:
         return jsonify({'error': 'User must be verified to RSVP'}), 400
+
+    if not user.is_active:
+        return jsonify({'error': 'User is inactive and cannot RSVP'}), 400
     
     data = request.get_json()
     status = data.get('status')  # 'confirmed', 'interested', 'out', or null to remove

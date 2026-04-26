@@ -92,6 +92,11 @@ def _filter_recipients_for_local(recipients):
     return recipients
 
 
+def _filter_active_recipients(recipients):
+    """Exclude inactive users from all regular email flows."""
+    return [user for user in recipients if getattr(user, 'is_active', True)]
+
+
 def _send_email_direct(to: str, subject: str, html_content: str, text_content: str = None, retry_on_429: bool = True):
     """
     Send an email directly using Resend (with retry logic for 429 errors)
@@ -323,6 +328,10 @@ def send_welcome_email(user):
 
 def send_account_verified_email(user):
     """Send email when admin verifies user account"""
+    if not user.is_active:
+        logger.info("Skipping account verified email for inactive user")
+        return False
+
     recipients = _filter_recipients_for_local([user])
     if not recipients:
         return False
@@ -333,6 +342,43 @@ def send_account_verified_email(user):
     return send_email(
         to=user.email,
         subject="Your Account Has Been Verified",
+        html_content=html_content,
+        text_content=text_content
+    )
+
+
+def send_account_inactive_email(user):
+    """Send email when admin marks a user account inactive"""
+    recipients = _filter_recipients_for_local([user])
+    if not recipients:
+        return False
+
+    user = recipients[0]
+    html_content = render_email_template('account_inactive.html', user=user, frontend_url=FRONTEND_URL)
+    text_content = (
+        "Your Zach's Organized Runs account has been marked inactive by the admin. "
+        "Please reach out if you'd like to be marked active."
+    )
+    return send_email(
+        to=user.email,
+        subject="Your Account Has Been Marked Inactive",
+        html_content=html_content,
+        text_content=text_content
+    )
+
+
+def send_account_active_email(user):
+    """Send email when admin marks a user account active again"""
+    recipients = _filter_recipients_for_local([user])
+    if not recipients:
+        return False
+
+    user = recipients[0]
+    html_content = render_email_template('account_active.html', user=user, frontend_url=FRONTEND_URL)
+    text_content = "Your account has now been marked back to Active by the admin."
+    return send_email(
+        to=user.email,
+        subject="Your Account Has Been Marked Active",
         html_content=html_content,
         text_content=text_content
     )
@@ -361,6 +407,7 @@ def send_admin_new_user_notification(user, admin_users):
     """Send notification to all admin users when a new user signs up"""
     # Filter admin users for local testing
     admin_users = _filter_recipients_for_local(admin_users)
+    admin_users = _filter_active_recipients(admin_users)
     
     if not admin_users:
         logger.info("No admin users for new user notification after filtering")
@@ -400,7 +447,7 @@ def send_run_created_email(run, recipients):
     success_count = 0
     location_name, location_address = _get_location_info(run)
     
-    verified_recipients = [user for user in recipients if user.is_verified]
+    verified_recipients = [user for user in recipients if user.is_verified and user.is_active]
     
     if not verified_recipients:
         logger.info("No verified recipients for run created email")
@@ -433,6 +480,7 @@ def send_run_reminder_email(run, recipients, reminder_message):
     """Send reminder email to confirmed and interested users"""
     # Filter recipients for local testing
     recipients = _filter_recipients_for_local(recipients)
+    recipients = _filter_active_recipients(recipients)
     
     if not recipients:
         logger.info("No recipients for run reminder email after filtering")
@@ -468,6 +516,7 @@ def send_run_completed_email(run, attendees):
     """Send completion summary email to all attendees"""
     # Filter recipients for local testing
     attendees = _filter_recipients_for_local(attendees)
+    attendees = _filter_active_recipients(attendees)
     
     if not attendees:
         logger.info("No attendees for run completed email after filtering")
@@ -504,6 +553,7 @@ def send_run_cancelled_email(run, recipients):
     """Send cancellation email to confirmed and interested users"""
     # Filter recipients for local testing
     recipients = _filter_recipients_for_local(recipients)
+    recipients = _filter_active_recipients(recipients)
     
     if not recipients:
         logger.info("No recipients for run cancelled email after filtering")
@@ -538,6 +588,7 @@ def send_run_modified_email(run, recipients, changes):
     """Send modification email to confirmed and interested users"""
     # Filter recipients for local testing
     recipients = _filter_recipients_for_local(recipients)
+    recipients = _filter_active_recipients(recipients)
     
     if not recipients:
         logger.info("No recipients for run modified email after filtering")
@@ -626,7 +677,7 @@ def send_announcement_email(announcement_message, recipients):
     
     success_count = 0
     
-    verified_recipients = [user for user in recipients if user.is_verified]
+    verified_recipients = [user for user in recipients if user.is_verified and user.is_active]
     
     if not verified_recipients:
         logger.info("No verified recipients for announcement email")

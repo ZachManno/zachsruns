@@ -24,6 +24,7 @@ export interface User {
   attendance_rate?: number;
   is_admin: boolean;
   is_verified: boolean;
+  is_active: boolean;
   created_at: string;
   run_count?: number;
   private_group_count?: number;

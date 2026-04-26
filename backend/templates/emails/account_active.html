@@ -1,0 +1,13 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<h2 style="color: #333333; margin-top: 0;">Your Account Has Been Marked Active</h2>
+
+<p>Hi {{ user.first_name or user.username }},</p>
+
+<p>Your account has now been marked back to Active by the admin.</p>
+
+<p>
+    <a href="{{ frontend_url }}/" class="button">View Runs &rarr;</a>
+</p>
+{% endblock %}

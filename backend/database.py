@@ -66,6 +66,14 @@ def init_db(app):
             print("Added private_group_id column to runs table")
         except Exception:
             db.session.rollback()
+
+        # Add is_active column to users table if it doesn't exist
+        try:
+            db.session.execute(db.text('ALTER TABLE users ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE'))
+            db.session.commit()
+            print("Added is_active column to users table")
+        except Exception:
+            db.session.rollback()
         
         # Clear all data for first release (remove this section after initial deployment)
         # This ensures a clean database state for the first release

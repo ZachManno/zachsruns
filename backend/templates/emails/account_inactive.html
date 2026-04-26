@@ -1,0 +1,13 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<h2 style="color: #333333; margin-top: 0;">Your Account Has Been Marked Inactive</h2>
+
+<p>Hi {{ user.first_name or user.username }},</p>
+
+<p>Your Zach's Organized Runs account has been marked inactive by the admin. Please reach out if you'd like to be marked active.</p>
+
+<p style="color: #666666; font-size: 14px; margin-top: 30px;">
+    While inactive, you can still view runs but won't be able to RSVP or receive run-related emails.
+</p>
+{% endblock %}

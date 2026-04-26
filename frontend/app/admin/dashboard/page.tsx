@@ -110,10 +110,10 @@ export default function AdminDashboard() {
             className="bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition-shadow"
           >
             <h2 className="text-lg md:text-xl font-bold text-basketball-black mb-2">
-              Verify Users
+              Manage Users
             </h2>
             <p className="text-gray-600 text-sm md:text-base">
-              Manage user verification status
+              Manage user verification and active status
             </p>
           </Link>
         </div>
