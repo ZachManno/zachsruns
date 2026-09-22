@@ -12,6 +12,7 @@ from utils.email import (
 )
 from utils.run_access import get_optional_user_from_request, user_can_view_runs
 from utils.drop_requests import serialize_run_for_viewer
+from utils.app_time import local_today
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ def get_runs():
     if not user_can_view_runs(current_user):
         return jsonify({'upcoming': [], 'past': []}), 200
 
-    today = date.today()
+    today = local_today()
     runs = Run.query.filter(Run.private_group_id.is_(None)).all()
     
     upcoming = []

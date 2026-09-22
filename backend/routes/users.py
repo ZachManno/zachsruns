@@ -5,6 +5,7 @@ from models import User, Run, RunParticipant
 from middleware import require_auth
 from utils.run_access import user_can_view_runs
 from utils.drop_requests import serialize_run_for_viewer
+from utils.app_time import local_today
 
 users_bp = Blueprint('users', __name__)
 
@@ -63,7 +64,7 @@ def get_user_runs():
     runs = Run.query.filter(Run.id.in_(run_ids)).all()
     
     # Separate into upcoming and history (completed runs go to history)
-    today = datetime.now().date()
+    today = local_today()
     upcoming = []
     history = []
     

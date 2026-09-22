@@ -123,14 +123,13 @@ class Run(db.Model):
     drop_requests = db.relationship('DropRequest', back_populates='run', cascade='all, delete-orphan')
 
     def is_late_drop_window(self):
-        """True from 1 hour before start until the run is completed. Times are US Eastern."""
+        """True from 1 hour before start until the run is completed."""
         if self.is_completed or not self.date or not self.start_time:
             return False
         from datetime import timedelta
-        from zoneinfo import ZoneInfo
-        eastern = ZoneInfo('America/New_York')
-        start = datetime.combine(self.date, self.start_time).replace(tzinfo=eastern)
-        return datetime.now(eastern) >= start - timedelta(hours=1)
+        from utils.app_time import APP_TIMEZONE, local_now
+        start = datetime.combine(self.date, self.start_time).replace(tzinfo=APP_TIMEZONE)
+        return local_now() >= start - timedelta(hours=1)
     
     def to_dict(self, include_participants=True):
         # Load location entity

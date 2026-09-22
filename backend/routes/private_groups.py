@@ -5,6 +5,7 @@ from database import db
 from models import PrivateGroup, PrivateGroupMember, Run, RunParticipant, User
 from middleware import require_auth, require_admin
 from utils.drop_requests import serialize_run_for_viewer
+from utils.app_time import local_today
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +74,7 @@ def get_group_runs(group_id):
     if err:
         return err
     
-    today = date.today()
+    today = local_today()
     runs = Run.query.filter_by(private_group_id=group_id).all()
     
     upcoming = []
