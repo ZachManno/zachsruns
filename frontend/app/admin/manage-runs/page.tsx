@@ -4,14 +4,33 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { adminApi, runsApi } from '@/lib/api';
-import { Run } from '@/types';
+import { DropRequest, Run } from '@/types';
 import Link from 'next/link';
 import BadgeIcon from '@/components/BadgeIcon';
+
+function formatRunDate(dateString: string) {
+  const [year, month, day] = dateString.split('T')[0].split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+function formatRunTime(time: string) {
+  const [hours, minutes] = time.split(':').map(Number);
+  const hour12 = hours % 12 || 12;
+  const ampm = hours >= 12 ? 'pm' : 'am';
+  return minutes === 0 ? `${hour12}${ampm}` : `${hour12}:${minutes.toString().padStart(2, '0')}${ampm}`;
+}
 
 export default function ManageRunsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [runs, setRuns] = useState<Run[]>([]);
+  const [dropRequests, setDropRequests] = useState<DropRequest[]>([]);
+  const [resolvingDropId, setResolvingDropId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,15 +44,36 @@ export default function ManageRunsPage() {
     }
   }, [user, authLoading, router]);
 
-  const fetchRuns = async () => {
+  const fetchRuns = async (silent = false) => {
     try {
-      setLoading(true);
-      const data = await adminApi.getAllRuns();
-      setRuns(data.runs);
+      if (!silent) setLoading(true);
+      const [runsData, dropsData] = await Promise.all([
+        adminApi.getAllRuns(),
+        adminApi.getDropRequests(),
+      ]);
+      setRuns(runsData.runs);
+      setDropRequests(dropsData.drop_requests);
     } catch (error) {
       console.error('Failed to fetch runs:', error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
+    }
+  };
+
+  const handleResolveDrop = async (requestId: string, action: 'approve' | 'deny') => {
+    setResolvingDropId(requestId);
+    try {
+      if (action === 'approve') {
+        await adminApi.approveDropRequest(requestId);
+      } else {
+        await adminApi.denyDropRequest(requestId);
+      }
+      await fetchRuns(true);
+    } catch (error: any) {
+      console.error('Failed to update drop request:', error);
+      alert(error.message || 'Failed to update drop request');
+    } finally {
+      setResolvingDropId(null);
     }
   };
 
@@ -42,7 +82,7 @@ export default function ManageRunsPage() {
 
     try {
       await runsApi.delete(runId);
-      await fetchRuns();
+      await fetchRuns(true);
     } catch (error: any) {
       console.error('Failed to delete run:', error);
       alert(error.message || 'Failed to delete run');
@@ -83,6 +123,58 @@ export default function ManageRunsPage() {
             Manage Runs
           </h1>
 
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-basketball-black mb-1">
+              Pending drops ({dropRequests.length})
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">
+              They stay confirmed until you approve. Approval emails everyone still confirmed or interested.
+            </p>
+            {dropRequests.length > 0 ? (
+              <div className="space-y-3">
+                {dropRequests.map((request) => {
+                  const name = [request.first_name, request.last_name].filter(Boolean).join(' ') || request.username;
+                  const requestedLabel = request.requested_status === 'interested' ? 'Interested' : 'Out';
+                  return (
+                    <div
+                      key={request.id}
+                      className="border border-amber-200 bg-amber-50 rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
+                    >
+                      <div>
+                        <p className="font-semibold text-basketball-black">
+                          {name} wants to drop to {requestedLabel}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          {request.run_title} · {formatRunDate(request.run_date)} · {formatRunTime(request.run_start_time)}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleResolveDrop(request.id, 'approve')}
+                          disabled={resolvingDropId === request.id}
+                          className="px-3 py-2 rounded bg-green-600 text-white text-sm disabled:opacity-50"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleResolveDrop(request.id, 'deny')}
+                          disabled={resolvingDropId === request.id}
+                          className="px-3 py-2 rounded bg-red-600 text-white text-sm hover:bg-red-700 disabled:opacity-50"
+                        >
+                          Deny
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-gray-600">No pending drop requests</p>
+            )}
+          </div>
+
           <div className="space-y-8">
             {/* Upcoming Runs */}
             <div>
@@ -96,7 +188,7 @@ export default function ManageRunsPage() {
                       key={run.id}
                       run={run}
                       onDelete={handleDelete}
-                      onRefresh={fetchRuns}
+                      onRefresh={() => fetchRuns(true)}
                     />
                   ))}
                 </div>
@@ -117,7 +209,7 @@ export default function ManageRunsPage() {
                       key={run.id}
                       run={run}
                       onDelete={handleDelete}
-                      onRefresh={fetchRuns}
+                      onRefresh={() => fetchRuns(true)}
                     />
                   ))}
                 </div>

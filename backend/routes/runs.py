@@ -2,10 +2,16 @@ from flask import Blueprint, request, jsonify
 from datetime import datetime, date, time
 import logging
 from database import db
-from models import Run, RunParticipant, Location, User, PrivateGroup, PrivateGroupMember
+from models import Run, RunParticipant, Location, User, PrivateGroup, PrivateGroupMember, DropRequest
 from middleware import require_auth, require_admin, verify_token
-from utils.email import send_run_created_email, send_run_modified_email, send_run_cancelled_email
+from utils.email import (
+    send_run_created_email,
+    send_run_modified_email,
+    send_run_cancelled_email,
+    send_drop_request_email,
+)
 from utils.run_access import get_optional_user_from_request, user_can_view_runs
+from utils.drop_requests import serialize_run_for_viewer
 
 logger = logging.getLogger(__name__)
 
@@ -32,13 +38,7 @@ def get_runs():
     past = []
     
     for run in runs:
-        run_dict = run.to_dict()
-        
-        participation = RunParticipant.query.filter_by(
-            run_id=run.id,
-            user_id=current_user.id
-        ).first()
-        run_dict['user_status'] = participation.status if participation else None
+        run_dict = serialize_run_for_viewer(run, current_user)
         
         if run.is_completed or run.date < today:
             past.append(run_dict)
@@ -78,7 +78,7 @@ def get_run(run_id):
                 return jsonify({'error': 'Run not found'}), 404
     
     return jsonify({
-        'run': run.to_dict()
+        'run': serialize_run_for_viewer(run, current_user)
     }), 200
 
 @runs_bp.route('', methods=['POST'])
@@ -383,12 +383,67 @@ def update_rsvp(run_id):
                 return jsonify({'error': 'Run is at capacity'}), 400
     
     try:
-        # Find or create participant record
         participant = RunParticipant.query.filter_by(
             run_id=run_id,
             user_id=request.current_user.id
         ).first()
-        
+
+        leaving_confirmed = (
+            participant is not None
+            and participant.status == 'confirmed'
+            and status in ('interested', 'out')
+        )
+        if leaving_confirmed and run.is_late_drop_window() and not request.current_user.is_admin:
+            if not data.get('confirm_late_drop'):
+                return jsonify({
+                    'error': 'Late drop requires admin verification',
+                    'code': 'late_drop_confirmation_required',
+                }), 409
+
+            drop = DropRequest.query.filter_by(
+                run_id=run_id,
+                user_id=request.current_user.id,
+                status='pending'
+            ).first()
+            status_changed = False
+            if drop:
+                # Asking for a different status replaces the pending request
+                if drop.requested_status != status:
+                    drop.resolve('cancelled', request.current_user.id)
+                    drop = None
+            if not drop:
+                drop = DropRequest(
+                    run_id=run_id,
+                    user_id=request.current_user.id,
+                    requested_status=status,
+                )
+                db.session.add(drop)
+                status_changed = True
+
+            db.session.commit()
+
+            if status_changed:
+                try:
+                    admins = User.query.filter_by(is_admin=True, is_active=True).all()
+                    db.session.refresh(run)
+                    send_drop_request_email(run, request.current_user, status, admins)
+                except Exception as e:
+                    logger.error(f"Failed to send drop request emails: {str(e)}")
+
+            return jsonify({
+                'message': 'Drop request submitted for admin verification',
+                'pending_drop': True,
+                'run': serialize_run_for_viewer(run, request.current_user),
+            }), 200
+
+        # Any pending request is dropped once the user picks a status outright
+        for pending in DropRequest.query.filter_by(
+            run_id=run_id,
+            user_id=request.current_user.id,
+            status='pending'
+        ).all():
+            pending.resolve('cancelled', request.current_user.id)
+
         if participant:
             participant.status = status
             participant.updated_at = datetime.utcnow()
@@ -404,9 +459,10 @@ def update_rsvp(run_id):
         
         return jsonify({
             'message': 'RSVP updated successfully',
-            'run': run.to_dict()
+            'run': serialize_run_for_viewer(run, request.current_user)
         }), 200
     except Exception as e:
         db.session.rollback()
+        logger.error(f"Failed to update RSVP: {str(e)}")
         return jsonify({'error': 'Failed to update RSVP'}), 500
 

@@ -3,9 +3,9 @@ from datetime import datetime, date, time
 from sqlalchemy import func
 import logging
 from database import db
-from models import User, Run, RunParticipant, Announcement
+from models import User, Run, RunParticipant, Announcement, DropRequest
 from middleware import require_admin
-from utils.email import send_account_verified_email, send_account_inactive_email, send_account_active_email, send_run_completed_email, send_run_reminder_email, send_announcement_email
+from utils.email import send_account_verified_email, send_account_inactive_email, send_account_active_email, send_run_completed_email, send_run_reminder_email, send_announcement_email, send_spot_opened_email
 
 logger = logging.getLogger(__name__)
 
@@ -339,6 +339,10 @@ def complete_run(run_id):
         run.is_completed = True
         run.completed_at = datetime.utcnow()
         run.completed_by = request.current_user.id
+
+        # Pending late drops are discarded. Completing a run does not open a spot.
+        for drop in DropRequest.query.filter_by(run_id=run_id, status='pending').all():
+            drop.resolve('cancelled', request.current_user.id)
         
         db.session.commit()
         
@@ -523,7 +527,9 @@ def admin_set_rsvp(run_id, user_id):
             # Remove RSVP entirely
             if participant:
                 db.session.delete(participant)
-                db.session.commit()
+            for drop in DropRequest.query.filter_by(run_id=run_id, user_id=user_id, status='pending').all():
+                drop.resolve('cancelled', request.current_user.id)
+            db.session.commit()
             return jsonify({
                 'message': 'RSVP removed successfully',
                 'run': run.to_dict()
@@ -551,6 +557,9 @@ def admin_set_rsvp(run_id, user_id):
                 status=status
             )
             db.session.add(participant)
+
+        for drop in DropRequest.query.filter_by(run_id=run_id, user_id=user_id, status='pending').all():
+            drop.resolve('cancelled', request.current_user.id)
         
         db.session.commit()
         
@@ -562,6 +571,101 @@ def admin_set_rsvp(run_id, user_id):
         db.session.rollback()
         logger.error(f"Failed to update RSVP: {str(e)}")
         return jsonify({'error': 'Failed to update RSVP'}), 500
+
+
+@admin_bp.route('/drop-requests', methods=['GET'])
+@require_admin
+def list_drop_requests():
+    """Pending late drops for runs that are still open."""
+    drops = (
+        DropRequest.query
+        .join(Run)
+        .filter(DropRequest.status == 'pending', Run.is_completed == False)
+        .order_by(DropRequest.requested_at.asc())
+        .all()
+    )
+    return jsonify({
+        'drop_requests': [drop.to_dict() for drop in drops]
+    }), 200
+
+
+@admin_bp.route('/drop-requests/<request_id>/approve', methods=['POST'])
+@require_admin
+def approve_drop_request(request_id):
+    """Approve a late drop, free the spot, and email the remaining group."""
+    drop = DropRequest.query.get(request_id)
+    if not drop:
+        return jsonify({'error': 'Drop request not found'}), 404
+
+    if drop.status != 'pending':
+        return jsonify({'error': 'Drop request is no longer pending'}), 400
+
+    run = drop.run
+    if not run or run.is_completed:
+        drop.resolve('cancelled', request.current_user.id)
+        db.session.commit()
+        return jsonify({'error': 'Run is no longer open for RSVP changes'}), 400
+
+    participant = RunParticipant.query.filter_by(
+        run_id=drop.run_id,
+        user_id=drop.user_id
+    ).first()
+    if not participant or participant.status != 'confirmed':
+        drop.resolve('cancelled', request.current_user.id)
+        db.session.commit()
+        return jsonify({'error': 'User is no longer confirmed'}), 400
+
+    if drop.requested_status not in ('interested', 'out'):
+        return jsonify({'error': 'Invalid drop request'}), 400
+
+    requester = User.query.get(drop.user_id)
+    requested_status = drop.requested_status
+
+    try:
+        participant.status = requested_status
+        participant.updated_at = datetime.utcnow()
+        drop.resolve('approved', request.current_user.id)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Failed to approve drop request: {str(e)}")
+        return jsonify({'error': 'Failed to approve drop request'}), 500
+
+    try:
+        db.session.refresh(run)
+        participants = RunParticipant.query.filter(
+            RunParticipant.run_id == run.id,
+            RunParticipant.status.in_(['confirmed', 'interested']),
+            RunParticipant.user_id != requester.id,
+        ).all()
+        recipients = [p.user for p in participants if p.user]
+        send_spot_opened_email(run, recipients, requester)
+    except Exception as e:
+        logger.error(f"Failed to send spot opened emails: {str(e)}")
+
+    return jsonify({'message': 'Drop request approved'}), 200
+
+
+@admin_bp.route('/drop-requests/<request_id>/deny', methods=['POST'])
+@require_admin
+def deny_drop_request(request_id):
+    """Deny a late drop. The player stays confirmed and can request again."""
+    drop = DropRequest.query.get(request_id)
+    if not drop:
+        return jsonify({'error': 'Drop request not found'}), 404
+
+    if drop.status != 'pending':
+        return jsonify({'error': 'Drop request is no longer pending'}), 400
+
+    try:
+        drop.resolve('denied', request.current_user.id)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Failed to deny drop request: {str(e)}")
+        return jsonify({'error': 'Failed to deny drop request'}), 500
+
+    return jsonify({'message': 'Drop request denied'}), 200
 
 
 @admin_bp.route('/runs/import', methods=['POST'])

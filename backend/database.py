@@ -57,6 +57,19 @@ def init_db(app):
         # Drop all tables and recreate them (clean slate for first release)
         # COMMENTED OUT - Database persistence enabled
         # db.drop_all()
+        # drop_requests gained status/resolution columns before release. The table only
+        # ever holds late-drop records, so rebuild it if it predates those columns.
+        try:
+            columns = db.session.execute(db.text('SELECT * FROM drop_requests LIMIT 0')).keys()
+            if 'status' not in columns:
+                db.session.execute(db.text('DROP TABLE drop_requests'))
+                db.session.commit()
+                print("Rebuilt drop_requests table with resolution columns")
+            else:
+                db.session.rollback()
+        except Exception:
+            db.session.rollback()
+
         db.create_all()
         
         # Add private_group_id column to runs table if it doesn't exist

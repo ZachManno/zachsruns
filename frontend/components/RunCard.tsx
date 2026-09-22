@@ -3,6 +3,7 @@
 import { Run } from '@/types';
 import { useAuth } from '@/context/AuthContext';
 import { runsApi } from '@/lib/api';
+import { isLateDropWindow } from '@/lib/dropLock';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import BadgeIcon from './BadgeIcon';
@@ -16,29 +17,75 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
   const { user } = useAuth();
   const [updating, setUpdating] = useState(false);
   const [currentStatus, setCurrentStatus] = useState(run.user_status);
+  const [pendingDropStatus, setPendingDropStatus] = useState<'interested' | 'out' | null>(
+    run.pending_drop_status ?? null
+  );
+  const [dropPromptStatus, setDropPromptStatus] = useState<'interested' | 'out' | null>(null);
 
-  // Sync currentStatus with run.user_status when run data changes
+  // Sync local RSVP state when run data changes
   useEffect(() => {
     setCurrentStatus(run.user_status);
-  }, [run.user_status]);
+    setPendingDropStatus(run.pending_drop_status ?? null);
+  }, [run.user_status, run.pending_drop_status]);
 
-  const handleRsvp = async (status: 'confirmed' | 'interested' | 'out') => {
-    if (!user) return;
-
+  const submitRsvp = async (
+    status: 'confirmed' | 'interested' | 'out',
+    confirmLateDrop = false
+  ) => {
     setUpdating(true);
     try {
-      await runsApi.updateRsvp(run.id, status);
-      setCurrentStatus(status);
+      const data = await runsApi.updateRsvp(run.id, status, confirmLateDrop);
+      if (data.pending_drop) {
+        setCurrentStatus('confirmed');
+        setPendingDropStatus(status === 'confirmed' ? null : status);
+      } else {
+        setCurrentStatus(status);
+        setPendingDropStatus(null);
+      }
       if (onUpdate) {
         onUpdate();
       }
     } catch (error: any) {
+      if (
+        error?.code === 'late_drop_confirmation_required' &&
+        (status === 'interested' || status === 'out')
+      ) {
+        setDropPromptStatus(status);
+        return;
+      }
       console.error('Failed to update RSVP:', error);
       const errorMessage = error?.message || 'Failed to update RSVP. Please try again.';
       alert(errorMessage);
     } finally {
       setUpdating(false);
     }
+  };
+
+  const handleRsvp = (status: 'confirmed' | 'interested' | 'out') => {
+    if (!user || updating) return;
+
+    if (status === 'confirmed') {
+      if (currentStatus === 'confirmed' && !pendingDropStatus) return;
+      submitRsvp('confirmed');
+      return;
+    }
+
+    if (pendingDropStatus === status || (currentStatus === status && !pendingDropStatus)) {
+      return;
+    }
+
+    const inLateWindow = Boolean(run.drop_locked) || isLateDropWindow(run.date, run.start_time);
+    const leavingConfirmed = currentStatus === 'confirmed' && !user.is_admin && inLateWindow;
+    if (leavingConfirmed && !pendingDropStatus) {
+      setDropPromptStatus(status);
+      return;
+    }
+    if (leavingConfirmed && pendingDropStatus) {
+      submitRsvp(status, true);
+      return;
+    }
+
+    submitRsvp(status);
   };
 
   const formatDate = (dateString: string) => {
@@ -96,7 +143,7 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
 
   // Helper function to format participant names with badges
   const formatParticipantNames = (
-    participants: Array<{username: string; first_name?: string; last_name?: string; badge?: string}>
+    participants: Array<{username: string; first_name?: string; last_name?: string; badge?: string; pending_drop_status?: 'interested' | 'out' | null}>
   ) => {
     if (!participants || participants.length === 0) return null;
     
@@ -116,9 +163,14 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
         : firstName;
       
       return (
-        <div key={index} className="flex items-center gap-1">
+        <div key={index} className="flex items-center gap-1 flex-wrap">
           <span className="text-gray-900">{displayName}</span>
           {p.badge && <BadgeIcon badge={p.badge as any} size="small" />}
+          {p.pending_drop_status && (
+            <span className="text-[10px] leading-none font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded px-1 py-0.5">
+              Drop pending
+            </span>
+          )}
         </div>
       );
     });
@@ -286,10 +338,12 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
                 className={`flex-1 min-w-0 px-2 py-2 text-xs sm:text-sm rounded transition-all truncate ${
                   currentStatus === 'interested'
                     ? 'bg-yellow-600 text-white border-2 border-yellow-700 ring-2 ring-yellow-300'
+                    : pendingDropStatus === 'interested'
+                    ? 'bg-amber-100 text-amber-800 border-2 border-amber-400'
                     : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-2 border-transparent'
                 } ${updating ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                {currentStatus === 'interested' ? '✓ Interested' : 'Interested'}
+                {currentStatus === 'interested' ? '✓ Interested' : pendingDropStatus === 'interested' ? 'Pending' : 'Interested'}
               </button>
               <button
                 onClick={() => handleRsvp('out')}
@@ -297,13 +351,57 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
                 className={`flex-1 min-w-0 px-2 py-2 text-xs sm:text-sm rounded transition-all truncate ${
                   currentStatus === 'out'
                     ? 'bg-red-600 text-white border-2 border-red-700 ring-2 ring-red-300'
+                    : pendingDropStatus === 'out'
+                    ? 'bg-amber-100 text-amber-800 border-2 border-amber-400'
                     : 'bg-red-100 text-red-700 hover:bg-red-200 border-2 border-transparent'
                 } ${updating ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                {currentStatus === 'out' ? '✓ Out' : 'Out'}
+                {currentStatus === 'out' ? '✓ Out' : pendingDropStatus === 'out' ? 'Pending' : 'Out'}
               </button>
             </div>
           )}
+          {user.is_verified && currentStatus === 'confirmed' && pendingDropStatus && (
+            <p className="mt-2 text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded p-2">
+              Your late cancellation from <span className="font-semibold text-green-600">Confirmed</span> to{' '}
+              {pendingDropStatus === 'interested' ? (
+                <span className="font-semibold text-yellow-600">Interested</span>
+              ) : (
+                <span className="font-semibold text-red-600">Out</span>
+              )}{' '}
+              is pending admin verification.
+            </p>
+          )}
+        </div>
+      )}
+      {dropPromptStatus && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6" role="dialog" aria-modal="true">
+            <p className="text-gray-800">
+              You are attempting to drop within 1 hour of the run starting time, this requires admin verification. Please notify the admin in order to get this approved. Continue?
+            </p>
+            <div className="mt-6 flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setDropPromptStatus(null)}
+                disabled={updating}
+                className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const status = dropPromptStatus;
+                  setDropPromptStatus(null);
+                  submitRsvp(status, true);
+                }}
+                disabled={updating}
+                className="px-4 py-2 rounded bg-basketball-orange text-white hover:opacity-90"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

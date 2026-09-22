@@ -4,6 +4,7 @@ from database import db
 from models import User, Run, RunParticipant
 from middleware import require_auth
 from utils.run_access import user_can_view_runs
+from utils.drop_requests import serialize_run_for_viewer
 
 users_bp = Blueprint('users', __name__)
 
@@ -68,8 +69,7 @@ def get_user_runs():
     
     for run in runs:
         participation = next((p for p in participations if p.run_id == run.id), None)
-        run_dict = run.to_dict()
-        run_dict['user_status'] = participation.status if participation else None
+        run_dict = serialize_run_for_viewer(run, user)
         
         # Completed runs: only include in history if the user actually attended.
         # This prevents stale RSVPs (e.g. on runs that were later opened to the

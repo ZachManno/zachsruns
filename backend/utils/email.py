@@ -703,3 +703,97 @@ def send_announcement_email(announcement_message, recipients):
     
     return success_count
 
+
+def _display_name(user):
+    name = f"{getattr(user, 'first_name', '') or ''} {getattr(user, 'last_name', '') or ''}".strip()
+    return name or user.username
+
+
+def _status_label(status):
+    if status == 'interested':
+        return 'Interested'
+    if status == 'out':
+        return 'Out'
+    return status
+
+
+def send_drop_request_email(run, requester, requested_status, admin_users):
+    """Email admins that a confirmed player asked to drop inside the late window."""
+    admin_users = _filter_recipients_for_local(admin_users)
+    admin_users = _filter_active_recipients(admin_users)
+
+    if not admin_users:
+        logger.info("No admin users for drop request email after filtering")
+        return 0
+
+    requester_name = _display_name(requester)
+    requested_status_label = _status_label(requested_status)
+    location_name, _ = _get_location_info(run)
+    success_count = 0
+
+    for index, admin in enumerate(admin_users):
+        html_content = render_email_template(
+            'drop_request_admin.html',
+            admin=admin,
+            requester_name=requester_name,
+            requested_status_label=requested_status_label,
+            run=run,
+            location_name=location_name,
+            frontend_url=FRONTEND_URL
+        )
+        text_content = (
+            f"{requester_name} wants to drop from Confirmed to {requested_status_label} "
+            f"for {run.title} on {run.date.strftime('%B %d, %Y')}. "
+            f"They stay confirmed until you approve it.\n\n"
+            f"Review it at {FRONTEND_URL}/admin/manage-runs"
+        )
+        if send_email(
+            to=admin.email,
+            subject=f"Drop request: {requester_name} — {run.title}",
+            html_content=html_content,
+            text_content=text_content,
+            delay_seconds=index
+        ):
+            success_count += 1
+
+    return success_count
+
+
+def send_spot_opened_email(run, recipients, requester):
+    """Email confirmed and interested players that a late drop was approved."""
+    recipients = _filter_recipients_for_local(recipients)
+    recipients = _filter_active_recipients(recipients)
+
+    if not recipients:
+        logger.info("No recipients for spot opened email after filtering")
+        return 0
+
+    requester_name = _display_name(requester)
+    location_name, _ = _get_location_info(run)
+    success_count = 0
+
+    for index, user in enumerate(recipients):
+        html_content = render_email_template(
+            'spot_opened.html',
+            user=user,
+            requester_name=requester_name,
+            run=run,
+            location_name=location_name,
+            frontend_url=FRONTEND_URL
+        )
+        text_content = (
+            f"{requester_name} dropped from Confirmed for {run.title} "
+            f"on {run.date.strftime('%B %d, %Y')}. A spot may be open.\n\n"
+            f"Visit {FRONTEND_URL} to view runs."
+        )
+        if send_email(
+            to=user.email,
+            subject=f"Spot opened: {run.title}",
+            html_content=html_content,
+            text_content=text_content,
+            delay_seconds=index
+        ):
+            success_count += 1
+
+    return success_count
+

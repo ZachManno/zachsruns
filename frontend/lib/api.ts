@@ -1,5 +1,5 @@
 import { getToken, removeToken } from './auth';
-import { User, Run, Announcement, ApiError, Location, PrivateGroup, GroupCommunityMember } from '@/types';
+import { User, Run, Announcement, ApiError, Location, PrivateGroup, GroupCommunityMember, DropRequest } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -34,7 +34,10 @@ async function fetchApi<T>(
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error((data as ApiError).error || 'An error occurred');
+    const apiError = data as ApiError;
+    const error = new Error(apiError.error || 'An error occurred') as Error & { code?: string };
+    error.code = apiError.code;
+    throw error;
   }
 
   return data as T;
@@ -117,10 +120,14 @@ export const runsApi = {
     });
   },
 
-  updateRsvp: async (runId: string, status: 'confirmed' | 'interested' | 'out') => {
-    return fetchApi<{ message: string; run: Run }>(`/api/runs/${runId}/rsvp`, {
+  updateRsvp: async (
+    runId: string,
+    status: 'confirmed' | 'interested' | 'out',
+    confirmLateDrop = false
+  ) => {
+    return fetchApi<{ message: string; run: Run; pending_drop?: boolean }>(`/api/runs/${runId}/rsvp`, {
       method: 'POST',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, confirm_late_drop: confirmLateDrop }),
     });
   },
 };
@@ -362,6 +369,24 @@ export const adminApi = {
       available_users: Array<{ id: string; username: string; first_name?: string; last_name?: string; badge?: string }>;
       capacity: number | null;
     }>(`/api/admin/runs/${runId}/rsvps`);
+  },
+
+  getDropRequests: async () => {
+    return fetchApi<{ drop_requests: DropRequest[] }>('/api/admin/drop-requests');
+  },
+
+  approveDropRequest: async (requestId: string) => {
+    return fetchApi<{ message: string }>(`/api/admin/drop-requests/${requestId}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
+  },
+
+  denyDropRequest: async (requestId: string) => {
+    return fetchApi<{ message: string }>(`/api/admin/drop-requests/${requestId}/deny`, {
+      method: 'POST',
+      body: JSON.stringify({}),
+    });
   },
 
   setUserRsvp: async (runId: string, userId: string, status: 'confirmed' | 'interested' | 'out' | null) => {

@@ -1,0 +1,21 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<h2 style="color: #333333; margin-top: 0;">Late Drop Request</h2>
+
+<p>Hi {{ admin.first_name or admin.username }},</p>
+
+<p><strong>{{ requester_name }}</strong> wants to drop from Confirmed to {{ requested_status_label }} within an hour of this run. They stay confirmed until you approve it.</p>
+
+<div style="background-color: #f8f8f8; padding: 15px; border-radius: 4px; margin: 20px 0;">
+    <h3 style="margin-top: 0; color: #ff6b35;">{{ run.title }}</h3>
+    <p style="margin: 5px 0;"><strong>Date:</strong> {{ run.date.strftime('%B %d, %Y') }}</p>
+    <p style="margin: 5px 0;"><strong>Time:</strong> {{ run.start_time.strftime('%I:%M %p') }} - {{ run.end_time.strftime('%I:%M %p') }}</p>
+    <p style="margin: 5px 0;"><strong>Location:</strong> {{ location_name }}</p>
+    <p style="margin: 5px 0;"><strong>Requested status:</strong> {{ requested_status_label }}</p>
+</div>
+
+<p>
+    <a href="{{ frontend_url }}/admin/manage-runs" class="button">Review Drop →</a>
+</p>
+{% endblock %}

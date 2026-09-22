@@ -120,6 +120,17 @@ class Run(db.Model):
     creator = db.relationship('User', foreign_keys=[created_by], backref='created_runs')
     completer = db.relationship('User', foreign_keys=[completed_by], backref='completed_runs')
     participants = db.relationship('RunParticipant', back_populates='run', cascade='all, delete-orphan')
+    drop_requests = db.relationship('DropRequest', back_populates='run', cascade='all, delete-orphan')
+
+    def is_late_drop_window(self):
+        """True from 1 hour before start until the run is completed. Times are US Eastern."""
+        if self.is_completed or not self.date or not self.start_time:
+            return False
+        from datetime import timedelta
+        from zoneinfo import ZoneInfo
+        eastern = ZoneInfo('America/New_York')
+        start = datetime.combine(self.date, self.start_time).replace(tzinfo=eastern)
+        return datetime.now(eastern) >= start - timedelta(hours=1)
     
     def to_dict(self, include_participants=True):
         # Load location entity
@@ -164,6 +175,7 @@ class Run(db.Model):
             'is_variable_cost': self.is_variable_cost,
             'total_cost': float(self.total_cost) if self.total_cost else None,
             'is_completed': self.is_completed,
+            'drop_locked': self.is_late_drop_window(),
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
             'completed_by': self.completed_by,
             'guest_attendees': json.loads(self.guest_attendees) if self.guest_attendees else None,
@@ -215,6 +227,10 @@ class Run(db.Model):
                 no_show_users = [p.user for p in no_show_participants_list]
                 
                 confirmed_count = len(confirmed_users)
+                pending_by_user_id = {
+                    d.user_id: d.requested_status
+                    for d in self.drop_requests if d.status == 'pending'
+                }
                 
                 # Calculate cost: if variable, divide total by confirmed participants; otherwise use fixed cost
                 if self.is_variable_cost and self.total_cost:
@@ -225,7 +241,7 @@ class Run(db.Model):
                 else:
                     result['cost'] = round(float(self.cost), 2) if self.cost else None
                 
-                confirmed = [{'username': u.username, 'first_name': u.first_name, 'last_name': u.last_name, 'badge': u.badge, 'attended': p.attended, 'no_show': p.no_show} for u, p in zip(confirmed_users, confirmed_participants_list)]
+                confirmed = [{'username': u.username, 'first_name': u.first_name, 'last_name': u.last_name, 'badge': u.badge, 'attended': p.attended, 'no_show': p.no_show, 'pending_drop_status': pending_by_user_id.get(u.id)} for u, p in zip(confirmed_users, confirmed_participants_list)]
                 interested = [{'username': u.username, 'first_name': u.first_name, 'last_name': u.last_name, 'badge': u.badge, 'attended': p.attended, 'no_show': p.no_show} for u, p in zip(interested_users, interested_participants_list)]
                 out = [{'username': u.username, 'first_name': u.first_name, 'last_name': u.last_name, 'badge': u.badge, 'attended': p.attended, 'no_show': p.no_show} for u, p in zip(out_users, out_participants_list)]
                 no_show = [{'username': p.user.username, 'first_name': p.user.first_name, 'last_name': p.user.last_name, 'badge': p.user.badge, 'attended': False, 'no_show': True} for p in no_show_participants_list]
@@ -272,6 +288,53 @@ class RunParticipant(db.Model):
             'attended': self.attended,
             'no_show': self.no_show,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
+
+
+class DropRequest(db.Model):
+    """A confirmed player asking to leave within the late-drop window. They stay confirmed until an admin approves.
+
+    Rows are kept after they are resolved so the request and decision times stay on record.
+    """
+    __tablename__ = 'drop_requests'
+
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    run_id = db.Column(db.String(36), db.ForeignKey('runs.id'), nullable=False)
+    user_id = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=False)
+    requested_status = db.Column(db.String(20), nullable=False)  # 'interested' or 'out'
+    status = db.Column(db.String(20), default='pending', nullable=False)  # 'pending', 'approved', 'denied', 'cancelled'
+    requested_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    resolved_at = db.Column(db.DateTime, nullable=True)
+    resolved_by = db.Column(db.String(36), db.ForeignKey('users.id'), nullable=True)
+
+    run = db.relationship('Run', back_populates='drop_requests')
+    user = db.relationship('User', foreign_keys=[user_id], backref='drop_requests')
+    resolver = db.relationship('User', foreign_keys=[resolved_by])
+
+    def resolve(self, status, admin_id=None):
+        self.status = status
+        self.resolved_at = datetime.utcnow()
+        self.resolved_by = admin_id
+
+    def to_dict(self):
+        user = self.user
+        run = self.run
+        return {
+            'id': self.id,
+            'run_id': self.run_id,
+            'user_id': self.user_id,
+            'username': user.username if user else None,
+            'first_name': user.first_name if user else None,
+            'last_name': user.last_name if user else None,
+            'requested_status': self.requested_status,
+            'status': self.status,
+            'requested_at': self.requested_at.isoformat() if self.requested_at else None,
+            'resolved_at': self.resolved_at.isoformat() if self.resolved_at else None,
+            'resolved_by': self.resolved_by,
+            'run_title': run.title if run else None,
+            'run_date': run.date.isoformat() if run and run.date else None,
+            'run_start_time': run.start_time.strftime('%H:%M') if run and run.start_time else None,
+            'run_end_time': run.end_time.strftime('%H:%M') if run and run.end_time else None,
         }
 
 class PrivateGroup(db.Model):

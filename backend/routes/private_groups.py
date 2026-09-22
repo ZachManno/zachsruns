@@ -4,6 +4,7 @@ import logging
 from database import db
 from models import PrivateGroup, PrivateGroupMember, Run, RunParticipant, User
 from middleware import require_auth, require_admin
+from utils.drop_requests import serialize_run_for_viewer
 
 logger = logging.getLogger(__name__)
 
@@ -79,12 +80,7 @@ def get_group_runs(group_id):
     past = []
     
     for run in runs:
-        run_dict = run.to_dict()
-        participation = RunParticipant.query.filter_by(
-            run_id=run.id,
-            user_id=request.current_user.id
-        ).first()
-        run_dict['user_status'] = participation.status if participation else None
+        run_dict = serialize_run_for_viewer(run, request.current_user)
         
         if run.is_completed or run.date < today:
             past.append(run_dict)

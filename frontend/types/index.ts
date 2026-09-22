@@ -55,7 +55,7 @@ export interface Run {
   private_group_name?: string;
   guest_attendees?: string[];
   participants?: {
-    confirmed?: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean; no_show?: boolean}>;
+    confirmed?: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean; no_show?: boolean; pending_drop_status?: 'interested' | 'out' | null}>;
     interested?: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean; no_show?: boolean}>;
     out?: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean; no_show?: boolean}>;
     no_show?: Array<{username: string; first_name?: string; last_name?: string; badge?: string; attended?: boolean; no_show?: boolean}>;
@@ -69,6 +69,26 @@ export interface Run {
     attended?: number;
   };
   user_status?: 'confirmed' | 'interested' | 'out';
+  pending_drop_status?: 'interested' | 'out' | null;
+  drop_locked?: boolean;
+}
+
+export interface DropRequest {
+  id: string;
+  run_id: string;
+  user_id: string;
+  username: string;
+  first_name?: string;
+  last_name?: string;
+  requested_status: 'interested' | 'out';
+  status: 'pending' | 'approved' | 'denied' | 'cancelled';
+  requested_at: string;
+  resolved_at?: string | null;
+  resolved_by?: string | null;
+  run_title: string;
+  run_date: string;
+  run_start_time: string;
+  run_end_time: string;
 }
 
 export interface PrivateGroup {
@@ -113,5 +133,6 @@ export interface Announcement {
 
 export interface ApiError {
   error: string;
+  code?: string;
 }
 
