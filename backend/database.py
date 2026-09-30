@@ -10,6 +10,17 @@ load_dotenv()
 
 db = SQLAlchemy()
 
+def _pin_postgres_driver(url):
+    """Name psycopg2 explicitly in the URL.
+
+    SQLAlchemy 2.1 resolves a bare postgresql:// URL to psycopg (v3), which we
+    don't ship - only psycopg2-binary is in requirements.txt.
+    """
+    for scheme in ('postgresql://', 'postgres://'):
+        if url.startswith(scheme):
+            return 'postgresql+psycopg2://' + url[len(scheme):]
+    return url
+
 def get_database_url():
     """Get database URL from environment or use local SQLite for development"""
     # Check for various Postgres URL environment variable names
@@ -19,7 +30,7 @@ def get_database_url():
         os.getenv('DATABASE_URL')
     )
     if postgres_url:
-        return postgres_url
+        return _pin_postgres_driver(postgres_url)
     
     # On Vercel without Postgres URL, raise an error
     if os.getenv('VERCEL'):
