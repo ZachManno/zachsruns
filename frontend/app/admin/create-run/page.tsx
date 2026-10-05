@@ -16,14 +16,14 @@ export default function CreateRunPage() {
   const [formData, setFormData] = useState({
     title: '',
     date: '',
-    start_time: '',
-    end_time: '',
+    start_time: '19:00',
+    end_time: '21:00',
     location_id: '',
     description: '',
-    capacity: '',
+    capacity: '15',
     cost: '',
-    is_variable_cost: false,
-    total_cost: '',
+    is_variable_cost: true,
+    total_cost: '120',
     private_group_id: '',
   });
   const [error, setError] = useState('');
