@@ -25,6 +25,17 @@ function formatRunTime(time: string) {
   return minutes === 0 ? `${hour12}${ampm}` : `${hour12}:${minutes.toString().padStart(2, '0')}${ampm}`;
 }
 
+function runStartMinutes(time: string) {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + (minutes || 0);
+}
+
+function compareRunStart(a: Run, b: Run) {
+  const dateDiff = a.date.split('T')[0].localeCompare(b.date.split('T')[0]);
+  if (dateDiff !== 0) return dateDiff;
+  return runStartMinutes(a.start_time) - runStartMinutes(b.start_time);
+}
+
 export default function ManageRunsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -103,8 +114,8 @@ export default function ManageRunsPage() {
     return null;
   }
 
-  const upcomingRuns = runs.filter(r => !r.is_completed);
-  const completedRuns = runs.filter(r => r.is_completed);
+  const upcomingRuns = runs.filter(r => !r.is_completed).sort((a, b) => compareRunStart(a, b));
+  const completedRuns = runs.filter(r => r.is_completed).sort((a, b) => compareRunStart(b, a));
 
   return (
     <div className="container mx-auto px-4 py-12">
