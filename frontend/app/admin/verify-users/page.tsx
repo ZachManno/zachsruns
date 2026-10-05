@@ -8,12 +8,18 @@ import { User } from '@/types';
 import UserBadge from '@/components/UserBadge';
 import Link from 'next/link';
 
+const getDisplayName = (u: User) =>
+  u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username;
+
 export default function VerifyUsersPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [verifyTarget, setVerifyTarget] = useState<User | null>(null);
+  const [addAsPlusOne, setAddAsPlusOne] = useState<boolean | null>(null);
+  const [referrerId, setReferrerId] = useState('');
 
   useEffect(() => {
     if (!authLoading && (!user || !user.is_admin)) {
@@ -37,13 +43,7 @@ export default function VerifyUsersPage() {
           return a.is_verified ? 1 : -1;
         }
         // If same verification status, sort alphabetically by name
-        const nameA = (a.first_name && a.last_name) 
-          ? `${a.first_name} ${a.last_name}`.toLowerCase()
-          : a.username.toLowerCase();
-        const nameB = (b.first_name && b.last_name)
-          ? `${b.first_name} ${b.last_name}`.toLowerCase()
-          : b.username.toLowerCase();
-        return nameA.localeCompare(nameB);
+        return getDisplayName(a).toLowerCase().localeCompare(getDisplayName(b).toLowerCase());
       });
       setUsers(sortedUsers);
     } catch (error) {
@@ -64,6 +64,44 @@ export default function VerifyUsersPage() {
     } finally {
       setUpdating(null);
     }
+  };
+
+  const openVerifyModal = (u: User) => {
+    setVerifyTarget(u);
+    setAddAsPlusOne(u.badge === 'plus_one' ? true : null);
+    setReferrerId(u.badge === 'plus_one' ? u.referred_by || '' : '');
+  };
+
+  const handleVerifyConfirm = async () => {
+    if (!verifyTarget) return;
+
+    const target = verifyTarget;
+    const plusOneReferrerId = addAsPlusOne ? referrerId : '';
+    setVerifyTarget(null);
+    setUpdating(target.id);
+
+    try {
+      await adminApi.verifyUser(target.id, true);
+    } catch (error) {
+      console.error('Failed to update verification:', error);
+      alert('Failed to update verification status');
+      setUpdating(null);
+      return;
+    }
+
+    if (plusOneReferrerId) {
+      try {
+        await adminApi.assignBadge(target.id, 'plus_one', plusOneReferrerId);
+      } catch (error) {
+        console.error('Failed to assign +1 badge:', error);
+        alert(
+          `${getDisplayName(target)} was verified, but the +1 badge could not be saved. Assign it in Manage Badges.`
+        );
+      }
+    }
+
+    await fetchUsers();
+    setUpdating(null);
   };
 
   const handleSetActive = async (userId: string, isActive: boolean) => {
@@ -98,6 +136,12 @@ export default function VerifyUsersPage() {
   if (!user || !user.is_admin) {
     return null;
   }
+
+  const regulars = users
+    .filter((u) => u.badge === 'regular' && u.id !== verifyTarget?.id)
+    .sort((a, b) =>
+      getDisplayName(a).toLowerCase().localeCompare(getDisplayName(b).toLowerCase())
+    );
 
   return (
     <div className="container mx-auto px-4 py-6 md:py-12">
@@ -138,7 +182,9 @@ export default function VerifyUsersPage() {
                 {/* Action Buttons */}
                 <div className="flex flex-row gap-2">
                   <button
-                    onClick={() => handleVerify(u.id, !u.is_verified)}
+                    onClick={() =>
+                      u.is_verified ? handleVerify(u.id, false) : openVerifyModal(u)
+                    }
                     disabled={updating === u.id}
                     className={`px-4 py-2 rounded transition-colors text-sm md:text-base whitespace-nowrap ${
                       u.is_verified
@@ -169,6 +215,85 @@ export default function VerifyUsersPage() {
           </div>
         </div>
       </div>
+
+      {verifyTarget && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold text-basketball-black mb-1">
+              Verify {getDisplayName(verifyTarget)}
+            </h2>
+            <p className="text-sm text-gray-600 mb-4">Add as Plus 1?</p>
+
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setAddAsPlusOne(true)}
+                className={`flex-1 px-4 py-2 rounded border transition-colors ${
+                  addAsPlusOne === true
+                    ? 'bg-basketball-orange text-white border-basketball-orange'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => setAddAsPlusOne(false)}
+                className={`flex-1 px-4 py-2 rounded border transition-colors ${
+                  addAsPlusOne === false
+                    ? 'bg-basketball-orange text-white border-basketball-orange'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                No
+              </button>
+            </div>
+
+            {addAsPlusOne && (
+              <div className="mb-4">
+                <label
+                  htmlFor="referrer"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Who are they a +1 of?
+                </label>
+                <select
+                  id="referrer"
+                  value={referrerId}
+                  onChange={(e) => setReferrerId(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                >
+                  <option value="">Select a Regular</option>
+                  {regulars.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {getDisplayName(r)}
+                    </option>
+                  ))}
+                </select>
+                {regulars.length === 0 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    No users have the Regular badge yet. Assign one in Manage Badges first.
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setVerifyTarget(null)}
+                className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleVerifyConfirm}
+                disabled={addAsPlusOne === null || (addAsPlusOne && !referrerId)}
+                className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {addAsPlusOne ? 'Verify & Save +1' : 'Verify'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
