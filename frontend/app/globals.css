@@ -93,6 +93,14 @@
     @apply font-display text-base md:text-lg font-bold tracking-tight text-white;
   }
 
+  /* Frosted title plate. Explicit -webkit prefix: iOS Safari drops
+     backdrop-filter when an ancestor is overflow:hidden or transformed. */
+  .hero-title-plate {
+    background-color: rgba(8, 8, 10, 0.42);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    backdrop-filter: blur(16px) saturate(140%);
+  }
+
   .muted {
     @apply text-zinc-400;
   }
