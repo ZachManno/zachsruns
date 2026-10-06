@@ -29,6 +29,13 @@ dist/
 .env.local
 .env*.local
 
+# Local Cursor / planning notes (not part of the app)
+.cursor/
+*_PLAN.md
+DEPLOYMENT_CHECKLIST.md
+scripts/generate_password_hash.py
+testing/
+
 # IDE
 .vscode/
 .idea/
