@@ -99,7 +99,9 @@ function HomeContent() {
 
           <div className="container relative mx-auto flex min-h-[188px] items-center justify-center px-4 py-12 md:min-h-[340px] md:py-16">
             <div className="animate-rise-in mx-auto max-w-3xl text-center">
-              <h1 className="inline-block rounded-2xl border border-white/10 bg-court-950/70 px-5 py-3 font-display text-[1.75rem] font-extrabold leading-[1.1] tracking-tight text-white backdrop-blur-md sm:px-8 sm:py-4 sm:text-4xl md:text-5xl">
+              {/* No backdrop-blur here: iOS Safari re-samples the backdrop against the solid
+                  body background once the page grows taller, turning this panel opaque black. */}
+              <h1 className="inline-block rounded-2xl border border-white/10 bg-court-950/70 px-5 py-3 font-display text-[1.75rem] font-extrabold leading-[1.1] tracking-tight text-white sm:px-8 sm:py-4 sm:text-4xl md:text-5xl">
                 Zach&apos;s <span className="text-gradient-ember">Organized Runs</span>
               </h1>
 
