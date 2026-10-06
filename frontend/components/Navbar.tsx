@@ -67,13 +67,8 @@ export default function Navbar() {
             className="group flex items-center gap-2.5"
           >
             <BallMark className="h-9 w-9 shrink-0 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:drop-shadow-[0_0_10px_rgba(255,107,53,0.55)]" />
-            <span className="flex flex-col leading-none">
-              <span className="font-display text-base font-extrabold tracking-tight text-white transition-colors duration-300 group-hover:text-ember-400 md:text-lg">
-                Zach&apos;s Runs
-              </span>
-              <span className="hidden text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-500 transition-colors duration-300 group-hover:text-ember-400/70 sm:block">
-                Organized Hoops
-              </span>
+            <span className="font-display text-base font-extrabold leading-none tracking-tight text-white transition-colors duration-300 group-hover:text-ember-400 md:text-lg">
+              Zach&apos;s Runs
             </span>
           </Link>
 
