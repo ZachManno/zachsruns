@@ -68,9 +68,11 @@ function HomeContent() {
 
   return (
     <div>
-      <div className="container mx-auto px-4 pt-4">
-        <AnnouncementBanner />
-      </div>
+      {user && (
+        <div className="container mx-auto px-4 pt-4">
+          <AnnouncementBanner />
+        </div>
+      )}
 
       {/* ── Hero ── */}
       <section className="mt-3 md:mt-4">
@@ -109,7 +111,7 @@ function HomeContent() {
               {!user && !authLoading && (
                 <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
                   <Link href="/signup" className="btn btn-primary btn-lg">
-                    Get Started
+                    Sign Up
                   </Link>
                   <Link href="/login" className="btn btn-secondary btn-lg">
                     Log In
@@ -137,18 +139,10 @@ function HomeContent() {
           ) : !user ? (
             /* ── Guest (not logged in) ── */
             <div className="mx-auto max-w-md py-6">
-              <div className="card card-pad glow-edge space-y-5 text-center">
+              <div className="card card-pad glow-edge text-center">
                 <p className="leading-relaxed text-zinc-400">
                   Sign up for an account to see upcoming runs and RSVP once an admin verifies you.
                 </p>
-                <div className="flex flex-col justify-center gap-3 pt-1 sm:flex-row">
-                  <Link href="/signup" className="btn btn-primary">
-                    Sign Up
-                  </Link>
-                  <Link href="/login" className="btn btn-outline">
-                    Log In
-                  </Link>
-                </div>
               </div>
             </div>
           ) : !canViewRuns ? (
