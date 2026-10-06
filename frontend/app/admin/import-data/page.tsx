@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { adminApi } from '@/lib/api';
-import Link from 'next/link';
+import BackLink from '@/components/BackLink';
 
 export default function ImportDataPage() {
   const { user, loading: authLoading } = useAuth();
@@ -16,9 +16,10 @@ export default function ImportDataPage() {
 
   if (authLoading) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center">
-          <p className="text-gray-600">Loading...</p>
+      <div className="page">
+        <div className="flex flex-col items-center gap-3 py-20">
+          <div className="spinner" />
+          <p className="text-sm text-zinc-500">Loading...</p>
         </div>
       </div>
     );
@@ -73,27 +74,22 @@ export default function ImportDataPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="max-w-2xl mx-auto">
-        <div className="mb-4">
-          <Link
-            href="/admin/dashboard"
-            className="text-basketball-orange hover:underline"
-          >
-            ← Back to Dashboard
-          </Link>
+    <div className="page">
+      <div className="mx-auto max-w-2xl">
+        <div className="mb-5">
+          <BackLink href="/admin/dashboard" label="Back to Dashboard" />
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-basketball-black mb-6">
-            Import Historical Data
-          </h1>
+        <div className="card glow-edge card-pad">
+          <p className="eyebrow">Migration</p>
+          <h1 className="heading-1 mt-2">Import Historical Data</h1>
+          <div className="accent-rule mt-5" />
 
-          <p className="text-gray-600 mb-6">
+          <p className="mt-6 text-sm text-zinc-400">
             Upload a JSON file with historical runs data. Format:
           </p>
 
-          <pre className="bg-gray-100 p-4 rounded mb-6 text-sm overflow-x-auto">
+          <pre className="panel-sunken mt-3 overflow-x-auto p-4 text-xs leading-relaxed text-zinc-400">
             {`{
   "runs": [
     {
@@ -115,24 +111,12 @@ export default function ImportDataPage() {
 }`}
           </pre>
 
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              {error}
-            </div>
-          )}
+          {error && <div className="alert alert-error mt-6">{error}</div>}
+          {success && <div className="alert alert-success mt-6">{success}</div>}
 
-          {success && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-              {success}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="mt-6 space-y-5">
             <div>
-              <label
-                htmlFor="file"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="file" className="field-label">
                 Upload JSON File
               </label>
               <input
@@ -140,15 +124,15 @@ export default function ImportDataPage() {
                 type="file"
                 accept=".json"
                 onChange={handleFileUpload}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
+                className="w-full cursor-pointer rounded-xl border border-court-600 bg-court-900/80 px-4 py-2.5 text-sm text-zinc-400
+                  file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-court-700 file:px-3 file:py-1.5
+                  file:text-xs file:font-semibold file:uppercase file:tracking-wider file:text-zinc-200
+                  hover:file:bg-court-600"
               />
             </div>
 
             <div>
-              <label
-                htmlFor="json"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="json" className="field-label">
                 Or paste JSON data
               </label>
               <textarea
@@ -156,7 +140,7 @@ export default function ImportDataPage() {
                 value={jsonData}
                 onChange={(e) => setJsonData(e.target.value)}
                 rows={15}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent font-mono text-sm text-gray-900"
+                className="field-textarea font-mono text-xs"
                 placeholder='{"runs": [...]}'
               />
             </div>
@@ -164,7 +148,7 @@ export default function ImportDataPage() {
             <button
               type="submit"
               disabled={submitting || !jsonData}
-              className="w-full bg-basketball-orange text-white py-2 px-4 rounded-md hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn btn-primary btn-block btn-lg"
             >
               {submitting ? 'Importing...' : 'Import Data'}
             </button>
@@ -174,4 +158,3 @@ export default function ImportDataPage() {
     </div>
   );
 }
-

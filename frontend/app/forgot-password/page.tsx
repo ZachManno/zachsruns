@@ -27,84 +27,71 @@ export default function ForgotPasswordPage() {
 
   if (submitted) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-basketball-black mb-6 text-center">
-            Check Your Email
-          </h1>
-          
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-            <p className="text-green-800 text-center">
+      <div className="container mx-auto px-4 py-12 md:py-20">
+        <div className="mx-auto max-w-md animate-rise-in">
+          <div className="card glow-edge p-6 md:p-8">
+            <div className="mb-6 text-center">
+              <p className="eyebrow">Almost there</p>
+              <h1 className="heading-1 mt-2">Check Your Email</h1>
+            </div>
+
+            <div className="alert alert-success mb-5 text-center">
               If an account with that email exists, we&apos;ve sent a password reset link.
+            </div>
+
+            <p className="mb-6 text-center text-sm text-zinc-500">
+              The link will expire in 15 minutes. Check your spam folder if you don&apos;t see it.
             </p>
+
+            <Link href="/login" className="btn btn-primary btn-block btn-lg">
+              Back to Login
+            </Link>
           </div>
-
-          <p className="text-gray-600 text-center mb-6">
-            The link will expire in 15 minutes. Check your spam folder if you don&apos;t see it.
-          </p>
-
-          <Link
-            href="/login"
-            className="block w-full text-center bg-basketball-orange text-white py-2 px-4 rounded-md hover:bg-orange-600 transition-colors"
-          >
-            Back to Login
-          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-basketball-black mb-6 text-center">
-          Forgot Password
-        </h1>
-
-        <p className="text-gray-600 text-center mb-6">
-          Enter your email address and we&apos;ll send you a link to reset your password.
-        </p>
-
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Email Address
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="you@example.com"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
-            />
+    <div className="container mx-auto px-4 py-12 md:py-20">
+      <div className="mx-auto max-w-md animate-rise-in">
+        <div className="card glow-edge p-6 md:p-8">
+          <div className="mb-6 text-center">
+            <p className="eyebrow">Account recovery</p>
+            <h1 className="heading-1 mt-2">Forgot Password</h1>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-basketball-orange text-white py-2 px-4 rounded-md hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Sending...' : 'Send Reset Link'}
-          </button>
-        </form>
+          <p className="mb-6 text-center text-sm leading-relaxed text-zinc-400">
+            Enter your email address and we&apos;ll send you a link to reset your password.
+          </p>
 
-        <p className="mt-4 text-center text-gray-600">
+          {error && <div className="alert alert-error mb-5">{error}</div>}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="email" className="field-label">
+                Email Address
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="you@example.com"
+                className="field-input"
+              />
+            </div>
+
+            <button type="submit" disabled={loading} className="btn btn-primary btn-block btn-lg">
+              {loading ? 'Sending...' : 'Send Reset Link'}
+            </button>
+          </form>
+        </div>
+
+        <p className="mt-6 text-center text-sm text-zinc-500">
           Remember your password?{' '}
-          <Link
-            href="/login"
-            className="text-basketball-orange hover:underline"
-          >
+          <Link href="/login" className="link-accent">
             Back to Login
           </Link>
         </p>
@@ -112,4 +99,3 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
-

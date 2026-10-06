@@ -3,11 +3,13 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import BallMark from '@/components/BallMark';
 
 export default function Navbar() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -40,160 +42,91 @@ export default function Navbar() {
 
   const showPrivateRuns = user && (user.private_group_count ?? 0) > 0;
 
-  const menuItems = user ? (
-    <>
-      {showPrivateRuns && (
-        <Link
-          href="/private-runs"
-          onClick={handleLinkClick}
-          className="block px-4 py-2 hover:bg-gray-800 transition-colors"
-        >
-          Private Groups
-        </Link>
-      )}
-      <Link
-        href="/community"
-        onClick={handleLinkClick}
-        className="block px-4 py-2 hover:bg-gray-800 transition-colors"
-      >
-        Community
-      </Link>
-      <Link
-        href="/locations"
-        onClick={handleLinkClick}
-        className="block px-4 py-2 hover:bg-gray-800 transition-colors"
-      >
-        Locations
-      </Link>
-      {user.is_admin && (
-        <Link
-          href="/admin/dashboard"
-          onClick={handleLinkClick}
-          className="block px-4 py-2 hover:bg-gray-800 transition-colors"
-        >
-          Admin
-        </Link>
-      )}
-      <Link
-        href="/profile"
-        onClick={handleLinkClick}
-        className="block px-4 py-2 hover:bg-gray-800 transition-colors"
-      >
-        Profile
-      </Link>
-      <button
-        onClick={handleLogout}
-        className="block w-full text-left px-4 py-2 hover:bg-gray-800 transition-colors"
-      >
-        Logout
-      </button>
-    </>
-  ) : (
-    <>
-      <Link
-        href="/login"
-        onClick={handleLinkClick}
-        className="block px-4 py-2 hover:bg-gray-800 transition-colors"
-      >
-        Login
-      </Link>
-      <Link
-        href="/signup"
-        onClick={handleLinkClick}
-        className="block px-4 py-2 bg-basketball-orange hover:bg-orange-600 transition-colors mx-4 my-2 rounded text-center"
-      >
-        Sign Up
-      </Link>
-    </>
-  );
+  const navLinks = user
+    ? [
+        ...(showPrivateRuns ? [{ href: '/private-runs', label: 'Private Groups' }] : []),
+        { href: '/community', label: 'Community' },
+        { href: '/locations', label: 'Locations' },
+        ...(user.is_admin ? [{ href: '/admin/dashboard', label: 'Admin' }] : []),
+        { href: '/profile', label: 'Profile' },
+      ]
+    : [];
+
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <nav className="bg-basketball-black text-white shadow-lg relative" ref={menuRef}>
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="text-xl md:text-2xl font-bold text-basketball-orange">
-            Zach&apos;s Organized Runs
+    <nav
+      className="sticky top-0 z-40 border-b border-court-800/80 bg-court-950/80 backdrop-blur-xl"
+      ref={menuRef}
+    >
+      <div className="container mx-auto px-4">
+        <div className="flex h-16 items-center justify-between">
+          <Link
+            href="/"
+            aria-label="Zach's Runs — back to home"
+            className="group flex items-center gap-2.5"
+          >
+            <BallMark className="h-9 w-9 shrink-0 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:drop-shadow-[0_0_10px_rgba(255,107,53,0.55)]" />
+            <span className="flex flex-col leading-none">
+              <span className="font-display text-base font-extrabold tracking-tight text-white transition-colors duration-300 group-hover:text-ember-400 md:text-lg">
+                Zach&apos;s Runs
+              </span>
+              <span className="hidden text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-500 transition-colors duration-300 group-hover:text-ember-400/70 sm:block">
+                Organized Hoops
+              </span>
+            </span>
           </Link>
-          
+
           {/* Desktop Menu - hidden on mobile */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden items-center gap-1 md:flex">
             {loading ? (
-              <span className="text-gray-400">Loading...</span>
+              <span className="px-3 text-sm text-zinc-500">Loading...</span>
+            ) : user ? (
+              <>
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                      isActive(link.href)
+                        ? 'bg-ember-500/10 text-ember-400'
+                        : 'text-zinc-400 hover:bg-court-800 hover:text-white'
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                <span className="mx-2 h-6 w-px bg-court-700" />
+                <button
+                  onClick={handleLogout}
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-500 transition-colors hover:text-white"
+                >
+                  Logout
+                </button>
+              </>
             ) : (
-              user ? (
-                <>
-                  {showPrivateRuns && (
-                    <Link
-                      href="/private-runs"
-                      className="hover:text-basketball-orange transition-colors"
-                    >
-                      Private Groups
-                    </Link>
-                  )}
-                  <Link
-                    href="/community"
-                    className="hover:text-basketball-orange transition-colors"
-                  >
-                    Community
-                  </Link>
-                  <Link
-                    href="/locations"
-                    className="hover:text-basketball-orange transition-colors"
-                  >
-                    Locations
-                  </Link>
-                  {user.is_admin && (
-                    <Link
-                      href="/admin/dashboard"
-                      className="hover:text-basketball-orange transition-colors"
-                    >
-                      Admin
-                    </Link>
-                  )}
-                  <Link
-                    href="/profile"
-                    className="hover:text-basketball-orange transition-colors"
-                  >
-                    Profile
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="hover:text-basketball-orange transition-colors"
-                  >
-                    Logout
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/login"
-                    className="hover:text-basketball-orange transition-colors"
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    href="/signup"
-                    className="bg-basketball-orange px-4 py-2 rounded hover:bg-orange-600 transition-colors"
-                  >
-                    Sign Up
-                  </Link>
-                </>
-              )
+              <>
+                <Link
+                  href="/login"
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:text-white"
+                >
+                  Log In
+                </Link>
+                <Link href="/signup" className="btn btn-primary btn-sm ml-1 px-4 py-2 text-sm">
+                  Sign Up
+                </Link>
+              </>
             )}
           </div>
 
           {/* Mobile Hamburger Button - visible on mobile only */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 hover:bg-gray-800 rounded transition-colors"
+            className="rounded-lg border border-court-700 p-2 text-zinc-300 transition-colors hover:bg-court-800 hover:text-white md:hidden"
             aria-label="Toggle menu"
+            aria-expanded={isMenuOpen}
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {isMenuOpen ? (
                 <path
                   strokeLinecap="round"
@@ -216,12 +149,52 @@ export default function Navbar() {
 
       {/* Mobile Dropdown Menu - visible on mobile when open */}
       {isMenuOpen && (
-        <div className="md:hidden bg-basketball-black border-t border-gray-700">
+        <div className="animate-fade-in border-t border-court-800 bg-court-900/95 backdrop-blur-xl md:hidden">
           {loading ? (
-            <div className="px-4 py-2 text-gray-400">Loading...</div>
+            <div className="px-4 py-3 text-sm text-zinc-500">Loading...</div>
           ) : (
-            <div className="py-2">
-              {menuItems}
+            <div className="space-y-1 p-3">
+              {user ? (
+                <>
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={handleLinkClick}
+                      className={`block rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
+                        isActive(link.href)
+                          ? 'bg-ember-500/10 text-ember-400'
+                          : 'text-zinc-300 hover:bg-court-800 hover:text-white'
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full rounded-lg px-4 py-2.5 text-left text-sm font-medium text-zinc-500 transition-colors hover:bg-court-800 hover:text-white"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    onClick={handleLinkClick}
+                    className="block rounded-lg px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:bg-court-800 hover:text-white"
+                  >
+                    Log In
+                  </Link>
+                  <Link
+                    href="/signup"
+                    onClick={handleLinkClick}
+                    className="btn btn-primary btn-block mt-1"
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -229,4 +202,3 @@ export default function Navbar() {
     </nav>
   );
 }
-

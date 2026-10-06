@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { privateGroupsApi } from '@/lib/api';
 import { PrivateGroup } from '@/types';
 import Link from 'next/link';
+import PageHeader from '@/components/PageHeader';
 
 export default function PrivateRunsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -36,9 +37,10 @@ export default function PrivateRunsPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center">
-          <p className="text-gray-600">Loading...</p>
+      <div className="page">
+        <div className="flex flex-col items-center gap-3 py-20">
+          <div className="spinner" />
+          <p className="text-sm text-zinc-500">Loading...</p>
         </div>
       </div>
     );
@@ -47,40 +49,39 @@ export default function PrivateRunsPage() {
   if (!user) return null;
 
   return (
-    <div className="container mx-auto px-4 py-4 md:py-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl md:text-4xl font-bold text-basketball-black mb-4 md:mb-8 text-center">
-          Private Groups
-        </h1>
+    <div className="page">
+      <div className="mx-auto max-w-4xl">
+        <PageHeader
+          eyebrow="Invite only"
+          title="Private Groups"
+          description="Runs organized for a smaller circle."
+        />
 
         {groups.length === 0 ? (
-          <div className="max-w-md mx-auto py-10">
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8 text-center space-y-4">
-              <div className="text-4xl">&#128274;</div>
-              <p className="text-gray-600 text-base md:text-lg">
-                You&apos;re not part of any private run groups yet.
-              </p>
-              <p className="text-gray-500 text-sm">
-                An admin can invite you to a private group.
-              </p>
+          <div className="mx-auto max-w-md py-6">
+            <div className="card card-pad glow-edge space-y-3 text-center">
+              <p className="text-zinc-300">You&apos;re not part of any private run groups yet.</p>
+              <p className="text-sm text-zinc-500">An admin can invite you to a private group.</p>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
             {groups.map((group) => (
               <Link
                 key={group.id}
                 href={`/private-runs/${group.id}`}
-                className="bg-white rounded-lg shadow-md p-5 md:p-6 hover:shadow-lg transition-shadow border border-gray-100"
+                className="card card-interactive group p-5"
               >
-                <h2 className="text-lg md:text-xl font-bold text-basketball-black mb-2">
+                <h2 className="font-display text-lg font-bold tracking-tight text-white md:text-xl">
                   {group.name}
                 </h2>
                 {group.description && (
-                  <p className="text-gray-600 text-sm mb-3">{group.description}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-zinc-400">{group.description}</p>
                 )}
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <span>{group.member_count} member{group.member_count !== 1 ? 's' : ''}</span>
+                <div className="mt-4 border-t border-court-800 pt-3">
+                  <span className="chip chip-neutral">
+                    {group.member_count} member{group.member_count !== 1 ? 's' : ''}
+                  </span>
                 </div>
               </Link>
             ))}

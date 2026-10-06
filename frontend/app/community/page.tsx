@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { usersApi } from '@/lib/api';
 import { User } from '@/types';
 import BadgeIcon from '@/components/BadgeIcon';
+import PageHeader from '@/components/PageHeader';
 
 export default function CommunityPage() {
   const { user: currentUser, loading: authLoading } = useAuth();
@@ -68,25 +69,32 @@ export default function CommunityPage() {
       ? `${user.first_name} ${user.last_name}`
       : user.username;
 
+    const initials = (user.first_name?.[0] || user.username[0] || '?').toUpperCase();
+
     const handleClick = () => {
       router.push(`/users/${user.id}`);
     };
 
     return (
-      <div 
-        className="bg-white rounded-lg shadow-md p-4 border border-gray-200 hover:shadow-lg transition-shadow cursor-pointer"
+      <div
+        className="card card-interactive group cursor-pointer p-4"
         onClick={handleClick}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {user.badge && <BadgeIcon badge={user.badge} size="medium" />}
-            <div>
-              <p className="font-semibold text-basketball-black">{displayName}</p>
-              <p className="text-sm text-gray-600">@{user.username}</p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-court-700 bg-court-900 font-display text-sm font-bold text-ember-400 transition-colors group-hover:border-ember-500/40">
+              {initials}
+            </span>
+            <div className="min-w-0">
+              <p className="flex items-center gap-1.5 truncate font-semibold text-white">
+                {displayName}
+                {user.badge && <BadgeIcon badge={user.badge} size="small" />}
+              </p>
+              <p className="truncate text-xs text-zinc-500">@{user.username}</p>
               {user.badge === 'plus_one' && user.referrer && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Referred by:{' '}
-                  <span className="font-medium text-gray-700">
+                <p className="mt-1 truncate text-xs text-zinc-500">
+                  Referred by{' '}
+                  <span className="font-medium text-zinc-400">
                     {user.referrer.first_name && user.referrer.last_name
                       ? `${user.referrer.first_name} ${user.referrer.last_name}`
                       : user.referrer.username}
@@ -95,24 +103,30 @@ export default function CommunityPage() {
               )}
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-sm font-semibold text-gray-700">
-              {user.runs_attended_count || 0} {user.runs_attended_count === 1 ? 'run' : 'runs'} attended
+          <div className="shrink-0 text-right">
+            <p className="font-display text-lg font-bold leading-none text-white">
+              {user.runs_attended_count || 0}
             </p>
-            <p className="text-xs text-gray-600">
-              {user.attendance_rate !== undefined && user.attendance_rate !== null ? `${user.attendance_rate}%` : '0%'} attendance
+            <p className="mt-0.5 text-[10px] uppercase tracking-wider text-zinc-500">
+              {user.runs_attended_count === 1 ? 'run' : 'runs'}
             </p>
-            {user.is_verified ? (
-              <span className="text-xs text-green-600">Verified</span>
-            ) : (
-              <span className="text-xs text-gray-400">Unverified</span>
-            )}
-            {currentUser?.is_admin && !user.is_active && (
-              <span className="ml-2 inline-block px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700 font-medium">
-                Inactive
-              </span>
-            )}
+            <p className="mt-1 text-xs text-zinc-400">
+              {user.attendance_rate !== undefined && user.attendance_rate !== null
+                ? `${user.attendance_rate}%`
+                : '0%'}{' '}
+              rate
+            </p>
           </div>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-court-800 pt-3">
+          {user.is_verified ? (
+            <span className="chip chip-green">Verified</span>
+          ) : (
+            <span className="chip chip-neutral">Unverified</span>
+          )}
+          {currentUser?.is_admin && !user.is_active && (
+            <span className="chip chip-red">Inactive</span>
+          )}
         </div>
       </div>
     );
@@ -136,9 +150,13 @@ export default function CommunityPage() {
     }
 
     return (
-      <div className="mb-6 md:mb-8">
-        <h2 className="text-xl md:text-2xl font-bold text-basketball-black mb-3 md:mb-4">{title}</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+      <div className="mb-8 md:mb-10">
+        <div className="mb-4 flex items-center gap-4">
+          <h2 className="heading-2 shrink-0">{title}</h2>
+          <span className="chip chip-neutral shrink-0">{filtered.length}</span>
+          <span className="accent-rule" />
+        </div>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">
           {filtered.map((user) => (
             <UserCard key={user.id} user={user} />
           ))}
@@ -149,9 +167,10 @@ export default function CommunityPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center">
-          <p className="text-gray-600">Loading...</p>
+      <div className="page">
+        <div className="flex flex-col items-center gap-3 py-20">
+          <div className="spinner" />
+          <p className="text-sm text-zinc-500">Loading...</p>
         </div>
       </div>
     );
@@ -162,35 +181,33 @@ export default function CommunityPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 md:py-12">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl md:text-4xl font-bold text-basketball-black mb-4 md:mb-8 text-center">
-          Community
-        </h1>
+    <div className="page">
+      <div className="mx-auto max-w-6xl">
+        <PageHeader
+          eyebrow="The roster"
+          title="Community"
+          description="Everyone who runs with us, grouped by badge and ranked by how often they show up."
+        />
 
         {/* Search and Filter Bar */}
-        <div className="bg-white rounded-lg shadow-md p-4 md:p-6 mb-6 md:mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="card card-pad mb-8">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Search
-              </label>
+              <label className="field-label">Search</label>
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by name..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                className="field-input"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Filter by Badge
-              </label>
+              <label className="field-label">Filter by Badge</label>
               <select
                 value={badgeFilter}
                 onChange={(e) => setBadgeFilter(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                className="field-select"
               >
                 <option value="all">All Badges</option>
                 <option value="regular">Regular</option>
@@ -198,14 +215,14 @@ export default function CommunityPage() {
               </select>
             </div>
             <div className="flex items-end">
-              <label className="flex items-center gap-2">
+              <label className="flex cursor-pointer items-center gap-2.5 py-2.5">
                 <input
                   type="checkbox"
                   checked={showUnverified}
                   onChange={(e) => setShowUnverified(e.target.checked)}
-                  className="rounded"
+                  className="field-checkbox"
                 />
-                <span className="text-sm text-gray-700">Show Unverified</span>
+                <span className="text-sm text-zinc-300">Show Unverified</span>
               </label>
             </div>
           </div>
@@ -213,23 +230,23 @@ export default function CommunityPage() {
 
         {/* Badge Sections */}
         <BadgeSection
-          title="⭐ Regular Members"
+          title="Regular Members"
           users={communityData.regular}
           badgeType="regular"
         />
         <BadgeSection
-          title="👥 +1 Members"
+          title="+1 Members"
           users={communityData.plus_one}
           badgeType="plus_one"
         />
         <BadgeSection
-          title="👤 Members (No Badge)"
+          title="Members"
           users={communityData.none}
           badgeType="none"
         />
         {showUnverified && (
           <BadgeSection
-            title="⚠️ Unverified Users"
+            title="Unverified Users"
             users={communityData.unverified}
             badgeType="unverified"
           />
@@ -238,4 +255,3 @@ export default function CommunityPage() {
     </div>
   );
 }
-

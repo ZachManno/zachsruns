@@ -7,6 +7,7 @@ import { adminApi, runsApi } from '@/lib/api';
 import { DropRequest, Run } from '@/types';
 import Link from 'next/link';
 import BadgeIcon from '@/components/BadgeIcon';
+import BackLink from '@/components/BackLink';
 
 function formatRunDate(dateString: string) {
   const [year, month, day] = dateString.split('T')[0].split('-').map(Number);
@@ -102,9 +103,10 @@ export default function ManageRunsPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center">
-          <p className="text-gray-600">Loading...</p>
+      <div className="page">
+        <div className="flex flex-col items-center gap-3 py-20">
+          <div className="spinner" />
+          <p className="text-sm text-zinc-500">Loading...</p>
         </div>
       </div>
     );
@@ -118,27 +120,25 @@ export default function ManageRunsPage() {
   const completedRuns = runs.filter(r => r.is_completed).sort((a, b) => compareRunStart(b, a));
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-4">
-          <Link
-            href="/admin/dashboard"
-            className="text-basketball-orange hover:underline"
-          >
-            ← Back to Dashboard
-          </Link>
+    <div className="page">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-5">
+          <BackLink href="/admin/dashboard" label="Back to Dashboard" />
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-basketball-black mb-6">
-            Manage Runs
-          </h1>
+        <div className="card glow-edge card-pad">
+          <p className="eyebrow">Scheduling</p>
+          <h1 className="heading-1 mt-2">Manage Runs</h1>
+          <div className="accent-rule mt-5" />
 
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-basketball-black mb-1">
-              Pending drops ({dropRequests.length})
-            </h2>
-            <p className="text-sm text-gray-600 mb-4">
+          <div className="mt-8">
+            <div className="mb-1 flex items-center gap-3">
+              <h2 className="heading-2 shrink-0">Pending drops</h2>
+              <span className={`chip shrink-0 ${dropRequests.length > 0 ? 'chip-amber' : 'chip-neutral'}`}>
+                {dropRequests.length}
+              </span>
+            </div>
+            <p className="mb-4 text-sm text-zinc-500">
               They stay confirmed until you approve. Approval emails everyone still confirmed or interested.
             </p>
             {dropRequests.length > 0 ? (
@@ -149,22 +149,22 @@ export default function ManageRunsPage() {
                   return (
                     <div
                       key={request.id}
-                      className="border border-amber-200 bg-amber-50 rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
+                      className="flex flex-col justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/[0.07] p-4 md:flex-row md:items-center"
                     >
-                      <div>
-                        <p className="font-semibold text-basketball-black">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-white">
                           {name} wants to drop to {requestedLabel}
                         </p>
-                        <p className="text-sm text-gray-600">
+                        <p className="mt-0.5 text-sm text-zinc-400">
                           {request.run_title} · {formatRunDate(request.run_date)} · {formatRunTime(request.run_start_time)}
                         </p>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex shrink-0 gap-2">
                         <button
                           type="button"
                           onClick={() => handleResolveDrop(request.id, 'approve')}
                           disabled={resolvingDropId === request.id}
-                          className="px-3 py-2 rounded bg-green-600 text-white text-sm disabled:opacity-50"
+                          className="btn btn-success btn-sm px-3 py-2"
                         >
                           Approve
                         </button>
@@ -172,7 +172,7 @@ export default function ManageRunsPage() {
                           type="button"
                           onClick={() => handleResolveDrop(request.id, 'deny')}
                           disabled={resolvingDropId === request.id}
-                          className="px-3 py-2 rounded bg-red-600 text-white text-sm hover:bg-red-700 disabled:opacity-50"
+                          className="btn btn-danger btn-sm px-3 py-2"
                         >
                           Deny
                         </button>
@@ -182,18 +182,19 @@ export default function ManageRunsPage() {
                 })}
               </div>
             ) : (
-              <p className="text-gray-600">No pending drop requests</p>
+              <p className="text-sm text-zinc-500">No pending drop requests</p>
             )}
           </div>
 
-          <div className="space-y-8">
+          <div className="mt-10 space-y-10">
             {/* Upcoming Runs */}
             <div>
-              <h2 className="text-2xl font-bold text-basketball-black mb-4">
-                Upcoming Runs ({upcomingRuns.length})
-              </h2>
+              <div className="mb-4 flex items-center gap-3">
+                <h2 className="heading-2 shrink-0">Upcoming Runs</h2>
+                <span className="chip chip-neutral shrink-0">{upcomingRuns.length}</span>
+              </div>
               {upcomingRuns.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {upcomingRuns.map((run) => (
                     <RunRow
                       key={run.id}
@@ -204,17 +205,18 @@ export default function ManageRunsPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-600">No upcoming runs</p>
+                <p className="text-sm text-zinc-500">No upcoming runs</p>
               )}
             </div>
 
             {/* Completed Runs */}
             <div>
-              <h2 className="text-2xl font-bold text-basketball-black mb-4">
-                Completed Runs ({completedRuns.length})
-              </h2>
+              <div className="mb-4 flex items-center gap-3">
+                <h2 className="heading-2 shrink-0">Completed Runs</h2>
+                <span className="chip chip-neutral shrink-0">{completedRuns.length}</span>
+              </div>
               {completedRuns.length > 0 ? (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {completedRuns.map((run) => (
                     <RunRow
                       key={run.id}
@@ -225,7 +227,7 @@ export default function ManageRunsPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-600">No completed runs</p>
+                <p className="text-sm text-zinc-500">No completed runs</p>
               )}
             </div>
           </div>
@@ -386,84 +388,89 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
   const confirmedCount = rsvpData?.participants.confirmed.length || 0;
   const isAtCapacity = rsvpData?.capacity ? confirmedCount >= rsvpData.capacity : false;
 
+  const lockedButtonClass =
+    'btn btn-sm cursor-not-allowed border border-court-700 bg-court-800/60 text-zinc-600 px-2 py-2 md:px-3 text-xs md:text-sm';
+
   return (
-    <div className={`border rounded-lg ${run.is_completed ? 'bg-gray-50 border-gray-300' : 'bg-white border-gray-200'}`}>
+    <div
+      className={`rounded-xl border transition-colors ${
+        run.is_completed
+          ? 'border-court-800 bg-court-900/50'
+          : 'border-court-700 bg-court-850/70 hover:border-court-600'
+      }`}
+    >
       <div className="p-3 md:p-4">
         {/* Mobile: Stack vertically, Desktop: Side by side */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           {/* Run Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start md:items-center gap-2 flex-wrap">
-              <h3 className="text-base md:text-lg font-semibold text-basketball-black">{run.title}</h3>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-start gap-2 md:items-center">
+              <h3 className="font-display text-base font-bold tracking-tight text-white md:text-lg">
+                {run.title}
+              </h3>
               {run.private_group_name && (
-                <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap">
-                  {run.private_group_name}
-                </span>
+                <span className="chip chip-blue whitespace-nowrap">{run.private_group_name}</span>
               )}
-              {run.is_completed && (
-                <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap">
-                  Completed
-                </span>
-              )}
+              {run.is_completed && <span className="chip chip-green whitespace-nowrap">Completed</span>}
             </div>
-            <p className="text-xs md:text-sm text-gray-600 mt-1">
+            <p className="mt-1 text-xs text-zinc-400 md:text-sm">
               {formatDate(run.date)} • {formatTimeRange(run.start_time, run.end_time)} • {run.location_name}
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="mt-1 text-xs text-zinc-500">
               {run.participant_counts?.confirmed || 0} confirmed
               {run.capacity && ` / ${run.capacity}`}
             </p>
           </div>
           
           {/* Action Buttons - Grid on mobile, flex on desktop */}
-          <div className="grid grid-cols-3 md:flex gap-1.5 md:gap-2">
+          <div className="grid shrink-0 grid-cols-3 gap-1.5 md:flex md:gap-2">
             {!run.is_completed && (
               <button
                 onClick={handleToggleExpand}
-                className="px-2 md:px-3 py-1.5 md:py-1 rounded text-xs md:text-sm bg-basketball-orange text-white hover:bg-orange-600 whitespace-nowrap"
+                className="btn btn-sm whitespace-nowrap px-2 py-2 text-xs md:px-3 md:text-sm btn-outline"
               >
                 {expanded ? 'Hide' : 'RSVPs'}
               </button>
             )}
             <Link
               href={`/admin/complete-run/${run.id}`}
-              className={`px-2 md:px-3 py-1.5 md:py-1 rounded text-xs md:text-sm text-center ${
+              className={
                 run.is_completed
-                  ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                  : 'bg-green-600 text-white hover:bg-green-700'
-              }`}
+                  ? `${lockedButtonClass} text-center`
+                  : 'btn btn-success btn-sm px-2 py-2 text-center text-xs md:px-3 md:text-sm'
+              }
             >
               {run.is_completed ? 'Done' : 'Complete'}
             </Link>
             <Link
               href={`/admin/edit-run/${run.id}`}
-              className={`px-2 md:px-3 py-1.5 md:py-1 rounded text-xs md:text-sm text-center ${
+              className={
                 run.is_completed
-                  ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              }`}
+                  ? `${lockedButtonClass} text-center`
+                  : 'btn btn-secondary btn-sm px-2 py-2 text-center text-xs md:px-3 md:text-sm'
+              }
             >
               Edit
             </Link>
             <button
               onClick={() => setShowRemindModal(true)}
               disabled={run.is_completed}
-              className={`px-2 md:px-3 py-1.5 md:py-1 rounded text-xs md:text-sm ${
+              className={
                 run.is_completed
-                  ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                  : 'bg-purple-600 text-white hover:bg-purple-700'
-              }`}
+                  ? lockedButtonClass
+                  : 'btn btn-sm border border-violet-500/40 bg-violet-500/10 px-2 py-2 text-xs text-violet-300 hover:border-violet-500/70 hover:bg-violet-500/20 hover:text-violet-200 md:px-3 md:text-sm'
+              }
             >
               Remind
             </button>
             <button
               onClick={() => onDelete(run.id)}
               disabled={run.is_completed}
-              className={`px-2 md:px-3 py-1.5 md:py-1 rounded text-xs md:text-sm ${
+              className={
                 run.is_completed
-                  ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                  : 'bg-red-600 text-white hover:bg-red-700'
-              }`}
+                  ? lockedButtonClass
+                  : 'btn btn-danger btn-sm px-2 py-2 text-xs md:px-3 md:text-sm'
+              }
             >
               Delete
             </button>
@@ -473,25 +480,25 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
 
       {/* Expandable RSVP Management Section */}
       {expanded && !run.is_completed && (
-        <div className="border-t border-gray-200 p-4 bg-gray-50">
+        <div className="animate-fade-in border-t border-court-800 bg-court-900/60 p-4">
           {loadingRsvps ? (
-            <p className="text-gray-600 text-sm">Loading RSVPs...</p>
+            <p className="text-sm text-zinc-500">Loading RSVPs...</p>
           ) : rsvpData ? (
-            <div className="space-y-4">
+            <div className="space-y-5">
               {/* Capacity Warning */}
               {isAtCapacity && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded p-2 text-sm text-yellow-800">
+                <div className="alert alert-warning text-xs">
                   Run is at capacity ({rsvpData.capacity})
                 </div>
               )}
 
               {/* Confirmed Section */}
               <div>
-                <h4 className="text-sm font-semibold text-green-700 mb-2">
+                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">
                   Confirmed ({rsvpData.participants.confirmed.length})
                 </h4>
                 {rsvpData.participants.confirmed.length > 0 ? (
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     {rsvpData.participants.confirmed.map((user) => (
                       <UserRsvpRow
                         key={user.id}
@@ -504,17 +511,17 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-500">No confirmed users</p>
+                  <p className="text-xs text-zinc-600">No confirmed users</p>
                 )}
               </div>
 
               {/* Interested Section */}
               <div>
-                <h4 className="text-sm font-semibold text-blue-700 mb-2">
+                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-400">
                   Interested ({rsvpData.participants.interested.length})
                 </h4>
                 {rsvpData.participants.interested.length > 0 ? (
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     {rsvpData.participants.interested.map((user) => (
                       <UserRsvpRow
                         key={user.id}
@@ -527,17 +534,17 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-500">No interested users</p>
+                  <p className="text-xs text-zinc-600">No interested users</p>
                 )}
               </div>
 
               {/* Out Section */}
               <div>
-                <h4 className="text-sm font-semibold text-gray-600 mb-2">
+                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-red-400">
                   Out ({rsvpData.participants.out.length})
                 </h4>
                 {rsvpData.participants.out.length > 0 ? (
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     {rsvpData.participants.out.map((user) => (
                       <UserRsvpRow
                         key={user.id}
@@ -550,20 +557,18 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-500">No users marked as out</p>
+                  <p className="text-xs text-zinc-600">No users marked as out</p>
                 )}
               </div>
 
               {/* Add User Section */}
               {rsvpData.available_users.length > 0 && (
-                <div className="pt-3 border-t border-gray-200">
-                  <h4 className="text-sm font-semibold text-basketball-black mb-2">
-                    Add User
-                  </h4>
-                  <div className="flex flex-col md:flex-row gap-2">
+                <div className="border-t border-court-800 pt-4">
+                  <h4 className="field-label">Add User</h4>
+                  <div className="flex flex-col gap-2 md:flex-row">
                     <select
                       id={`add-user-${run.id}`}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm text-gray-900 focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
+                      className="field-select flex-1 py-2 text-xs"
                       defaultValue=""
                     >
                       <option value="" disabled>Select a user...</option>
@@ -576,7 +581,7 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
                     <div className="flex gap-2">
                       <select
                         id={`add-status-${run.id}`}
-                        className="flex-1 md:flex-none px-3 py-2 border border-gray-300 rounded text-sm text-gray-900 focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
+                        className="field-select flex-1 py-2 text-xs md:flex-none"
                         defaultValue="confirmed"
                       >
                         <option value="confirmed" disabled={isAtCapacity}>Confirmed</option>
@@ -596,7 +601,7 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
                             userSelect.value = '';
                           }
                         }}
-                        className="px-4 py-2 bg-basketball-orange text-white rounded text-sm hover:bg-orange-600 whitespace-nowrap"
+                        className="btn btn-primary btn-sm whitespace-nowrap px-4 py-2"
                       >
                         Add
                       </button>
@@ -606,21 +611,19 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
               )}
             </div>
           ) : (
-            <p className="text-gray-600 text-sm">Failed to load RSVPs</p>
+            <p className="text-sm text-zinc-500">Failed to load RSVPs</p>
           )}
         </div>
       )}
 
       {/* Remind Modal */}
       {showRemindModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-xl font-bold text-basketball-black mb-4">
-              Send Reminder: {run.title}
-            </h3>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Reminder Message <span className="text-red-500">*</span>
+        <div className="modal-overlay">
+          <div className="modal-panel max-w-md animate-rise-in">
+            <h3 className="heading-2 mb-4">Send Reminder: {run.title}</h3>
+            <div className="mb-5">
+              <label className="field-label">
+                Reminder Message <span className="text-ember-400">*</span>
               </label>
               <input
                 type="text"
@@ -631,29 +634,27 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
                   }
                 }}
                 placeholder="Enter reminder message (max 100 characters)"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                className="field-input"
                 maxLength={100}
                 autoFocus
               />
-              <p className="text-xs text-gray-500 mt-1">
-                {reminderMessage.length}/100 characters
-              </p>
+              <p className="field-hint">{reminderMessage.length}/100 characters</p>
             </div>
-            <div className="flex gap-3 justify-end">
+            <div className="flex justify-end gap-3">
               <button
                 onClick={() => {
                   setShowRemindModal(false);
                   setReminderMessage('');
                 }}
                 disabled={sendingReminder}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="btn btn-secondary"
               >
                 Cancel
               </button>
               <button
                 onClick={handleRemind}
                 disabled={sendingReminder || !reminderMessage.trim()}
-                className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn btn-primary"
               >
                 {sendingReminder ? 'Sending...' : 'Send Reminder'}
               </button>
@@ -683,15 +684,15 @@ function UserRsvpRow({
     : user.username;
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between p-2 bg-white rounded border border-gray-200 gap-2">
+    <div className="flex flex-col justify-between gap-2 rounded-xl border border-court-700 bg-court-850/80 p-2 md:flex-row md:items-center">
       {/* User Info */}
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="flex min-w-0 items-center gap-2 pl-1">
         {user.badge && <BadgeIcon badge={user.badge as 'regular' | 'plus_one'} size="small" />}
-        <span className="text-sm text-gray-900 truncate">{displayName}</span>
-        <span className="text-xs text-gray-500 hidden md:inline">@{user.username}</span>
+        <span className="truncate text-sm text-zinc-100">{displayName}</span>
+        <span className="hidden text-xs text-zinc-500 md:inline">@{user.username}</span>
       </div>
       {/* Controls */}
-      <div className="flex items-center gap-2 justify-end">
+      <div className="flex shrink-0 items-center justify-end gap-2">
         <select
           value={currentStatus}
           onChange={(e) => {
@@ -701,7 +702,7 @@ function UserRsvpRow({
             }
           }}
           disabled={isUpdating}
-          className="px-2 py-1.5 border border-gray-300 rounded text-xs text-gray-900 focus:ring-2 focus:ring-basketball-orange focus:border-transparent disabled:opacity-50"
+          className="field-select w-32 py-1.5 text-xs"
         >
           <option value="confirmed" disabled={isAtCapacity && currentStatus !== 'confirmed'}>
             Confirmed
@@ -712,16 +713,13 @@ function UserRsvpRow({
         <button
           onClick={() => onStatusChange(user.id, null, displayName, currentStatus)}
           disabled={isUpdating}
-          className="text-red-600 hover:text-red-800 text-xs disabled:opacity-50 whitespace-nowrap"
+          className="whitespace-nowrap text-xs font-semibold text-red-400 transition-colors hover:text-red-300 disabled:opacity-50"
           title="Remove RSVP"
         >
           Remove
         </button>
-        {isUpdating && (
-          <span className="text-xs text-gray-500">...</span>
-        )}
+        {isUpdating && <span className="text-xs text-zinc-500">...</span>}
       </div>
     </div>
   );
 }
-

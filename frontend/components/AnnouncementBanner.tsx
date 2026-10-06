@@ -28,14 +28,12 @@ export default function AnnouncementBanner() {
   }
 
   return (
-    <div className="bg-basketball-orange text-white py-3 px-4 shadow-md">
-      <div className="container mx-auto">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-white">Announcement:</span>
-          <span className="text-white">{announcement.message}</span>
-        </div>
-      </div>
+    <div className="glow-edge animate-fade-in rounded-2xl border border-ember-500/30 bg-gradient-to-r from-ember-500/15 via-ember-500/5 to-transparent px-4 py-3">
+      <p className="text-sm text-zinc-200">
+        <span className="font-semibold uppercase tracking-wider text-ember-400">Announcement</span>
+        <span className="mx-2 text-court-600">/</span>
+        <span>{announcement.message}</span>
+      </p>
     </div>
   );
 }
-

@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { adminApi } from '@/lib/api';
 import { Announcement } from '@/types';
-import Link from 'next/link';
+import BackLink from '@/components/BackLink';
 
 export default function AnnouncementsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -86,9 +86,10 @@ export default function AnnouncementsPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center">
-          <p className="text-gray-600">Loading...</p>
+      <div className="page">
+        <div className="flex flex-col items-center gap-3 py-20">
+          <div className="spinner" />
+          <p className="text-sm text-zinc-500">Loading...</p>
         </div>
       </div>
     );
@@ -99,37 +100,31 @@ export default function AnnouncementsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="max-w-2xl mx-auto">
-        <div className="mb-4">
-          <Link
-            href="/admin/dashboard"
-            className="text-basketball-orange hover:underline"
-          >
-            ← Back to Dashboard
-          </Link>
+    <div className="page">
+      <div className="mx-auto max-w-2xl">
+        <div className="mb-5">
+          <BackLink href="/admin/dashboard" label="Back to Dashboard" />
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-basketball-black mb-6">
-            Manage Announcements
-          </h1>
+        <div className="card glow-edge card-pad">
+          <p className="eyebrow">Broadcast</p>
+          <h1 className="heading-1 mt-2">Manage Announcements</h1>
+          <div className="accent-rule mt-5" />
 
           {announcement && (
-            <div className="mb-6 p-4 bg-gray-100 rounded">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600 mb-2">Current Announcement:</p>
-                  <p className="text-gray-800">{announcement.message}</p>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Created:{' '}
-                    {new Date(announcement.created_at).toLocaleString()}
+            <div className="panel-sunken mt-6 p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <p className="stat-label">Current Announcement</p>
+                  <p className="mt-2 text-sm text-zinc-200">{announcement.message}</p>
+                  <p className="mt-2 text-xs text-zinc-500">
+                    Created {new Date(announcement.created_at).toLocaleString()}
                   </p>
                 </div>
                 <button
                   onClick={handleClear}
                   disabled={submitting}
-                  className="ml-4 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  className="btn btn-danger btn-sm shrink-0"
                 >
                   Clear
                 </button>
@@ -137,24 +132,12 @@ export default function AnnouncementsPage() {
             </div>
           )}
 
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              {error}
-            </div>
-          )}
+          {error && <div className="alert alert-error mt-6">{error}</div>}
+          {success && <div className="alert alert-success mt-6">{success}</div>}
 
-          {success && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-              {success}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="mt-6 space-y-5">
             <div>
-              <label
-                htmlFor="message"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="message" className="field-label">
                 Announcement Message
               </label>
               <textarea
@@ -163,19 +146,13 @@ export default function AnnouncementsPage() {
                 onChange={(e) => setMessage(e.target.value)}
                 rows={4}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                className="field-textarea"
                 placeholder="Enter announcement message..."
               />
-              <p className="text-sm text-gray-500 mt-1">
-                This will replace any existing announcement.
-              </p>
+              <p className="field-hint">This will replace any existing announcement.</p>
             </div>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full bg-basketball-orange text-white py-2 px-4 rounded-md hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            <button type="submit" disabled={submitting} className="btn btn-primary btn-block btn-lg">
               {submitting ? 'Updating...' : 'Update Announcement'}
             </button>
           </form>
@@ -184,4 +161,3 @@ export default function AnnouncementsPage() {
     </div>
   );
 }
-

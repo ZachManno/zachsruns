@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { privateGroupsApi } from '@/lib/api';
 import { PrivateGroup } from '@/types';
 import Link from 'next/link';
+import BackLink from '@/components/BackLink';
 
 export default function AdminPrivateGroupsPage() {
   const { user, loading: authLoading, refreshUser } = useAuth();
@@ -79,9 +80,10 @@ export default function AdminPrivateGroupsPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center">
-          <p className="text-gray-600">Loading...</p>
+      <div className="page">
+        <div className="flex flex-col items-center gap-3 py-20">
+          <div className="spinner" />
+          <p className="text-sm text-zinc-500">Loading...</p>
         </div>
       </div>
     );
@@ -92,63 +94,52 @@ export default function AdminPrivateGroupsPage() {
   const groupToDelete = groups.find((g) => g.id === deleteConfirm);
 
   return (
-    <div className="container mx-auto px-4 py-6 md:py-12">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-4">
-          <Link
-            href="/admin/dashboard"
-            className="text-basketball-orange hover:underline"
-          >
-            &larr; Back to Dashboard
-          </Link>
+    <div className="page">
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-5">
+          <BackLink href="/admin/dashboard" label="Back to Dashboard" />
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-4 md:p-8">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl md:text-3xl font-bold text-basketball-black">
-              Private Groups
-            </h1>
+        <div className="card glow-edge card-pad">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="eyebrow">Invite only</p>
+              <h1 className="heading-1 mt-2">Private Groups</h1>
+            </div>
             <button
               onClick={() => setShowCreateForm(!showCreateForm)}
-              className="bg-basketball-orange text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors text-sm md:text-base"
+              className={`btn self-start ${showCreateForm ? 'btn-secondary' : 'btn-primary'}`}
             >
               {showCreateForm ? 'Cancel' : 'Create Group'}
             </button>
           </div>
+          <div className="accent-rule mt-5" />
 
           {showCreateForm && (
-            <form onSubmit={handleCreate} className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="space-y-3">
+            <form onSubmit={handleCreate} className="panel-sunken mt-6 animate-rise-in p-4">
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Group Name *
-                  </label>
+                  <label className="field-label">Group Name *</label>
                   <input
                     type="text"
                     value={newGroupName}
                     onChange={(e) => setNewGroupName(e.target.value)}
                     placeholder="e.g., Thursday Night Crew"
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                    className="field-input"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
-                  </label>
+                  <label className="field-label">Description</label>
                   <input
                     type="text"
                     value={newGroupDescription}
                     onChange={(e) => setNewGroupDescription(e.target.value)}
                     placeholder="Optional description"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                    className="field-input"
                   />
                 </div>
-                <button
-                  type="submit"
-                  disabled={creating}
-                  className="bg-basketball-orange text-white px-6 py-2 rounded-md hover:bg-orange-600 transition-colors disabled:opacity-50"
-                >
+                <button type="submit" disabled={creating} className="btn btn-primary">
                   {creating ? 'Creating...' : 'Create'}
                 </button>
               </div>
@@ -156,35 +147,35 @@ export default function AdminPrivateGroupsPage() {
           )}
 
           {groups.length === 0 ? (
-            <p className="text-gray-600 text-center py-8">
+            <p className="py-10 text-center text-sm text-zinc-500">
               No private groups yet. Create one to get started.
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="mt-6 space-y-3">
               {groups.map((group) => (
                 <div
                   key={group.id}
-                  className="border border-gray-200 rounded-lg p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3"
+                  className="panel flex flex-col justify-between gap-3 p-4 transition-colors hover:border-court-600 md:flex-row md:items-center"
                 >
                   <div className="min-w-0">
-                    <h3 className="font-semibold text-basketball-black">{group.name}</h3>
+                    <h3 className="font-display font-bold text-white">{group.name}</h3>
                     {group.description && (
-                      <p className="text-sm text-gray-600 mt-0.5">{group.description}</p>
+                      <p className="mt-0.5 text-sm text-zinc-400">{group.description}</p>
                     )}
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="mt-1.5 text-xs text-zinc-500">
                       {group.member_count} member{group.member_count !== 1 ? 's' : ''}
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex shrink-0 gap-2">
                     <Link
                       href={`/admin/private-groups/${group.id}`}
-                      className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                      className="btn btn-secondary btn-sm px-3 py-2"
                     >
                       Manage
                     </Link>
                     <button
                       onClick={() => setDeleteConfirm(group.id)}
-                      className="px-3 py-1.5 bg-red-600 text-white rounded text-sm hover:bg-red-700"
+                      className="btn btn-danger btn-sm px-3 py-2"
                     >
                       Delete
                     </button>
@@ -198,27 +189,26 @@ export default function AdminPrivateGroupsPage() {
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && groupToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-red-700 mb-3">
-              Delete Group
-            </h3>
-            <p className="text-gray-700 mb-4">
-              Are you sure you&apos;d like to delete the entire group <strong>&quot;{groupToDelete.name}&quot;</strong>?
-              All runs in this group will be permanently deleted.
+        <div className="modal-overlay">
+          <div className="modal-panel max-w-md animate-rise-in">
+            <h3 className="font-display text-xl font-bold text-red-300">Delete Group</h3>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-300">
+              Are you sure you&apos;d like to delete the entire group{' '}
+              <strong className="text-white">&quot;{groupToDelete.name}&quot;</strong>? All runs in
+              this group will be permanently deleted.
             </p>
-            <div className="flex gap-3 justify-end">
+            <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setDeleteConfirm(null)}
                 disabled={deleting}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                className="btn btn-secondary"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleDelete(deleteConfirm)}
                 disabled={deleting}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
+                className="btn btn-danger"
               >
                 {deleting ? 'Deleting...' : 'Delete Group'}
               </button>

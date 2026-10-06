@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter, useParams } from 'next/navigation';
 import { runsApi, locationsApi, privateGroupsApi } from '@/lib/api';
 import { Location, Run, PrivateGroup } from '@/types';
-import Link from 'next/link';
+import BackLink from '@/components/BackLink';
 
 export default function EditRunPage() {
   const { user, loading: authLoading } = useAuth();
@@ -101,9 +101,10 @@ export default function EditRunPage() {
 
   if (authLoading || loadingRun || loadingLocations) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center">
-          <p className="text-gray-600">Loading...</p>
+      <div className="page">
+        <div className="flex flex-col items-center gap-3 py-20">
+          <div className="spinner" />
+          <p className="text-sm text-zinc-500">Loading...</p>
         </div>
       </div>
     );
@@ -116,20 +117,13 @@ export default function EditRunPage() {
 
   if (run?.is_completed) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-2xl mx-auto">
-          <div className="mb-4">
-            <Link
-              href="/admin/manage-runs"
-              className="text-basketball-orange hover:underline"
-            >
-              ← Back to Manage Runs
-            </Link>
+      <div className="page">
+        <div className="mx-auto max-w-2xl">
+          <div className="mb-5">
+            <BackLink href="/admin/manage-runs" label="Back to Manage Runs" />
           </div>
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-              Cannot edit completed runs
-            </div>
+          <div className="card card-pad">
+            <div className="alert alert-error">Cannot edit completed runs</div>
           </div>
         </div>
       </div>
@@ -175,34 +169,22 @@ export default function EditRunPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 md:py-12">
-      <div className="max-w-2xl mx-auto">
-        <div className="mb-4">
-          <Link
-            href="/admin/manage-runs"
-            className="text-basketball-orange hover:underline"
-          >
-            ← Back to Manage Runs
-          </Link>
+    <div className="page">
+      <div className="mx-auto max-w-2xl">
+        <div className="mb-5">
+          <BackLink href="/admin/manage-runs" label="Back to Manage Runs" />
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-4 md:p-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-basketball-black mb-4 md:mb-6">
-            Edit Run
-          </h1>
+        <div className="card glow-edge card-pad">
+          <p className="eyebrow">Adjustments</p>
+          <h1 className="heading-1 mt-2">Edit Run</h1>
+          <div className="accent-rule mt-5" />
 
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              {error}
-            </div>
-          )}
+          {error && <div className="alert alert-error mt-6">{error}</div>}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="mt-6 space-y-5">
             <div>
-              <label
-                htmlFor="title"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="title" className="field-label">
                 Title *
               </label>
               <input
@@ -212,16 +194,13 @@ export default function EditRunPage() {
                 value={formData.title}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                className="field-input"
               />
             </div>
 
             {groups.length > 0 && (
               <div>
-                <label
-                  htmlFor="private_group_id"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
+                <label htmlFor="private_group_id" className="field-label">
                   Private Group
                 </label>
                 <select
@@ -229,7 +208,7 @@ export default function EditRunPage() {
                   name="private_group_id"
                   value={formData.private_group_id}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                  className="field-select"
                 >
                   <option value="">Public (no group)</option>
                   {groups.map((group) => (
@@ -238,38 +217,28 @@ export default function EditRunPage() {
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  Set to &quot;Public&quot; to open this run to everyone.
-                </p>
+                <p className="field-hint">Set to &quot;Public&quot; to open this run to everyone.</p>
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="date"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Date *
-                </label>
-                <input
-                  id="date"
-                  name="date"
-                  type="date"
-                  value={formData.date}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
-                />
-              </div>
+            <div>
+              <label htmlFor="date" className="field-label">
+                Date *
+              </label>
+              <input
+                id="date"
+                name="date"
+                type="date"
+                value={formData.date}
+                onChange={handleChange}
+                required
+                className="field-input"
+              />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label
-                  htmlFor="start_time"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
+                <label htmlFor="start_time" className="field-label">
                   Start Time *
                 </label>
                 <input
@@ -279,15 +248,12 @@ export default function EditRunPage() {
                   value={formData.start_time}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                  className="field-input"
                 />
               </div>
 
               <div>
-                <label
-                  htmlFor="end_time"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
+                <label htmlFor="end_time" className="field-label">
                   End Time *
                 </label>
                 <input
@@ -297,20 +263,17 @@ export default function EditRunPage() {
                   value={formData.end_time}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                  className="field-input"
                 />
               </div>
             </div>
 
             <div>
-              <label
-                htmlFor="location_id"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="location_id" className="field-label">
                 Location *
               </label>
               {loadingLocations ? (
-                <p className="text-gray-600">Loading locations...</p>
+                <p className="text-sm text-zinc-500">Loading locations...</p>
               ) : (
                 <select
                   id="location_id"
@@ -318,7 +281,7 @@ export default function EditRunPage() {
                   value={formData.location_id}
                   onChange={handleChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                  className="field-select"
                 >
                   <option value="">Select a location</option>
                   {locations.map((location) => (
@@ -331,10 +294,7 @@ export default function EditRunPage() {
             </div>
 
             <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="description" className="field-label">
                 Description
               </label>
               <textarea
@@ -343,106 +303,94 @@ export default function EditRunPage() {
                 value={formData.description}
                 onChange={handleChange}
                 rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                className="field-textarea"
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="capacity"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Capacity
-                </label>
-                <input
-                  id="capacity"
-                  name="capacity"
-                  type="number"
-                  min="1"
-                  value={formData.capacity}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cost Type
-                </label>
-                <div className="flex gap-4 mb-3">
-                  <label className="flex items-center text-gray-700">
-                    <input
-                      type="radio"
-                      name="costType"
-                      checked={!formData.is_variable_cost}
-                      onChange={() => setFormData({ ...formData, is_variable_cost: false })}
-                      className="mr-2"
-                    />
-                    Fixed Cost
-                  </label>
-                  <label className="flex items-center text-gray-700">
-                    <input
-                      type="radio"
-                      name="costType"
-                      checked={formData.is_variable_cost}
-                      onChange={() => setFormData({ ...formData, is_variable_cost: true })}
-                      className="mr-2"
-                    />
-                    Variable Cost
-                  </label>
-                </div>
-                {formData.is_variable_cost ? (
-                  <div>
-                    <label
-                      htmlFor="total_cost"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Total Cost ($)
-                    </label>
-                    <input
-                      id="total_cost"
-                      name="total_cost"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={formData.total_cost}
-                      onChange={handleChange}
-                      placeholder="e.g., 250"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Cost per person = Total Cost ÷ Number of confirmed participants
-                    </p>
-                  </div>
-                ) : (
-                  <div>
-                    <label
-                      htmlFor="cost"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Cost per Person ($)
-                    </label>
-                    <input
-                      id="cost"
-                      name="cost"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={formData.cost}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
-                    />
-                  </div>
-                )}
-              </div>
+            <div>
+              <label htmlFor="capacity" className="field-label">
+                Capacity
+              </label>
+              <input
+                id="capacity"
+                name="capacity"
+                type="number"
+                min="1"
+                value={formData.capacity}
+                onChange={handleChange}
+                className="field-input"
+              />
             </div>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full bg-basketball-orange text-white py-2 px-4 rounded-md hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            <div className="panel-sunken p-4">
+              <label className="field-label">Cost Type</label>
+              <div className="grid grid-cols-2 gap-2">
+                <label
+                  className={`choice-tile ${!formData.is_variable_cost ? 'choice-tile-active' : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name="costType"
+                    checked={!formData.is_variable_cost}
+                    onChange={() => setFormData({ ...formData, is_variable_cost: false })}
+                    className="field-radio"
+                  />
+                  Fixed Cost
+                </label>
+                <label
+                  className={`choice-tile ${formData.is_variable_cost ? 'choice-tile-active' : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name="costType"
+                    checked={formData.is_variable_cost}
+                    onChange={() => setFormData({ ...formData, is_variable_cost: true })}
+                    className="field-radio"
+                  />
+                  Variable Cost
+                </label>
+              </div>
+
+              {formData.is_variable_cost ? (
+                <div className="mt-4">
+                  <label htmlFor="total_cost" className="field-label">
+                    Total Cost ($)
+                  </label>
+                  <input
+                    id="total_cost"
+                    name="total_cost"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.total_cost}
+                    onChange={handleChange}
+                    placeholder="e.g., 250"
+                    className="field-input"
+                  />
+                  <p className="field-hint">
+                    Cost per person = Total Cost ÷ Number of confirmed participants
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-4">
+                  <label htmlFor="cost" className="field-label">
+                    Cost per Person ($)
+                  </label>
+                  <input
+                    id="cost"
+                    name="cost"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.cost}
+                    onChange={handleChange}
+                    className="field-input"
+                  />
+                </div>
+              )}
+            </div>
+
+            <button type="submit" disabled={submitting} className="btn btn-primary btn-block btn-lg">
               {submitting ? 'Updating...' : 'Update Run'}
             </button>
           </form>
@@ -451,4 +399,3 @@ export default function EditRunPage() {
     </div>
   );
 }
-

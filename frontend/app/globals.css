@@ -2,27 +2,353 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
+/* ------------------------------------------------------------------ */
+/* Base                                                                */
+/* ------------------------------------------------------------------ */
 
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+    color-scheme: dark;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-court-950 text-zinc-100 font-sans antialiased;
+  }
+
+  ::selection {
+    @apply bg-ember-500/30 text-white;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-ember-500/60 ring-offset-2 ring-offset-court-950;
+  }
+
+  /* Dark native dropdown options */
+  option {
+    @apply bg-court-800 text-zinc-100;
+  }
+
+  /* Dark date/time picker glyphs */
+  input[type='date']::-webkit-calendar-picker-indicator,
+  input[type='time']::-webkit-calendar-picker-indicator {
+    filter: invert(0.75);
+    cursor: pointer;
+  }
+
+  /* Slim dark scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #31313b transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-court-600;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-court-500;
+    background-clip: content-box;
   }
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+/* ------------------------------------------------------------------ */
+/* Components                                                          */
+/* ------------------------------------------------------------------ */
+
+@layer components {
+  /* --- Layout ---------------------------------------------------- */
+
+  .page {
+    @apply container mx-auto px-4 py-6 md:py-10;
+  }
+
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-ember-400;
+  }
+
+  .heading-1 {
+    @apply font-display text-2xl md:text-4xl font-extrabold tracking-tight text-white;
+  }
+
+  .heading-2 {
+    @apply font-display text-xl md:text-2xl font-bold tracking-tight text-white;
+  }
+
+  .heading-3 {
+    @apply font-display text-base md:text-lg font-bold tracking-tight text-white;
+  }
+
+  .muted {
+    @apply text-zinc-400;
+  }
+
+  .subtle {
+    @apply text-zinc-500;
+  }
+
+  /* Thin gradient rule used under section headings */
+  .accent-rule {
+    @apply h-px w-full bg-gradient-to-r from-ember-500/60 via-court-700 to-transparent;
+  }
+
+  /* --- Surfaces -------------------------------------------------- */
+
+  .card {
+    @apply rounded-2xl border border-court-700/80 bg-court-850/90 shadow-card backdrop-blur-sm;
+  }
+
+  .card-pad {
+    @apply p-4 md:p-6;
+  }
+
+  .card-interactive {
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:border-ember-500/40 hover:shadow-card-hover;
+  }
+
+  .panel {
+    @apply rounded-xl border border-court-700/70 bg-court-800/60;
+  }
+
+  .panel-sunken {
+    @apply rounded-xl border border-court-700/60 bg-court-900/70;
+  }
+
+  /* Stat tile, like the dashboard cards in the reference design */
+  .stat-tile {
+    @apply rounded-xl border border-court-700/70 bg-court-900/70 p-3 md:p-4;
+  }
+
+  .stat-label {
+    @apply text-[11px] font-medium uppercase tracking-wider text-zinc-500;
+  }
+
+  .stat-value {
+    @apply font-display text-xl md:text-2xl font-bold text-white;
+  }
+
+  /* --- Buttons --------------------------------------------------- */
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold
+      transition-all duration-150 active:scale-[0.98]
+      disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply bg-ember-gradient text-white shadow-glow-sm hover:brightness-110 hover:shadow-glow;
+  }
+
+  .btn-secondary {
+    @apply border border-court-600 bg-court-800 text-zinc-100 hover:border-court-500 hover:bg-court-750;
+  }
+
+  .btn-outline {
+    @apply border border-ember-500/60 bg-ember-500/5 text-ember-400 hover:border-ember-500 hover:bg-ember-500/15 hover:text-ember-300;
+  }
+
+  .btn-ghost {
+    @apply text-zinc-300 hover:bg-court-800 hover:text-white;
+  }
+
+  .btn-danger {
+    @apply border border-red-500/40 bg-red-500/10 text-red-300 hover:border-red-500/70 hover:bg-red-500/20 hover:text-red-200;
+  }
+
+  .btn-success {
+    @apply border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:border-emerald-500/70 hover:bg-emerald-500/20 hover:text-emerald-200;
+  }
+
+  .btn-sm {
+    @apply rounded-lg px-3 py-1.5 text-xs;
+  }
+
+  .btn-lg {
+    @apply rounded-xl px-6 py-3.5 text-base;
+  }
+
+  .btn-block {
+    @apply w-full;
+  }
+
+  .link-accent {
+    @apply font-medium text-ember-400 transition-colors hover:text-ember-300;
+  }
+
+  /* --- Forms ----------------------------------------------------- */
+
+  .field-label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400;
+  }
+
+  .field-input {
+    @apply w-full rounded-xl border border-court-600 bg-court-900/80 px-4 py-2.5 text-sm text-zinc-100
+      placeholder:text-zinc-600 transition-colors
+      focus:border-ember-500/70 focus:bg-court-900 focus:outline-none focus:ring-2 focus:ring-ember-500/25 focus:ring-offset-0
+      disabled:opacity-50;
+  }
+
+  .field-select {
+    @apply field-input cursor-pointer appearance-none bg-no-repeat pr-10;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2371717a'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
+    background-size: 1.15rem;
+  }
+
+  .field-textarea {
+    @apply field-input min-h-[88px] resize-y leading-relaxed;
+  }
+
+  .field-checkbox {
+    @apply h-4 w-4 shrink-0 cursor-pointer rounded border-court-500 bg-court-900 text-ember-500
+      accent-ember-500 focus:ring-2 focus:ring-ember-500/40 focus:ring-offset-0;
+  }
+
+  .field-radio {
+    @apply h-4 w-4 shrink-0 cursor-pointer border-court-500 bg-court-900 text-ember-500
+      accent-ember-500 focus:ring-2 focus:ring-ember-500/40 focus:ring-offset-0;
+  }
+
+  .field-hint {
+    @apply mt-1.5 text-xs text-zinc-500;
+  }
+
+  /* Radio/checkbox row that reads as a selectable tile */
+  .choice-tile {
+    @apply flex cursor-pointer items-center gap-2.5 rounded-xl border border-court-700 bg-court-900/60 px-3 py-2.5
+      text-sm text-zinc-300 transition-colors hover:border-court-600 hover:text-white;
+  }
+
+  .choice-tile-active {
+    @apply border-ember-500/50 bg-ember-500/10 text-white;
+  }
+
+  /* --- Chips & pills --------------------------------------------- */
+
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold leading-5;
+  }
+
+  .chip-orange {
+    @apply border-ember-500/40 bg-ember-500/15 text-ember-300;
+  }
+
+  .chip-green {
+    @apply border-emerald-500/35 bg-emerald-500/15 text-emerald-300;
+  }
+
+  .chip-amber {
+    @apply border-amber-500/35 bg-amber-500/15 text-amber-300;
+  }
+
+  .chip-red {
+    @apply border-red-500/35 bg-red-500/15 text-red-300;
+  }
+
+  .chip-blue {
+    @apply border-sky-500/35 bg-sky-500/15 text-sky-300;
+  }
+
+  .chip-neutral {
+    @apply border-court-600 bg-court-800 text-zinc-400;
+  }
+
+  /* --- Alerts ---------------------------------------------------- */
+
+  .alert {
+    @apply rounded-xl border px-4 py-3 text-sm;
+  }
+
+  .alert-error {
+    @apply border-red-500/30 bg-red-500/10 text-red-200;
+  }
+
+  .alert-success {
+    @apply border-emerald-500/30 bg-emerald-500/10 text-emerald-200;
+  }
+
+  .alert-warning {
+    @apply border-amber-500/30 bg-amber-500/10 text-amber-200;
+  }
+
+  .alert-info {
+    @apply border-sky-500/30 bg-sky-500/10 text-sky-200;
+  }
+
+  /* --- Modal ----------------------------------------------------- */
+
+  .modal-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center bg-court-950/80 p-4 backdrop-blur-sm;
+  }
+
+  .modal-panel {
+    @apply w-full rounded-2xl border border-court-700 bg-court-850 p-6 shadow-card-hover;
+  }
+
+  /* --- Tables ---------------------------------------------------- */
+
+  .data-table {
+    @apply w-full border-collapse text-sm;
+  }
+
+  .data-table thead th {
+    @apply border-b border-court-700 px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-zinc-500;
+  }
+
+  .data-table tbody td {
+    @apply border-b border-court-800 px-3 py-3 text-zinc-300;
+  }
+
+  .data-table tbody tr:hover {
+    @apply bg-court-800/40;
+  }
+
+  /* --- Misc ------------------------------------------------------ */
+
+  .spinner {
+    @apply h-5 w-5 animate-spin rounded-full border-2 border-court-600 border-t-ember-500;
+  }
+
+  /* Hairline top highlight + orange edge, used for hero/feature cards */
+  .glow-edge {
+    @apply relative overflow-hidden;
+  }
+
+  .glow-edge::before {
+    content: '';
+    @apply pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-ember-500/60 to-transparent;
+  }
 }
 
+/* ------------------------------------------------------------------ */
+/* Utilities                                                           */
+/* ------------------------------------------------------------------ */
+
+@layer utilities {
+  .text-gradient-ember {
+    @apply bg-gradient-to-br from-ember-300 via-ember-500 to-ember-600 bg-clip-text text-transparent;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

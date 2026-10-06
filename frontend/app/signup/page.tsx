@@ -42,130 +42,107 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-basketball-black mb-6 text-center">
-          Sign Up
-        </h1>
-
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="username"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Username
-            </label>
-            <input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
-            />
+    <div className="container mx-auto px-4 py-12 md:py-20">
+      <div className="mx-auto max-w-md animate-rise-in">
+        <div className="card glow-edge p-6 md:p-8">
+          <div className="mb-7 text-center">
+            <p className="eyebrow">Join the run</p>
+            <h1 className="heading-1 mt-2">Sign Up</h1>
           </div>
 
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              pattern={EMAIL_WITH_DOMAIN_PATTERN.source}
-              placeholder="you@example.com"
-              title="Enter a valid email address, like you@example.com"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
-            />
-          </div>
+          {error && <div className="alert alert-error mb-5">{error}</div>}
 
-          <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label
-                htmlFor="firstName"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                First Name *
+              <label htmlFor="username" className="field-label">
+                Username
               </label>
               <input
-                id="firstName"
+                id="username"
                 type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                className="field-input"
               />
             </div>
 
             <div>
-              <label
-                htmlFor="lastName"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Last Name *
+              <label htmlFor="email" className="field-label">
+                Email
               </label>
               <input
-                id="lastName"
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                pattern={EMAIL_WITH_DOMAIN_PATTERN.source}
+                placeholder="you@example.com"
+                title="Enter a valid email address, like you@example.com"
+                className="field-input"
               />
             </div>
-          </div>
 
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
-            />
-          </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="firstName" className="field-label">
+                  First Name *
+                </label>
+                <input
+                  id="firstName"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  className="field-input"
+                />
+              </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-basketball-orange text-white py-2 px-4 rounded-md hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Creating account...' : 'Sign Up'}
-          </button>
-        </form>
+              <div>
+                <label htmlFor="lastName" className="field-label">
+                  Last Name *
+                </label>
+                <input
+                  id="lastName"
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                  className="field-input"
+                />
+              </div>
+            </div>
 
-        <p className="mt-4 text-center text-gray-600">
+            <div>
+              <label htmlFor="password" className="field-label">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                className="field-input"
+              />
+              <p className="field-hint">At least 6 characters.</p>
+            </div>
+
+            <button type="submit" disabled={loading} className="btn btn-primary btn-block btn-lg">
+              {loading ? 'Creating account...' : 'Sign Up'}
+            </button>
+          </form>
+        </div>
+
+        <p className="mt-6 text-center text-sm text-zinc-500">
           Already have an account?{' '}
-          <Link
-            href="/login"
-            className="text-basketball-orange hover:underline"
-          >
-            Login
+          <Link href="/login" className="link-accent">
+            Log in
           </Link>
         </p>
       </div>
     </div>
   );
 }
-

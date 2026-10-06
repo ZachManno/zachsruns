@@ -163,11 +163,11 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
         : firstName;
       
       return (
-        <div key={index} className="flex items-center gap-1 flex-wrap">
-          <span className="text-gray-900">{displayName}</span>
+        <div key={index} className="flex flex-wrap items-center gap-1">
+          <span className="text-zinc-300">{displayName}</span>
           {p.badge && <BadgeIcon badge={p.badge as any} size="small" />}
           {p.pending_drop_status && (
-            <span className="text-[10px] leading-none font-semibold text-amber-800 bg-amber-50 border border-amber-200 rounded px-1 py-0.5">
+            <span className="rounded border border-amber-500/35 bg-amber-500/10 px-1 py-0.5 text-[10px] font-semibold leading-none text-amber-300">
               Drop pending
             </span>
           )}
@@ -176,95 +176,131 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
     });
   };
 
+  const rsvpButtonClass = (
+    active: boolean,
+    pending: boolean,
+    tone: 'green' | 'amber' | 'red',
+    disabled = false
+  ) => {
+    const base =
+      'flex-1 min-w-0 truncate rounded-xl px-2 py-2.5 text-xs font-semibold transition-all duration-150 border sm:text-sm active:scale-[0.97]';
+
+    if (disabled) {
+      return `${base} border-court-700 bg-court-800/60 text-zinc-600 cursor-not-allowed`;
+    }
+    if (pending) {
+      return `${base} border-amber-500/50 bg-amber-500/15 text-amber-300`;
+    }
+
+    const tones = {
+      green: active
+        ? 'border-emerald-400/60 bg-emerald-500/90 text-white shadow-[0_6px_18px_-8px_rgba(16,185,129,0.9)]'
+        : 'border-court-700 bg-court-800/70 text-emerald-300/80 hover:border-emerald-500/50 hover:bg-emerald-500/10 hover:text-emerald-300',
+      amber: active
+        ? 'border-amber-400/60 bg-amber-500/90 text-court-950 shadow-[0_6px_18px_-8px_rgba(245,158,11,0.9)]'
+        : 'border-court-700 bg-court-800/70 text-amber-300/80 hover:border-amber-500/50 hover:bg-amber-500/10 hover:text-amber-300',
+      red: active
+        ? 'border-red-400/60 bg-red-500/90 text-white shadow-[0_6px_18px_-8px_rgba(239,68,68,0.9)]'
+        : 'border-court-700 bg-court-800/70 text-red-300/80 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-300',
+    };
+
+    return `${base} ${tones[tone]} ${updating ? 'opacity-50 cursor-not-allowed' : ''}`;
+  };
+
+  const showStats =
+    (run.capacity || isCompleted) ||
+    (run.cost !== undefined &&
+      run.cost !== null &&
+      (!run.is_variable_cost || (run.participant_counts?.confirmed || 0) >= 10 || isCompleted));
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition-shadow">
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex-1 min-w-0 pr-2">
-          <h3 className="text-lg md:text-xl font-bold text-basketball-black mb-1">
+    <div className="card card-interactive glow-edge flex flex-col p-4 md:p-5">
+      {/* Header: title, date, time */}
+      <div className="mb-4 flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h3 className="font-display text-lg font-bold leading-tight tracking-tight text-white md:text-xl">
             {run.title}
           </h3>
-          <p className="text-sm md:text-base text-gray-600">{formatDate(run.date)}</p>
-          <p className="text-sm md:text-base text-gray-600">
-            {formatTimeRange(run.start_time, run.end_time)}
-          </p>
+          <div className="mt-2 space-y-1 text-sm">
+            <p className="text-zinc-400">{formatDate(run.date)}</p>
+            <p className="text-zinc-400">{formatTimeRange(run.start_time, run.end_time)}</p>
+          </div>
         </div>
-        {run.is_historical && (
-          <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs md:text-sm flex-shrink-0">
-            Historical
-          </span>
-        )}
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+          {run.is_historical && <span className="chip chip-neutral">Historical</span>}
+          {isCompleted && <span className="chip chip-green">Completed</span>}
+        </div>
       </div>
 
+      {/* Location, description, stats */}
       <div className="mb-4">
         {run.location_name && (
-          <Link 
-            href="/locations" 
-            className="font-semibold text-basketball-black hover:text-basketball-orange hover:underline transition-colors inline-block"
+          <Link
+            href="/locations"
+            className="font-semibold text-zinc-100 transition-colors hover:text-ember-400"
           >
             {run.location_name}
           </Link>
         )}
-        <p className="text-sm text-gray-600">{run.location_address}</p>
-        {run.description && (
-          <p className="text-gray-700 mt-2">{run.description}</p>
+        {run.location_address && (
+          <p className="mt-0.5 text-sm text-zinc-500">{run.location_address}</p>
         )}
-        {((run.capacity || isCompleted) || (run.cost !== undefined && run.cost !== null && (!run.is_variable_cost || (run.participant_counts?.confirmed || 0) >= 10 || isCompleted))) && (
-          <div className="mt-4 flex gap-4">
+        {run.description && <p className="mt-3 text-sm leading-relaxed text-zinc-400">{run.description}</p>}
+
+        {showStats && (
+          <div className="mt-4 flex gap-3">
             {(run.capacity || isCompleted) && (
-              <div className="flex-1 bg-gray-50 rounded-lg p-3 border border-gray-200">
+              <div className="stat-tile flex-1">
                 {isCompleted ? (
                   <>
-                    <p className="text-xs text-gray-500 mb-1">Attended</p>
-                    <p className="text-lg font-semibold text-basketball-black">
-                      {run.participant_counts?.attended || 0}/{run.capacity || 0}
+                    <p className="stat-label">Attended</p>
+                    <p className="stat-value mt-0.5">
+                      {run.participant_counts?.attended || 0}
+                      <span className="text-sm font-medium text-zinc-500">/{run.capacity || 0}</span>
                     </p>
                   </>
                 ) : (
                   <>
-                    <p className="text-xs text-gray-500 mb-1">Capacity</p>
-                    <p className="text-lg font-semibold text-basketball-black">
-                      {run.participant_counts?.confirmed || 0}/{run.capacity}
+                    <p className="stat-label">Capacity</p>
+                    <p className="stat-value mt-0.5">
+                      <span className={isAtCapacity ? 'text-ember-400' : ''}>
+                        {run.participant_counts?.confirmed || 0}
+                      </span>
+                      <span className="text-sm font-medium text-zinc-500">/{run.capacity}</span>
                     </p>
                   </>
                 )}
               </div>
             )}
-            {(run.cost !== undefined && run.cost !== null) && 
-             // For variable cost runs, show cost if at least 10 people have confirmed OR if run is completed
-             (!run.is_variable_cost || (run.participant_counts?.confirmed || 0) >= 10 || isCompleted) && (
-              <div className="flex-1 bg-gray-50 rounded-lg p-3 border border-gray-200">
-                <p className="text-xs text-gray-500 mb-1">{isCompleted ? 'Final Cost' : 'Cost'}</p>
-                <p className="text-lg font-semibold text-basketball-black">
-                  ${Number(run.cost).toFixed(2)}
-                </p>
-              </div>
-            )}
+            {run.cost !== undefined &&
+              run.cost !== null &&
+              // For variable cost runs, show cost if at least 10 people have confirmed OR if run is completed
+              (!run.is_variable_cost || (run.participant_counts?.confirmed || 0) >= 10 || isCompleted) && (
+                <div className="stat-tile flex-1">
+                  <p className="stat-label">{isCompleted ? 'Final Cost' : 'Cost'}</p>
+                  <p className="stat-value mt-0.5 text-ember-400">${Number(run.cost).toFixed(2)}</p>
+                </div>
+              )}
           </div>
         )}
       </div>
 
-      <div className="mb-4 border-t pt-4">
-        {isCompleted && (
-          <div className="mb-2">
-            <span className="inline-block bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs font-semibold">
-              ✓ Completed
-            </span>
-          </div>
-        )}
+      {/* Roster */}
+      <div className="mt-auto border-t border-court-800 pt-4">
         {isCompleted ? (
           // For completed runs, only show attended
-          <div className="flex flex-col md:flex-row gap-3 md:gap-4 text-sm">
+          <div className="flex flex-col gap-3 text-sm md:flex-row md:gap-4">
             <div className="flex-1">
-              <span className="font-semibold text-green-600">
-                Attended: {run.participant_counts?.attended || 0}
+              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                Attended · {run.participant_counts?.attended || 0}
               </span>
               {run.participants?.attended && run.participants.attended.length > 0 && (
-                <div className="text-gray-600 text-xs mt-1 space-y-1">
+                <div className="mt-1.5 space-y-1 text-xs">
                   {formatParticipantNames(run.participants.attended)}
                 </div>
               )}
               {run.guest_attendees && run.guest_attendees.length > 0 && (
-                <div className="text-gray-600 text-xs mt-1 space-y-1">
+                <div className="mt-1 space-y-1 text-xs text-zinc-500">
                   {run.guest_attendees.map((guest, idx) => (
                     <div key={idx}>{guest}</div>
                   ))}
@@ -274,33 +310,33 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
           </div>
         ) : (
           // For non-completed runs, show all statuses
-          <div className="flex flex-col md:flex-row gap-3 md:gap-4 text-sm">
+          <div className="flex flex-col gap-3 text-sm md:flex-row md:gap-4">
             <div className="flex-1">
-              <span className="font-semibold text-green-600">
-                Confirmed: {run.participant_counts?.confirmed || 0}
+              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                Confirmed · {run.participant_counts?.confirmed || 0}
               </span>
               {run.participants?.confirmed && run.participants.confirmed.length > 0 && (
-                <div className="text-gray-600 text-xs mt-1 space-y-1">
+                <div className="mt-1.5 space-y-1 text-xs">
                   {formatParticipantNames(run.participants.confirmed)}
                 </div>
               )}
             </div>
             <div className="flex-1">
-              <span className="font-semibold text-yellow-600">
-                Interested: {run.participant_counts?.interested || 0}
+              <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">
+                Interested · {run.participant_counts?.interested || 0}
               </span>
               {run.participants?.interested && run.participants.interested.length > 0 && (
-                <div className="text-gray-600 text-xs mt-1 space-y-1">
+                <div className="mt-1.5 space-y-1 text-xs">
                   {formatParticipantNames(run.participants.interested)}
                 </div>
               )}
             </div>
             <div className="flex-1">
-              <span className="font-semibold text-red-600">
-                Out: {run.participant_counts?.out || 0}
+              <span className="text-xs font-semibold uppercase tracking-wider text-red-400">
+                Out · {run.participant_counts?.out || 0}
               </span>
               {run.participants?.out && run.participants.out.length > 0 && (
-                <div className="text-gray-600 text-xs mt-1 space-y-1">
+                <div className="mt-1.5 space-y-1 text-xs">
                   {formatParticipantNames(run.participants.out)}
                 </div>
               )}
@@ -309,82 +345,82 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
         )}
       </div>
 
+      {/* RSVP controls */}
       {user && !isPast && !isCompleted && (
         <div className="mt-4">
           {!user.is_verified ? (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-center">
-              <p className="text-sm text-yellow-800">
-                Please notify the admin to verify your account in order to RSVP for runs
-              </p>
+            <div className="alert alert-warning text-center text-xs">
+              Please notify the admin to verify your account in order to RSVP for runs
             </div>
           ) : (
             <div className="flex gap-2 overflow-hidden">
               <button
                 onClick={() => handleRsvp('confirmed')}
                 disabled={updating || isConfirmDisabled}
-                className={`flex-1 min-w-0 px-2 py-2 text-xs sm:text-sm rounded transition-all truncate ${
-                  currentStatus === 'confirmed'
-                    ? 'bg-green-600 text-white border-2 border-green-700 ring-2 ring-green-300'
-                    : isConfirmDisabled
-                    ? 'bg-gray-200 text-gray-500 border-2 border-transparent cursor-not-allowed'
-                    : 'bg-green-100 text-green-700 hover:bg-green-200 border-2 border-transparent'
-                } ${updating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={rsvpButtonClass(
+                  currentStatus === 'confirmed',
+                  false,
+                  'green',
+                  isConfirmDisabled
+                )}
               >
                 {currentStatus === 'confirmed' ? '✓ Confirmed' : 'Confirm'}
               </button>
               <button
                 onClick={() => handleRsvp('interested')}
                 disabled={updating}
-                className={`flex-1 min-w-0 px-2 py-2 text-xs sm:text-sm rounded transition-all truncate ${
-                  currentStatus === 'interested'
-                    ? 'bg-yellow-600 text-white border-2 border-yellow-700 ring-2 ring-yellow-300'
-                    : pendingDropStatus === 'interested'
-                    ? 'bg-amber-100 text-amber-800 border-2 border-amber-400'
-                    : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200 border-2 border-transparent'
-                } ${updating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={rsvpButtonClass(
+                  currentStatus === 'interested',
+                  pendingDropStatus === 'interested' && currentStatus !== 'interested',
+                  'amber'
+                )}
               >
-                {currentStatus === 'interested' ? '✓ Interested' : pendingDropStatus === 'interested' ? 'Pending' : 'Interested'}
+                {currentStatus === 'interested'
+                  ? '✓ Interested'
+                  : pendingDropStatus === 'interested'
+                  ? 'Pending'
+                  : 'Interested'}
               </button>
               <button
                 onClick={() => handleRsvp('out')}
                 disabled={updating}
-                className={`flex-1 min-w-0 px-2 py-2 text-xs sm:text-sm rounded transition-all truncate ${
-                  currentStatus === 'out'
-                    ? 'bg-red-600 text-white border-2 border-red-700 ring-2 ring-red-300'
-                    : pendingDropStatus === 'out'
-                    ? 'bg-amber-100 text-amber-800 border-2 border-amber-400'
-                    : 'bg-red-100 text-red-700 hover:bg-red-200 border-2 border-transparent'
-                } ${updating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={rsvpButtonClass(
+                  currentStatus === 'out',
+                  pendingDropStatus === 'out' && currentStatus !== 'out',
+                  'red'
+                )}
               >
                 {currentStatus === 'out' ? '✓ Out' : pendingDropStatus === 'out' ? 'Pending' : 'Out'}
               </button>
             </div>
           )}
           {user.is_verified && currentStatus === 'confirmed' && pendingDropStatus && (
-            <p className="mt-2 text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded p-2">
-              Your late cancellation from <span className="font-semibold text-green-600">Confirmed</span> to{' '}
+            <p className="alert alert-warning mt-2 text-xs">
+              Your late cancellation from <span className="font-semibold text-emerald-400">Confirmed</span> to{' '}
               {pendingDropStatus === 'interested' ? (
-                <span className="font-semibold text-yellow-600">Interested</span>
+                <span className="font-semibold text-amber-400">Interested</span>
               ) : (
-                <span className="font-semibold text-red-600">Out</span>
+                <span className="font-semibold text-red-400">Out</span>
               )}{' '}
               is pending admin verification.
             </p>
           )}
         </div>
       )}
+
       {dropPromptStatus && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6" role="dialog" aria-modal="true">
-            <p className="text-gray-800">
+        <div className="modal-overlay">
+          <div className="modal-panel max-w-md animate-rise-in" role="dialog" aria-modal="true">
+            <h4 className="heading-3 mb-2">Late drop needs approval</h4>
+            <p className="text-sm leading-relaxed text-zinc-400">
               You are attempting to drop within 1 hour of the run starting time, this requires admin verification. Please notify the admin in order to get this approved. Continue?
             </p>
-            <div className="mt-6 flex gap-3 justify-end">
+            <div className="mt-6 flex justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setDropPromptStatus(null)}
                 disabled={updating}
-                className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+                className="btn btn-secondary"
               >
                 Cancel
               </button>
@@ -396,7 +432,7 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
                   submitRsvp(status, true);
                 }}
                 disabled={updating}
-                className="px-4 py-2 rounded bg-basketball-orange text-white hover:opacity-90"
+                className="btn btn-primary"
               >
                 Continue
               </button>
@@ -407,4 +443,3 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
     </div>
   );
 }
-

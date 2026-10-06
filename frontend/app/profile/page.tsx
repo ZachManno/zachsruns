@@ -29,9 +29,10 @@ export default function ProfilePage() {
     }
   }, [user, authLoading, router]);
 
-  const fetchRuns = async () => {
+  // `silent` keeps the run grid mounted when refreshing after an RSVP change
+  const fetchRuns = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const data = await usersApi.getMyRuns();
       setRuns(data);
     } catch (error) {
@@ -43,9 +44,10 @@ export default function ProfilePage() {
 
   if (authLoading || loading) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center">
-          <p className="text-gray-600">Loading...</p>
+      <div className="page">
+        <div className="flex flex-col items-center gap-3 py-20">
+          <div className="spinner" />
+          <p className="text-sm text-zinc-500">Loading...</p>
         </div>
       </div>
     );
@@ -55,61 +57,68 @@ export default function ProfilePage() {
     return null;
   }
 
+  const initials = (user.first_name?.[0] || user.username[0] || '?').toUpperCase();
+
   return (
-    <div className="container mx-auto px-4 py-6 md:py-12">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-4 md:p-8 mb-6 md:mb-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-4 md:mb-6">
-            <h1 className="text-2xl md:text-3xl font-bold text-basketball-black">
-              Profile
-            </h1>
+    <div className="page">
+      <div className="mx-auto max-w-4xl">
+        {/* Identity card */}
+        <div className="card glow-edge card-pad mb-6 md:mb-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+            <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-ember-gradient font-display text-2xl font-extrabold text-white shadow-glow-sm">
+              {initials}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="eyebrow">Your profile</p>
+              <div className="mt-1.5">
+                <UserBadge user={user} />
+              </div>
+              <div className="mt-3 space-y-1 text-sm text-zinc-400">
+                <p>{user.email}</p>
+                {user.badge === 'plus_one' && user.referrer && (
+                  <p>
+                    Referred by{' '}
+                    <span className="font-semibold text-zinc-200">
+                      {user.referrer.first_name && user.referrer.last_name
+                        ? `${user.referrer.first_name} ${user.referrer.last_name}`
+                        : user.referrer.username}
+                    </span>
+                  </p>
+                )}
+                <p className="text-zinc-500">
+                  Member since{' '}
+                  {new Date(user.created_at).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </p>
+              </div>
+            </div>
             {user.badge && (
-              <div className="flex items-center gap-2">
+              <div className="flex shrink-0 items-center gap-2 self-start rounded-xl border border-court-700 bg-court-900/70 px-3 py-2 sm:self-center">
                 <BadgeIcon badge={user.badge} size="large" />
-                <span className="text-lg font-semibold text-gray-700">
-                  {user.badge === 'regular' ? 'Regular' :
-                   user.badge === 'plus_one' ? '+1' : ''}
+                <span className="font-display text-sm font-bold text-white">
+                  {user.badge === 'regular' ? 'Regular' : user.badge === 'plus_one' ? '+1' : ''}
                 </span>
               </div>
             )}
           </div>
-          <UserBadge user={user} />
-          <div className="mt-4 text-gray-600">
-            <p>Email: {user.email}</p>
-            {user.badge === 'plus_one' && user.referrer && (
-              <p className="text-sm mt-2">
-                Referred by:{' '}
-                <span className="font-semibold text-basketball-black">
-                  {user.referrer.first_name && user.referrer.last_name
-                    ? `${user.referrer.first_name} ${user.referrer.last_name}`
-                    : user.referrer.username}
-                </span>
-              </p>
-            )}
-            <p className="text-sm mt-2">
-              Member since:{' '}
-              {new Date(user.created_at).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </p>
-          </div>
-          
-          {(user.runs_attended_count !== undefined) && (
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <h2 className="text-xl font-bold text-basketball-black mb-4">Run Statistics</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-600 mb-1">Runs Attended</p>
-                  <p className="text-2xl font-bold text-basketball-black">
-                    {user.runs_attended_count || 0}
-                  </p>
+
+          {user.runs_attended_count !== undefined && (
+            <div className="mt-6 border-t border-court-800 pt-6">
+              <h2 className="heading-3 mb-3">Run Statistics</h2>
+              <div className="grid grid-cols-2 gap-3 md:gap-4">
+                <div className="stat-tile">
+                  <p className="stat-label">Runs Attended</p>
+                  <p className="stat-value mt-1 text-ember-400">{user.runs_attended_count || 0}</p>
                 </div>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-600 mb-1">Attendance Rate</p>
-                  <p className="text-2xl font-bold text-gray-500">
-                    {user.attendance_rate !== undefined && user.attendance_rate !== null ? `${user.attendance_rate}%` : '0%'}
+                <div className="stat-tile">
+                  <p className="stat-label">Attendance Rate</p>
+                  <p className="stat-value mt-1">
+                    {user.attendance_rate !== undefined && user.attendance_rate !== null
+                      ? `${user.attendance_rate}%`
+                      : '0%'}
                   </p>
                 </div>
               </div>
@@ -117,37 +126,44 @@ export default function ProfilePage() {
           )}
         </div>
 
-        <div className="mb-6 md:mb-8">
-          <h2 className="text-xl md:text-2xl font-bold text-basketball-black mb-3 md:mb-4">
-            My Runs
-          </h2>
+        <div className="mb-8 md:mb-10">
+          <div className="mb-4 flex items-center gap-4">
+            <h2 className="heading-2 shrink-0">My Runs</h2>
+            <span className="chip chip-neutral shrink-0">{runs.upcoming.length}</span>
+            <span className="accent-rule" />
+          </div>
           {runs.upcoming.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
               {runs.upcoming.map((run) => (
-                <RunCard key={run.id} run={run} onUpdate={fetchRuns} />
+                <RunCard key={run.id} run={run} onUpdate={() => fetchRuns(true)} />
               ))}
             </div>
           ) : (
-            <p className="text-gray-600">No upcoming runs.</p>
+            <div className="panel-sunken px-4 py-8 text-center text-sm text-zinc-500">
+              No upcoming runs.
+            </div>
           )}
         </div>
 
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-basketball-black mb-3 md:mb-4">
-            Completed Runs
-          </h2>
+          <div className="mb-4 flex items-center gap-4">
+            <h2 className="heading-2 shrink-0">Completed Runs</h2>
+            <span className="chip chip-neutral shrink-0">{runs.history.length}</span>
+            <span className="accent-rule" />
+          </div>
           {runs.history.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
               {runs.history.map((run) => (
-                <RunCard key={run.id} run={run} onUpdate={fetchRuns} />
+                <RunCard key={run.id} run={run} onUpdate={() => fetchRuns(true)} />
               ))}
             </div>
           ) : (
-            <p className="text-gray-600">No completed runs.</p>
+            <div className="panel-sunken px-4 py-8 text-center text-sm text-zinc-500">
+              No completed runs.
+            </div>
           )}
         </div>
       </div>
     </div>
   );
 }
-

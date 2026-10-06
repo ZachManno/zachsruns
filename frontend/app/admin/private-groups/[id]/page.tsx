@@ -6,7 +6,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { privateGroupsApi, adminApi } from '@/lib/api';
 import { PrivateGroup, User } from '@/types';
 import BadgeIcon from '@/components/BadgeIcon';
-import Link from 'next/link';
+import BackLink from '@/components/BackLink';
 
 export default function AdminManageGroupPage() {
   const { user, loading: authLoading, refreshUser } = useAuth();
@@ -101,9 +101,10 @@ export default function AdminManageGroupPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center">
-          <p className="text-gray-600">Loading...</p>
+      <div className="page">
+        <div className="flex flex-col items-center gap-3 py-20">
+          <div className="spinner" />
+          <p className="text-sm text-zinc-500">Loading...</p>
         </div>
       </div>
     );
@@ -132,40 +133,31 @@ export default function AdminManageGroupPage() {
   });
 
   return (
-    <div className="container mx-auto px-4 py-6 md:py-12">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-4">
-          <Link
-            href="/admin/private-groups"
-            className="text-basketball-orange hover:underline"
-          >
-            &larr; Back to Private Groups
-          </Link>
+    <div className="page">
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-5">
+          <BackLink href="/admin/private-groups" label="Back to Private Groups" />
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-4 md:p-8">
+        <div className="card glow-edge card-pad">
           {/* Group Info */}
           {editingName ? (
-            <div className="mb-6 space-y-3">
+            <div className="space-y-3">
               <input
                 type="text"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900 text-xl font-bold"
+                className="field-input font-display text-xl font-bold"
               />
               <input
                 type="text"
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
                 placeholder="Description (optional)"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                className="field-input"
               />
               <div className="flex gap-2">
-                <button
-                  onClick={handleSaveEdit}
-                  disabled={saving}
-                  className="px-4 py-2 bg-basketball-orange text-white rounded-md hover:bg-orange-600 disabled:opacity-50 text-sm"
-                >
+                <button onClick={handleSaveEdit} disabled={saving} className="btn btn-primary btn-sm px-4 py-2">
                   {saving ? 'Saving...' : 'Save'}
                 </button>
                 <button
@@ -174,41 +166,35 @@ export default function AdminManageGroupPage() {
                     setEditName(group.name);
                     setEditDescription(group.description || '');
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm"
+                  className="btn btn-secondary btn-sm px-4 py-2"
                 >
                   Cancel
                 </button>
               </div>
             </div>
           ) : (
-            <div className="mb-6 flex items-start justify-between">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-basketball-black">
-                  {group.name}
-                </h1>
-                {group.description && (
-                  <p className="text-gray-600 mt-1">{group.description}</p>
-                )}
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="eyebrow">Private group</p>
+                <h1 className="heading-1 mt-2">{group.name}</h1>
+                {group.description && <p className="mt-2 text-sm text-zinc-400">{group.description}</p>}
               </div>
-              <button
-                onClick={() => setEditingName(true)}
-                className="px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-              >
+              <button onClick={() => setEditingName(true)} className="btn btn-secondary btn-sm shrink-0 px-3 py-2">
                 Edit
               </button>
             </div>
           )}
 
+          <div className="accent-rule mt-5" />
+
           {/* Add Member */}
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <h3 className="text-sm font-semibold text-basketball-black mb-2">
-              Add Member
-            </h3>
-            <div className="flex flex-col md:flex-row gap-2">
+          <div className="panel-sunken mt-6 p-4">
+            <h3 className="stat-label">Add Member</h3>
+            <div className="mt-2 flex flex-col gap-2 md:flex-row">
               <select
                 value={addingUserId}
                 onChange={(e) => setAddingUserId(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded text-sm text-gray-900 focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
+                className="field-select flex-1 py-2 text-sm"
               >
                 <option value="">Select a verified user...</option>
                 {verifiedNonMembers.map((u) => (
@@ -220,21 +206,22 @@ export default function AdminManageGroupPage() {
               <button
                 onClick={handleAddMember}
                 disabled={!addingUserId || adding}
-                className="px-4 py-2 bg-basketball-orange text-white rounded text-sm hover:bg-orange-600 disabled:opacity-50 whitespace-nowrap"
+                className="btn btn-primary btn-sm whitespace-nowrap px-5 py-2"
               >
                 {adding ? 'Adding...' : 'Add'}
               </button>
             </div>
             {verifiedNonMembers.length === 0 && (
-              <p className="text-xs text-gray-500 mt-2">All verified users are already members.</p>
+              <p className="field-hint">All verified users are already members.</p>
             )}
           </div>
 
           {/* Members List */}
-          <div>
-            <h3 className="text-lg font-bold text-basketball-black mb-3">
-              Members ({group.members?.length || 0})
-            </h3>
+          <div className="mt-6">
+            <div className="mb-3 flex items-center gap-3">
+              <h3 className="heading-3 shrink-0">Members</h3>
+              <span className="chip chip-neutral shrink-0">{group.members?.length || 0}</span>
+            </div>
 
             {(group.members?.length || 0) > 5 && (
               <div className="mb-3">
@@ -243,7 +230,7 @@ export default function AdminManageGroupPage() {
                   placeholder="Search members..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 focus:ring-2 focus:ring-basketball-orange focus:border-transparent"
+                  className="field-input py-2 text-sm"
                 />
               </div>
             )}
@@ -252,28 +239,21 @@ export default function AdminManageGroupPage() {
               {filteredMembers.map((member) => (
                 <div
                   key={member.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+                  className="panel flex items-center justify-between p-3 transition-colors hover:border-court-600"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex min-w-0 items-center gap-2">
                     {member.badge && (
-                      <BadgeIcon
-                        badge={member.badge as 'regular' | 'plus_one'}
-                        size="small"
-                      />
+                      <BadgeIcon badge={member.badge as 'regular' | 'plus_one'} size="small" />
                     )}
                     <div className="min-w-0">
-                      <span className="text-sm font-medium text-gray-900">
-                        {getDisplayName(member)}
-                      </span>
-                      <span className="text-xs text-gray-500 ml-2">
-                        @{member.username}
-                      </span>
+                      <span className="text-sm font-medium text-white">{getDisplayName(member)}</span>
+                      <span className="ml-2 text-xs text-zinc-500">@{member.username}</span>
                     </div>
                   </div>
                   <button
                     onClick={() => handleRemoveMember(member.user_id)}
                     disabled={removingUserId === member.user_id}
-                    className="text-red-600 hover:text-red-800 text-xs font-medium disabled:opacity-50 whitespace-nowrap ml-2"
+                    className="ml-2 whitespace-nowrap text-xs font-semibold text-red-400 transition-colors hover:text-red-300 disabled:opacity-50"
                   >
                     {removingUserId === member.user_id ? '...' : 'Remove'}
                   </button>
@@ -282,7 +262,7 @@ export default function AdminManageGroupPage() {
             </div>
 
             {filteredMembers.length === 0 && (
-              <p className="text-gray-600 text-center py-4 text-sm">
+              <p className="py-6 text-center text-sm text-zinc-500">
                 {searchTerm ? 'No members match your search.' : 'No members yet.'}
               </p>
             )}

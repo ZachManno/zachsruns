@@ -44,9 +44,10 @@ export default function PrivateGroupCommunityPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center">
-          <p className="text-gray-600">Loading...</p>
+      <div className="page">
+        <div className="flex flex-col items-center gap-3 py-20">
+          <div className="spinner" />
+          <p className="text-sm text-zinc-500">Loading...</p>
         </div>
       </div>
     );
@@ -71,23 +72,25 @@ export default function PrivateGroupCommunityPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-4 md:py-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-4">
+    <div className="page">
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-5">
           <Link
             href={`/private-runs/${groupId}`}
-            className="text-basketball-orange hover:underline"
+            className="text-sm text-zinc-500 transition-colors hover:text-ember-400"
           >
-            &larr; Back to {group?.name}
+            ← Back to {group?.name}
           </Link>
         </div>
 
-        <h1 className="text-2xl md:text-3xl font-bold text-basketball-black mb-2 text-center">
-          {group?.name} Community
-        </h1>
-        <p className="text-gray-500 text-center mb-6">
-          {members.length} member{members.length !== 1 ? 's' : ''}
-        </p>
+        <div className="mb-6">
+          <p className="eyebrow">Group roster</p>
+          <h1 className="heading-1 mt-2">{group?.name} Community</h1>
+          <p className="mt-2 text-sm text-zinc-500">
+            {members.length} member{members.length !== 1 ? 's' : ''}
+          </p>
+          <div className="accent-rule mt-5" />
+        </div>
 
         {members.length > 5 && (
           <div className="mb-6">
@@ -96,29 +99,26 @@ export default function PrivateGroupCommunityPage() {
               placeholder="Search members..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+              className="field-input"
             />
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {filteredMembers.map((member) => (
-            <div
-              key={member.id}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                {member.badge && (
-                  <BadgeIcon
-                    badge={member.badge as 'regular' | 'plus_one'}
-                    size="small"
-                  />
-                )}
+            <div key={member.id} className="card card-interactive p-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-court-700 bg-court-900 font-display text-xs font-bold text-ember-400">
+                  {(member.first_name?.[0] || member.username[0] || '?').toUpperCase()}
+                </span>
                 <div className="min-w-0">
-                  <p className="font-medium text-gray-900 truncate">
+                  <p className="flex items-center gap-1.5 truncate font-medium text-white">
                     {getDisplayName(member)}
+                    {member.badge && (
+                      <BadgeIcon badge={member.badge as 'regular' | 'plus_one'} size="small" />
+                    )}
                   </p>
-                  <p className="text-xs text-gray-500">@{member.username}</p>
+                  <p className="truncate text-xs text-zinc-500">@{member.username}</p>
                 </div>
               </div>
             </div>
@@ -126,8 +126,8 @@ export default function PrivateGroupCommunityPage() {
         </div>
 
         {filteredMembers.length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-gray-600">
+          <div className="card card-pad py-12 text-center">
+            <p className="text-zinc-500">
               {searchTerm ? 'No members match your search.' : 'No members in this group.'}
             </p>
           </div>

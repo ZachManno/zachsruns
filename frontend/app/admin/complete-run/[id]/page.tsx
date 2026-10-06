@@ -7,6 +7,7 @@ import { adminApi, runsApi } from '@/lib/api';
 import { Run, User } from '@/types';
 import Link from 'next/link';
 import BadgeIcon from '@/components/BadgeIcon';
+import BackLink from '@/components/BackLink';
 
 export default function CompleteRunPage() {
   const { user, loading: authLoading } = useAuth();
@@ -143,9 +144,10 @@ export default function CompleteRunPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center">
-          <p className="text-gray-600">Loading...</p>
+      <div className="page">
+        <div className="flex flex-col items-center gap-3 py-20">
+          <div className="spinner" />
+          <p className="text-sm text-zinc-500">Loading...</p>
         </div>
       </div>
     );
@@ -157,13 +159,13 @@ export default function CompleteRunPage() {
 
   if (run.is_completed) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-            <p className="text-yellow-800">This run is already completed.</p>
-            <Link href="/admin/manage-runs" className="text-basketball-orange hover:underline mt-2 inline-block">
-              ← Back to Manage Runs
-            </Link>
+      <div className="page">
+        <div className="mx-auto max-w-4xl">
+          <div className="card card-pad">
+            <div className="alert alert-warning">This run is already completed.</div>
+            <div className="mt-4">
+              <BackLink href="/admin/manage-runs" label="Back to Manage Runs" />
+            </div>
           </div>
         </div>
       </div>
@@ -175,23 +177,74 @@ export default function CompleteRunPage() {
     u => !confirmedParticipants.some(p => p.username === u.username) && !extraAttendees.includes(u.id)
   );
 
+  const totalAttended = attendedUserIds.size + extraAttendees.length + guestAttendees.length;
+
+  // Row for a confirmed participant, tinted by their current attendance state
+  const renderParticipantRow = (
+    participant: (typeof confirmedParticipants)[number],
+    tone: 'attended' | 'pending' | 'no-show'
+  ) => {
+    const userId = allUsers.find(u => u.username === participant.username)?.id;
+    if (!userId) return null;
+
+    const displayName = participant.first_name && participant.last_name
+      ? `${participant.first_name} ${participant.last_name}`
+      : participant.username;
+
+    const toneClass = {
+      attended: 'border-emerald-500/30 bg-emerald-500/[0.07]',
+      pending: 'border-court-700 bg-court-900/60',
+      'no-show': 'border-amber-500/30 bg-amber-500/[0.07]',
+    }[tone];
+
+    return (
+      <div
+        key={participant.username}
+        className={`flex flex-col gap-3 rounded-xl border p-3 transition-colors sm:flex-row sm:items-center sm:justify-between ${toneClass}`}
+      >
+        <div className="flex items-center gap-2">
+          {participant.badge && <BadgeIcon badge={participant.badge as any} size="small" />}
+          <span className="font-medium text-white">{displayName}</span>
+        </div>
+        <div className="flex shrink-0 gap-4">
+          <label className="flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              checked={attendedUserIds.has(userId)}
+              onChange={() => handleToggleAttended(userId)}
+              className="field-checkbox"
+            />
+            <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+              Attended
+            </span>
+          </label>
+          <label className="flex cursor-pointer items-center gap-2">
+            <input
+              type="checkbox"
+              checked={noShowUserIds.has(userId)}
+              onChange={() => handleToggleNoShow(userId)}
+              className="field-checkbox"
+            />
+            <span className="text-xs font-semibold uppercase tracking-wider text-amber-400">
+              No Show
+            </span>
+          </label>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-4">
-          <Link
-            href="/admin/manage-runs"
-            className="text-basketball-orange hover:underline"
-          >
-            ← Back to Manage Runs
-          </Link>
+    <div className="page">
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-5">
+          <BackLink href="/admin/manage-runs" label="Back to Manage Runs" />
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-basketball-black mb-2">
-            Complete Run: {run.title}
-          </h1>
-          <p className="text-gray-600 mb-6">
+        <div className="card glow-edge card-pad">
+          <p className="eyebrow">Final whistle</p>
+          <h1 className="heading-1 mt-2">Complete Run: {run.title}</h1>
+          <p className="mt-2 text-sm text-zinc-400">
             {(() => {
               // Parse date string (YYYY-MM-DD) directly to avoid timezone issues
               const [year, month, day] = run.date.split('T')[0].split('-').map(Number);
@@ -204,18 +257,19 @@ export default function CompleteRunPage() {
               });
             })()}
           </p>
+          <div className="accent-rule mt-5" />
 
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-            <p className="text-yellow-800 text-sm">
-              ⚠️ Once you complete this run, it will be locked from editing. Make sure all attendance information is correct.
-            </p>
+          <div className="alert alert-warning mt-6">
+            Once you complete this run, it will be locked from editing. Make sure all attendance
+            information is correct.
           </div>
 
           {/* Attended Participants */}
-          <div className="mb-8">
-            <h2 className="text-xl font-bold text-basketball-black mb-4">
-              Attended ({attendedUserIds.size + extraAttendees.length + guestAttendees.length})
-            </h2>
+          <div className="mt-8">
+            <div className="mb-4 flex items-center gap-3">
+              <h2 className="heading-2 shrink-0">Attended</h2>
+              <span className="chip chip-green shrink-0">{totalAttended}</span>
+            </div>
             <div className="space-y-2">
               {/* Show confirmed participants who attended */}
               {confirmedParticipants
@@ -223,153 +277,34 @@ export default function CompleteRunPage() {
                   const userId = allUsers.find(u => u.username === participant.username)?.id;
                   return userId && attendedUserIds.has(userId);
                 })
-                .map((participant) => {
-                  const userId = allUsers.find(u => u.username === participant.username)?.id;
-                  if (!userId) return null;
-                  
-                  const displayName = participant.first_name && participant.last_name
-                    ? `${participant.first_name} ${participant.last_name}`
-                    : participant.username;
+                .map((participant) => renderParticipantRow(participant, 'attended'))}
 
-                  return (
-                    <div
-                      key={participant.username}
-                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-green-50"
-                    >
-                      <div className="flex items-center gap-3">
-                        {participant.badge && <BadgeIcon badge={participant.badge as any} size="small" />}
-                        <span className="font-medium text-gray-900">{displayName}</span>
-                      </div>
-                      <div className="flex gap-4">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={attendedUserIds.has(userId)}
-                            onChange={() => handleToggleAttended(userId)}
-                            className="rounded"
-                          />
-                          <span className="text-sm text-green-600">Attended</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={noShowUserIds.has(userId)}
-                            onChange={() => handleToggleNoShow(userId)}
-                            className="rounded"
-                          />
-                          <span className="text-sm text-orange-600">No Show</span>
-                        </label>
-                      </div>
-                    </div>
-                  );
-                })}
-              
               {/* Show confirmed participants who didn't attend yet (for toggling) */}
               {confirmedParticipants
                 .filter((participant) => {
                   const userId = allUsers.find(u => u.username === participant.username)?.id;
                   return userId && !attendedUserIds.has(userId) && !noShowUserIds.has(userId);
                 })
-                .map((participant) => {
-                  const userId = allUsers.find(u => u.username === participant.username)?.id;
-                  if (!userId) return null;
-                  
-                  const displayName = participant.first_name && participant.last_name
-                    ? `${participant.first_name} ${participant.last_name}`
-                    : participant.username;
+                .map((participant) => renderParticipantRow(participant, 'pending'))}
 
-                  return (
-                    <div
-                      key={participant.username}
-                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
-                    >
-                      <div className="flex items-center gap-3">
-                        {participant.badge && <BadgeIcon badge={participant.badge as any} size="small" />}
-                        <span className="font-medium text-gray-900">{displayName}</span>
-                      </div>
-                      <div className="flex gap-4">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={attendedUserIds.has(userId)}
-                            onChange={() => handleToggleAttended(userId)}
-                            className="rounded"
-                          />
-                          <span className="text-sm text-green-600">Attended</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={noShowUserIds.has(userId)}
-                            onChange={() => handleToggleNoShow(userId)}
-                            className="rounded"
-                          />
-                          <span className="text-sm text-orange-600">No Show</span>
-                        </label>
-                      </div>
-                    </div>
-                  );
-                })}
-              
               {/* Show no-shows */}
               {confirmedParticipants
                 .filter((participant) => {
                   const userId = allUsers.find(u => u.username === participant.username)?.id;
                   return userId && noShowUserIds.has(userId);
                 })
-                .map((participant) => {
-                  const userId = allUsers.find(u => u.username === participant.username)?.id;
-                  if (!userId) return null;
-                  
-                  const displayName = participant.first_name && participant.last_name
-                    ? `${participant.first_name} ${participant.last_name}`
-                    : participant.username;
-
-                  return (
-                    <div
-                      key={participant.username}
-                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-orange-50"
-                    >
-                      <div className="flex items-center gap-3">
-                        {participant.badge && <BadgeIcon badge={participant.badge as any} size="small" />}
-                        <span className="font-medium text-gray-900">{displayName}</span>
-                      </div>
-                      <div className="flex gap-4">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={attendedUserIds.has(userId)}
-                            onChange={() => handleToggleAttended(userId)}
-                            className="rounded"
-                          />
-                          <span className="text-sm text-green-600">Attended</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={noShowUserIds.has(userId)}
-                            onChange={() => handleToggleNoShow(userId)}
-                            className="rounded"
-                          />
-                          <span className="text-sm text-orange-600">No Show</span>
-                        </label>
-                      </div>
-                    </div>
-                  );
-                })}
+                .map((participant) => renderParticipantRow(participant, 'no-show'))}
             </div>
           </div>
 
           {/* Extra Attendees */}
-          <div className="mb-8">
-            <h2 className="text-xl font-bold text-basketball-black mb-4">
-              Extra Attendees (Didn't RSVP)
-            </h2>
+          <div className="mt-8">
+            <h2 className="heading-2 mb-4">Extra Attendees (Didn&apos;t RSVP)</h2>
             
             {/* Existing Users */}
             {extraAttendees.length > 0 && (
-              <div className="space-y-2 mb-4">
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">Existing Users</h3>
+              <div className="mb-4 space-y-2">
+                <h3 className="stat-label">Existing Users</h3>
                 {extraAttendees.map((userId) => {
                   const user = allUsers.find(u => u.id === userId);
                   if (!user) return null;
@@ -381,15 +316,15 @@ export default function CompleteRunPage() {
                   return (
                     <div
                       key={userId}
-                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-green-50"
+                      className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/[0.07] p-3"
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         {user.badge && <BadgeIcon badge={user.badge} size="small" />}
-                        <span className="font-medium text-gray-900">{displayName}</span>
+                        <span className="font-medium text-white">{displayName}</span>
                       </div>
                       <button
                         onClick={() => handleRemoveExtraAttendee(userId)}
-                        className="text-red-600 hover:text-red-800 text-sm"
+                        className="text-xs font-semibold text-red-400 transition-colors hover:text-red-300"
                       >
                         Remove
                       </button>
@@ -401,17 +336,17 @@ export default function CompleteRunPage() {
             
             {/* Guest Attendees (Non-users) */}
             {guestAttendees.length > 0 && (
-              <div className="space-y-2 mb-4">
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">Guests (Not Registered)</h3>
+              <div className="mb-4 space-y-2">
+                <h3 className="stat-label">Guests (Not Registered)</h3>
                 {guestAttendees.map((name, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-blue-50"
+                    className="flex items-center justify-between rounded-xl border border-sky-500/30 bg-sky-500/[0.07] p-3"
                   >
-                    <span className="font-medium text-gray-900">{name}</span>
+                    <span className="font-medium text-white">{name}</span>
                     <button
                       onClick={() => handleRemoveGuest(name)}
-                      className="text-red-600 hover:text-red-800 text-sm"
+                      className="text-xs font-semibold text-red-400 transition-colors hover:text-red-300"
                     >
                       Remove
                     </button>
@@ -423,9 +358,7 @@ export default function CompleteRunPage() {
             {/* Add Existing User */}
             {availableUsersForExtra.length > 0 && (
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Add Existing User
-                </label>
+                <label className="field-label">Add Existing User</label>
                 <select
                   onChange={(e) => {
                     if (e.target.value) {
@@ -433,7 +366,7 @@ export default function CompleteRunPage() {
                       e.target.value = '';
                     }
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                  className="field-select"
                 >
                   <option value="">Select a user...</option>
                   {availableUsersForExtra.map((user) => {
@@ -452,9 +385,7 @@ export default function CompleteRunPage() {
             
             {/* Add Guest (Non-user) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Add Guest (Not Registered)
-              </label>
+              <label className="field-label">Add Guest (Not Registered)</label>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -467,12 +398,9 @@ export default function CompleteRunPage() {
                     }
                   }}
                   placeholder="Enter guest name..."
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900"
+                  className="field-input flex-1"
                 />
-                <button
-                  onClick={handleAddGuest}
-                  className="bg-basketball-orange text-white px-4 py-2 rounded-md hover:bg-orange-600 transition-colors"
-                >
+                <button onClick={handleAddGuest} className="btn btn-primary shrink-0">
                   Add
                 </button>
               </div>
@@ -480,43 +408,46 @@ export default function CompleteRunPage() {
           </div>
 
           {/* Summary */}
-          <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <h3 className="font-semibold text-basketball-black mb-2">Summary</h3>
-            <div className="space-y-2">
-              <p className="text-sm text-gray-600">
-                Total Attended: {attendedUserIds.size + extraAttendees.length + guestAttendees.length} • No Shows: {noShowUserIds.size}
-              </p>
-              {guestAttendees.length > 0 && (
-                <p className="text-xs text-gray-500">
-                  ({guestAttendees.length} guest{guestAttendees.length !== 1 ? 's' : ''} included)
-                </p>
-              )}
-              {run.is_variable_cost && run.total_cost && (
-                <p className="text-sm font-semibold text-basketball-black mt-2">
-                  Final Cost: ${((Number(run.total_cost) || 0) / (attendedUserIds.size + extraAttendees.length + guestAttendees.length || 1)).toFixed(2)} per person
-                </p>
-              )}
-              {!run.is_variable_cost && run.cost && (
-                <p className="text-sm font-semibold text-basketball-black mt-2">
-                  Final Cost: ${Number(run.cost).toFixed(2)} per person
-                </p>
-              )}
+          <div className="panel-sunken mt-8 p-4">
+            <h3 className="stat-label">Summary</h3>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <div className="stat-tile">
+                <p className="stat-label">Total Attended</p>
+                <p className="stat-value mt-0.5 text-emerald-400">{totalAttended}</p>
+              </div>
+              <div className="stat-tile">
+                <p className="stat-label">No Shows</p>
+                <p className="stat-value mt-0.5 text-amber-400">{noShowUserIds.size}</p>
+              </div>
             </div>
+            {guestAttendees.length > 0 && (
+              <p className="mt-2 text-xs text-zinc-500">
+                ({guestAttendees.length} guest{guestAttendees.length !== 1 ? 's' : ''} included)
+              </p>
+            )}
+            {run.is_variable_cost && run.total_cost && (
+              <p className="mt-3 text-sm font-semibold text-white">
+                Final Cost:{' '}
+                <span className="text-ember-400">
+                  ${((Number(run.total_cost) || 0) / (totalAttended || 1)).toFixed(2)}
+                </span>{' '}
+                per person
+              </p>
+            )}
+            {!run.is_variable_cost && run.cost && (
+              <p className="mt-3 text-sm font-semibold text-white">
+                Final Cost: <span className="text-ember-400">${Number(run.cost).toFixed(2)}</span> per
+                person
+              </p>
+            )}
           </div>
 
           {/* Actions */}
-          <div className="flex gap-4">
-            <button
-              onClick={handleComplete}
-              disabled={saving}
-              className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:opacity-50"
-            >
+          <div className="mt-6 flex gap-3">
+            <button onClick={handleComplete} disabled={saving} className="btn btn-primary btn-lg">
               {saving ? 'Completing...' : 'Complete Run'}
             </button>
-            <Link
-              href="/admin/manage-runs"
-              className="bg-gray-300 text-gray-700 px-6 py-2 rounded hover:bg-gray-400"
-            >
+            <Link href="/admin/manage-runs" className="btn btn-secondary btn-lg">
               Cancel
             </Link>
           </div>
@@ -525,4 +456,3 @@ export default function CompleteRunPage() {
     </div>
   );
 }
-

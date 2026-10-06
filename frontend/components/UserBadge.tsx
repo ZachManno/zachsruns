@@ -16,29 +16,20 @@ export default function UserBadge({ user }: UserBadgeProps) {
                     user.badge === 'plus_one' ? '+1' : null;
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="font-semibold text-basketball-black">{displayName}</span>
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="font-display text-lg font-bold tracking-tight text-white">{displayName}</span>
       {user.badge && (
-        <span className="flex items-center gap-1">
+        <span className="chip chip-neutral">
           <BadgeIcon badge={user.badge} size="small" />
-          {badgeName && <span className="text-xs text-gray-600">({badgeName})</span>}
+          {badgeName && <span>{badgeName}</span>}
         </span>
       )}
       {user.is_verified ? (
-        <span className="bg-green-500 text-white px-2 py-1 rounded text-xs">
-          Verified
-        </span>
+        <span className="chip chip-green">Verified</span>
       ) : (
-        <span className="bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs">
-          Unverified
-        </span>
+        <span className="chip chip-neutral">Unverified</span>
       )}
-      {user.is_admin && (
-        <span className="bg-basketball-orange text-white px-2 py-1 rounded text-xs">
-          Admin
-        </span>
-      )}
+      {user.is_admin && <span className="chip chip-orange">Admin</span>}
     </div>
   );
 }
-

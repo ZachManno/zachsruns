@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { locationsApi } from '@/lib/api';
 import { Location } from '@/types';
+import PageHeader from '@/components/PageHeader';
 
 export default function LocationsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -40,9 +41,10 @@ export default function LocationsPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center">
-          <p className="text-gray-600">Loading...</p>
+      <div className="page">
+        <div className="flex flex-col items-center gap-3 py-20">
+          <div className="spinner" />
+          <p className="text-sm text-zinc-500">Loading...</p>
         </div>
       </div>
     );
@@ -54,13 +56,10 @@ export default function LocationsPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center">
-          <p className="text-red-600">{error}</p>
-          <button
-            onClick={fetchLocations}
-            className="mt-4 bg-basketball-orange text-white px-4 py-2 rounded hover:bg-orange-600"
-          >
+      <div className="page">
+        <div className="py-20 text-center">
+          <p className="text-red-300">{error}</p>
+          <button onClick={fetchLocations} className="btn btn-primary mt-4">
             Retry
           </button>
         </div>
@@ -69,25 +68,24 @@ export default function LocationsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 md:py-12">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl md:text-4xl font-bold text-basketball-black mb-4 md:mb-8 text-center">
-          Locations
-        </h1>
+    <div className="page">
+      <div className="mx-auto max-w-6xl">
+        <PageHeader
+          eyebrow="Where we play"
+          title="Locations"
+          description="The gyms and courts we run at."
+        />
 
         {locations.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
             {locations.map((location) => (
-              <div
-                key={location.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-              >
+              <div key={location.id} className="card card-interactive overflow-hidden">
                 {location.image_url && (
-                  <div className="w-full h-48 md:h-64 bg-gray-200 overflow-hidden relative">
+                  <div className="relative h-44 w-full overflow-hidden bg-court-900 md:h-52">
                     <img
                       src={location.image_url}
                       alt={location.name}
-                      className="w-full h-full object-cover"
+                      className="h-full w-full object-cover opacity-80 saturate-[0.85] transition-all duration-300 hover:scale-[1.03] hover:opacity-100 hover:saturate-100"
                       onError={(e) => {
                         // Hide image container if image fails to load
                         const container = (e.target as HTMLImageElement).parentElement;
@@ -96,17 +94,16 @@ export default function LocationsPage() {
                         }
                       }}
                     />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-court-950 via-court-950/20 to-transparent" />
                   </div>
                 )}
-                <div className="p-4 md:p-6">
-                  <h2 className="text-xl md:text-2xl font-bold text-basketball-black mb-2 md:mb-3">
+                <div className="p-4 md:p-5">
+                  <h2 className="font-display text-lg font-bold tracking-tight text-white md:text-xl">
                     {location.name}
                   </h2>
-                  <p className="text-gray-700 mb-2">
-                    <span className="font-semibold">Address:</span> {location.address}
-                  </p>
+                  <p className="mt-2 text-sm text-zinc-400">{location.address}</p>
                   {location.description && (
-                    <p className="text-gray-600 text-sm mt-4">
+                    <p className="mt-3 border-t border-court-800 pt-3 text-sm leading-relaxed text-zinc-400">
                       {location.description}
                     </p>
                   )}
@@ -115,12 +112,11 @@ export default function LocationsPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-gray-600">No locations available.</p>
+          <div className="card card-pad py-16 text-center">
+            <p className="text-zinc-500">No locations available.</p>
           </div>
         )}
       </div>
     </div>
   );
 }
-

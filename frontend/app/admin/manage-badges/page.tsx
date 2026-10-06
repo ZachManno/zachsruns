@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { adminApi } from '@/lib/api';
 import { User } from '@/types';
 import BadgeIcon from '@/components/BadgeIcon';
-import Link from 'next/link';
+import BackLink from '@/components/BackLink';
 
 export default function ManageBadgesPage() {
   const { user, loading: authLoading } = useAuth();
@@ -120,9 +120,10 @@ export default function ManageBadgesPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center">
-          <p className="text-gray-600">Loading...</p>
+      <div className="page">
+        <div className="flex flex-col items-center gap-3 py-20">
+          <div className="spinner" />
+          <p className="text-sm text-zinc-500">Loading...</p>
         </div>
       </div>
     );
@@ -133,39 +134,33 @@ export default function ManageBadgesPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-4">
-          <Link
-            href="/admin/dashboard"
-            className="text-basketball-orange hover:underline"
-          >
-            ← Back to Dashboard
-          </Link>
+    <div className="page">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-5">
+          <BackLink href="/admin/dashboard" label="Back to Dashboard" />
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-basketball-black">
-              Manage Badges
-            </h1>
-            <button
-              onClick={() => handleBulkAssign('regular')}
-              className="bg-basketball-orange text-white px-4 py-2 rounded hover:bg-orange-600 transition-colors"
-            >
+        <div className="card glow-edge card-pad">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="eyebrow">Recognition</p>
+              <h1 className="heading-1 mt-2">Manage Badges</h1>
+            </div>
+            <button onClick={() => handleBulkAssign('regular')} className="btn btn-secondary self-start">
               Set All to Regular
             </button>
           </div>
+          <div className="accent-rule mt-5" />
 
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="mt-6 overflow-x-auto">
+            <table className="data-table min-w-[720px]">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Name</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Current Badge</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Run Count</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Assign Badge</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
+                <tr>
+                  <th>Name</th>
+                  <th>Current Badge</th>
+                  <th>Run Count</th>
+                  <th>Assign Badge</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -179,34 +174,29 @@ export default function ManageBadgesPage() {
                   const needsReferrer = currentBadge === 'plus_one' || change?.badge === 'plus_one';
 
                   return (
-                    <tr key={u.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-gray-900">{displayName}</span>
-                          {u.badge && !change && (
-                            <BadgeIcon badge={u.badge} size="small" />
-                          )}
+                    <tr key={u.id}>
+                      <td>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-white">{displayName}</span>
+                          {u.badge && !change && <BadgeIcon badge={u.badge} size="small" />}
                         </div>
-                        <p className="text-xs text-gray-500">@{u.username}</p>
+                        <p className="text-xs text-zinc-500">@{u.username}</p>
                       </td>
-                      <td className="py-3 px-4">
+                      <td>
                         {u.badge ? (
-                          <span className="flex items-center gap-1">
+                          <span className="chip chip-neutral">
                             <BadgeIcon badge={u.badge} size="small" />
-                            <span className="text-sm">
-                              {u.badge === 'regular' ? 'Regular' :
-                               u.badge === 'plus_one' ? '+1' : ''}
-                            </span>
+                            {u.badge === 'regular' ? 'Regular' : u.badge === 'plus_one' ? '+1' : ''}
                           </span>
                         ) : (
-                          <span className="text-sm text-gray-400">None</span>
+                          <span className="text-sm text-zinc-600">None</span>
                         )}
                       </td>
-                      <td className="py-3 px-4">
-                        <span className="text-sm">{u.run_count || 0}</span>
+                      <td>
+                        <span className="font-display font-semibold text-white">{u.run_count || 0}</span>
                       </td>
-                      <td className="py-3 px-4">
-                        <div className="space-y-2">
+                      <td>
+                        <div className="w-44 space-y-2">
                           <select
                             value={currentBadge || 'none'}
                             onChange={(e) => {
@@ -215,7 +205,7 @@ export default function ManageBadgesPage() {
                               const existingReferredBy = change?.referredBy;
                               handleBadgeChange(u.id, newBadge as any, newBadge === 'plus_one' ? existingReferredBy : undefined);
                             }}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900 text-sm"
+                            className="field-select py-2 text-xs"
                           >
                             <option value="none">None</option>
                             <option value="regular">Regular</option>
@@ -229,7 +219,7 @@ export default function ManageBadgesPage() {
                                 // Always set badge to plus_one when referrer is selected
                                 handleBadgeChange(u.id, 'plus_one', referrerId);
                               }}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-basketball-orange focus:border-transparent text-gray-900 text-sm"
+                              className="field-select py-2 text-xs"
                             >
                               <option value="">Select Referrer</option>
                               {referrers.map((ref) => (
@@ -243,12 +233,12 @@ export default function ManageBadgesPage() {
                           )}
                         </div>
                       </td>
-                      <td className="py-3 px-4">
+                      <td>
                         {(badgeChanges[u.id] && (badgeChanges[u.id].badge !== undefined || badgeChanges[u.id].referredBy !== undefined)) && (
                           <button
                             onClick={() => handleSave(u.id)}
                             disabled={updating === u.id}
-                            className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 disabled:opacity-50"
+                            className="btn btn-success btn-sm"
                           >
                             {updating === u.id ? 'Saving...' : 'Save'}
                           </button>
@@ -265,4 +255,3 @@ export default function ManageBadgesPage() {
     </div>
   );
 }
-

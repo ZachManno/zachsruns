@@ -4,6 +4,49 @@ import { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import PageHeader from '@/components/PageHeader';
+
+const adminLinks: Array<{
+  href: string;
+  title: string;
+  description: string;
+}> = [
+  {
+    href: '/admin/create-run',
+    title: 'Create Run',
+    description: 'Create a new basketball run event',
+  },
+  {
+    href: '/admin/manage-runs',
+    title: 'Manage Runs',
+    description: 'View, edit, complete, or delete runs',
+  },
+  {
+    href: '/admin/manage-badges',
+    title: 'Manage Badges',
+    description: 'Assign badges to users (Regular, +1)',
+  },
+  {
+    href: '/admin/announcements',
+    title: 'Manage Announcements',
+    description: 'Create or update site announcements',
+  },
+  {
+    href: '/admin/private-groups',
+    title: 'Private Groups',
+    description: 'Manage private run groups and members',
+  },
+  {
+    href: '/admin/import-data',
+    title: 'Import Historical Data',
+    description: 'Import past runs from JSON file',
+  },
+  {
+    href: '/admin/verify-users',
+    title: 'Manage Users',
+    description: 'Manage user verification and active status',
+  },
+];
 
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
@@ -17,108 +60,35 @@ export default function AdminDashboard() {
 
   if (loading || !user || !user.is_admin) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center">
-          <p className="text-gray-600">Loading...</p>
+      <div className="page">
+        <div className="flex flex-col items-center gap-3 py-20">
+          <div className="spinner" />
+          <p className="text-sm text-zinc-500">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 md:py-12">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-bold text-basketball-black mb-4 md:mb-8">
-          Admin Dashboard
-        </h1>
+    <div className="page">
+      <div className="mx-auto max-w-4xl">
+        <PageHeader
+          eyebrow="Control room"
+          title="Admin Dashboard"
+          description="Everything you need to run the league."
+        />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          <Link
-            href="/admin/create-run"
-            className="bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition-shadow"
-          >
-            <h2 className="text-lg md:text-xl font-bold text-basketball-black mb-2">
-              Create Run
-            </h2>
-            <p className="text-gray-600 text-sm md:text-base">
-              Create a new basketball run event
-            </p>
-          </Link>
-
-          <Link
-            href="/admin/manage-runs"
-            className="bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition-shadow"
-          >
-            <h2 className="text-lg md:text-xl font-bold text-basketball-black mb-2">
-              Manage Runs
-            </h2>
-            <p className="text-gray-600 text-sm md:text-base">
-              View, edit, complete, or delete runs
-            </p>
-          </Link>
-
-          <Link
-            href="/admin/manage-badges"
-            className="bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition-shadow"
-          >
-            <h2 className="text-lg md:text-xl font-bold text-basketball-black mb-2">
-              Manage Badges
-            </h2>
-            <p className="text-gray-600 text-sm md:text-base">
-              Assign badges to users (Regular, +1)
-            </p>
-          </Link>
-
-          <Link
-            href="/admin/announcements"
-            className="bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition-shadow"
-          >
-            <h2 className="text-lg md:text-xl font-bold text-basketball-black mb-2">
-              Manage Announcements
-            </h2>
-            <p className="text-gray-600 text-sm md:text-base">
-              Create or update site announcements
-            </p>
-          </Link>
-
-          <Link
-            href="/admin/private-groups"
-            className="bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition-shadow"
-          >
-            <h2 className="text-lg md:text-xl font-bold text-basketball-black mb-2">
-              Private Groups
-            </h2>
-            <p className="text-gray-600 text-sm md:text-base">
-              Manage private run groups and members
-            </p>
-          </Link>
-
-          <Link
-            href="/admin/import-data"
-            className="bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition-shadow"
-          >
-            <h2 className="text-lg md:text-xl font-bold text-basketball-black mb-2">
-              Import Historical Data
-            </h2>
-            <p className="text-gray-600 text-sm md:text-base">
-              Import past runs from JSON file
-            </p>
-          </Link>
-
-          <Link
-            href="/admin/verify-users"
-            className="bg-white rounded-lg shadow-md p-4 md:p-6 hover:shadow-lg transition-shadow"
-          >
-            <h2 className="text-lg md:text-xl font-bold text-basketball-black mb-2">
-              Manage Users
-            </h2>
-            <p className="text-gray-600 text-sm md:text-base">
-              Manage user verification and active status
-            </p>
-          </Link>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
+          {adminLinks.map((link) => (
+            <Link key={link.href} href={link.href} className="card card-interactive group p-5">
+              <h2 className="font-display text-base font-bold tracking-tight text-white transition-colors group-hover:text-ember-400 md:text-lg">
+                {link.title}
+              </h2>
+              <p className="mt-1 text-sm text-zinc-400">{link.description}</p>
+            </Link>
+          ))}
         </div>
       </div>
     </div>
   );
 }
-
