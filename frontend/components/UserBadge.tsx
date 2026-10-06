@@ -17,7 +17,7 @@ export default function UserBadge({ user }: UserBadgeProps) {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="font-display text-lg font-bold tracking-tight text-white">{displayName}</span>
+      <span className="font-display text-lg font-bold tracking-tight text-ink">{displayName}</span>
       {user.badge && (
         <span className="chip chip-neutral">
           <BadgeIcon badge={user.badge} size="small" />

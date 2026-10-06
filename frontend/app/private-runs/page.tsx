@@ -72,7 +72,7 @@ export default function PrivateRunsPage() {
                 href={`/private-runs/${group.id}`}
                 className="card card-interactive group p-5"
               >
-                <h2 className="font-display text-lg font-bold tracking-tight text-white md:text-xl">
+                <h2 className="font-display text-lg font-bold tracking-tight text-ink md:text-xl">
                   {group.name}
                 </h2>
                 {group.description && (

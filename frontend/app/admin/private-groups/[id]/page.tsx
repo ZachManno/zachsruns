@@ -246,7 +246,7 @@ export default function AdminManageGroupPage() {
                       <BadgeIcon badge={member.badge as 'regular' | 'plus_one'} size="small" />
                     )}
                     <div className="min-w-0">
-                      <span className="text-sm font-medium text-white">{getDisplayName(member)}</span>
+                      <span className="text-sm font-medium text-ink">{getDisplayName(member)}</span>
                       <span className="ml-2 text-xs text-zinc-500">@{member.username}</span>
                     </div>
                   </div>

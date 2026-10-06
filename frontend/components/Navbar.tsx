@@ -67,7 +67,7 @@ export default function Navbar() {
             className="group flex items-center gap-2.5"
           >
             <BallMark className="h-9 w-9 shrink-0 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:drop-shadow-[0_0_10px_rgba(255,107,53,0.55)]" />
-            <span className="font-display text-base font-extrabold leading-none tracking-tight text-white transition-colors duration-300 group-hover:text-ember-400 md:text-lg">
+            <span className="font-display text-base font-extrabold leading-none tracking-tight text-ink transition-colors duration-300 group-hover:text-ember-400 md:text-lg">
               Zach&apos;s Runs
             </span>
           </Link>
@@ -85,7 +85,7 @@ export default function Navbar() {
                     className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                       isActive(link.href)
                         ? 'bg-ember-500/10 text-ember-400'
-                        : 'text-zinc-400 hover:bg-court-800 hover:text-white'
+                        : 'text-zinc-400 hover:bg-court-800 hover:text-ink'
                     }`}
                   >
                     {link.label}
@@ -94,7 +94,7 @@ export default function Navbar() {
                 <span className="mx-2 h-6 w-px bg-court-700" />
                 <button
                   onClick={handleLogout}
-                  className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-500 transition-colors hover:text-white"
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-500 transition-colors hover:text-ink"
                 >
                   Logout
                 </button>
@@ -103,7 +103,7 @@ export default function Navbar() {
               <>
                 <Link
                   href="/login"
-                  className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:text-white"
+                  className="rounded-lg px-3 py-2 text-sm font-medium text-zinc-300 transition-colors hover:text-ink"
                 >
                   Log In
                 </Link>
@@ -117,7 +117,7 @@ export default function Navbar() {
           {/* Mobile Hamburger Button - visible on mobile only */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="rounded-lg border border-court-700 p-2 text-zinc-300 transition-colors hover:bg-court-800 hover:text-white md:hidden"
+            className="rounded-lg border border-court-700 p-2 text-zinc-300 transition-colors hover:bg-court-800 hover:text-ink md:hidden"
             aria-label="Toggle menu"
             aria-expanded={isMenuOpen}
           >
@@ -159,7 +159,7 @@ export default function Navbar() {
                       className={`block rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
                         isActive(link.href)
                           ? 'bg-ember-500/10 text-ember-400'
-                          : 'text-zinc-300 hover:bg-court-800 hover:text-white'
+                          : 'text-zinc-300 hover:bg-court-800 hover:text-ink'
                       }`}
                     >
                       {link.label}
@@ -167,7 +167,7 @@ export default function Navbar() {
                   ))}
                   <button
                     onClick={handleLogout}
-                    className="block w-full rounded-lg px-4 py-2.5 text-left text-sm font-medium text-zinc-500 transition-colors hover:bg-court-800 hover:text-white"
+                    className="block w-full rounded-lg px-4 py-2.5 text-left text-sm font-medium text-zinc-500 transition-colors hover:bg-court-800 hover:text-ink"
                   >
                     Logout
                   </button>
@@ -177,7 +177,7 @@ export default function Navbar() {
                   <Link
                     href="/login"
                     onClick={handleLinkClick}
-                    className="block rounded-lg px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:bg-court-800 hover:text-white"
+                    className="block rounded-lg px-4 py-2.5 text-sm font-medium text-zinc-300 transition-colors hover:bg-court-800 hover:text-ink"
                   >
                     Log In
                   </Link>

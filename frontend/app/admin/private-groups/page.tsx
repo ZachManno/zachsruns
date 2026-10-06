@@ -158,7 +158,7 @@ export default function AdminPrivateGroupsPage() {
                   className="panel flex flex-col justify-between gap-3 p-4 transition-colors hover:border-court-600 md:flex-row md:items-center"
                 >
                   <div className="min-w-0">
-                    <h3 className="font-display font-bold text-white">{group.name}</h3>
+                    <h3 className="font-display font-bold text-ink">{group.name}</h3>
                     {group.description && (
                       <p className="mt-0.5 text-sm text-zinc-400">{group.description}</p>
                     )}
@@ -194,7 +194,7 @@ export default function AdminPrivateGroupsPage() {
             <h3 className="font-display text-xl font-bold text-red-300">Delete Group</h3>
             <p className="mt-3 text-sm leading-relaxed text-zinc-300">
               Are you sure you&apos;d like to delete the entire group{' '}
-              <strong className="text-white">&quot;{groupToDelete.name}&quot;</strong>? All runs in
+              <strong className="text-ink">&quot;{groupToDelete.name}&quot;</strong>? All runs in
               this group will be permanently deleted.
             </p>
             <div className="mt-6 flex justify-end gap-3">

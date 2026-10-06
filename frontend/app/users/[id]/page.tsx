@@ -120,7 +120,7 @@ export default function UserProfilePage() {
             {user.badge && (
               <div className="flex shrink-0 items-center gap-2 self-start rounded-xl border border-court-700 bg-court-900/70 px-3 py-2 sm:self-center">
                 <BadgeIcon badge={user.badge} size="large" />
-                <span className="font-display text-sm font-bold text-white">
+                <span className="font-display text-sm font-bold text-ink">
                   {user.badge === 'regular' ? 'Regular' : user.badge === 'plus_one' ? '+1' : ''}
                 </span>
               </div>

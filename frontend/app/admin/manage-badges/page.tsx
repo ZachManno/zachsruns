@@ -177,7 +177,7 @@ export default function ManageBadgesPage() {
                     <tr key={u.id}>
                       <td>
                         <div className="flex items-center gap-1.5">
-                          <span className="font-semibold text-white">{displayName}</span>
+                          <span className="font-semibold text-ink">{displayName}</span>
                           {u.badge && !change && <BadgeIcon badge={u.badge} size="small" />}
                         </div>
                         <p className="text-xs text-zinc-500">@{u.username}</p>
@@ -193,7 +193,7 @@ export default function ManageBadgesPage() {
                         )}
                       </td>
                       <td>
-                        <span className="font-display font-semibold text-white">{u.run_count || 0}</span>
+                        <span className="font-display font-semibold text-ink">{u.run_count || 0}</span>
                       </td>
                       <td>
                         <div className="w-44 space-y-2">

@@ -92,16 +92,17 @@ function HomeContent() {
             className="absolute inset-0"
             style={{
               background:
-                'linear-gradient(to bottom, rgba(8,8,10,0.12) 0%, rgba(8,8,10,0) 20%, rgba(8,8,10,0) 68%, rgba(8,8,10,0.7) 88%, rgba(8,8,10,1) 100%)',
+                'linear-gradient(to bottom, rgb(var(--court-950) / 0.12) 0%, rgb(var(--court-950) / 0) 20%, rgb(var(--court-950) / 0) 68%, rgb(var(--court-950) / 0.7) 88%, rgb(var(--court-950)) 100%)',
             }}
             aria-hidden
           />
 
           <div className="container relative mx-auto flex min-h-[188px] items-center justify-center px-4 py-12 md:min-h-[340px] md:py-16">
             <div className="animate-rise-in mx-auto max-w-3xl text-center">
-              {/* No backdrop-blur here: iOS Safari re-samples the backdrop against the solid
-                  body background once the page grows taller, turning this panel opaque black. */}
-              <h1 className="inline-block rounded-2xl border border-white/10 bg-court-950/70 px-5 py-3 font-display text-[1.75rem] font-extrabold leading-[1.1] tracking-tight text-white sm:px-8 sm:py-4 sm:text-4xl md:text-5xl">
+              {/* Stays dark in both themes since it sits on the photo. No backdrop-blur here:
+                  iOS Safari re-samples the backdrop against the solid body background once the
+                  page grows taller, turning this panel opaque black. */}
+              <h1 className="inline-block rounded-2xl border border-white/10 bg-basketball-black/70 px-5 py-3 font-display text-[1.75rem] font-extrabold leading-[1.1] tracking-tight text-white sm:px-8 sm:py-4 sm:text-4xl md:text-5xl">
                 Zach&apos;s <span className="text-gradient-ember">Organized Runs</span>
               </h1>
 
@@ -154,7 +155,7 @@ function HomeContent() {
             /* ── Logged in but not verified ── */
             <div className="mx-auto max-w-md py-6">
               <div className="card card-pad glow-edge space-y-5 text-center">
-                <p className="font-display text-lg font-bold text-white">
+                <p className="font-display text-lg font-bold text-ink">
                   Your account is pending verification
                 </p>
                 <p className="text-sm leading-relaxed text-zinc-500">

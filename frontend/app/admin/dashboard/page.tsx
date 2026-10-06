@@ -81,7 +81,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
           {adminLinks.map((link) => (
             <Link key={link.href} href={link.href} className="card card-interactive group p-5">
-              <h2 className="font-display text-base font-bold tracking-tight text-white transition-colors group-hover:text-ember-400 md:text-lg">
+              <h2 className="font-display text-base font-bold tracking-tight text-ink transition-colors group-hover:text-ember-400 md:text-lg">
                 {link.title}
               </h2>
               <p className="mt-1 text-sm text-zinc-400">{link.description}</p>

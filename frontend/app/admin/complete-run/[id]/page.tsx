@@ -204,7 +204,7 @@ export default function CompleteRunPage() {
       >
         <div className="flex items-center gap-2">
           {participant.badge && <BadgeIcon badge={participant.badge as any} size="small" />}
-          <span className="font-medium text-white">{displayName}</span>
+          <span className="font-medium text-ink">{displayName}</span>
         </div>
         <div className="flex shrink-0 gap-4">
           <label className="flex cursor-pointer items-center gap-2">
@@ -320,7 +320,7 @@ export default function CompleteRunPage() {
                     >
                       <div className="flex items-center gap-2">
                         {user.badge && <BadgeIcon badge={user.badge} size="small" />}
-                        <span className="font-medium text-white">{displayName}</span>
+                        <span className="font-medium text-ink">{displayName}</span>
                       </div>
                       <button
                         onClick={() => handleRemoveExtraAttendee(userId)}
@@ -343,7 +343,7 @@ export default function CompleteRunPage() {
                     key={index}
                     className="flex items-center justify-between rounded-xl border border-sky-500/30 bg-sky-500/[0.07] p-3"
                   >
-                    <span className="font-medium text-white">{name}</span>
+                    <span className="font-medium text-ink">{name}</span>
                     <button
                       onClick={() => handleRemoveGuest(name)}
                       className="text-xs font-semibold text-red-400 transition-colors hover:text-red-300"
@@ -426,7 +426,7 @@ export default function CompleteRunPage() {
               </p>
             )}
             {run.is_variable_cost && run.total_cost && (
-              <p className="mt-3 text-sm font-semibold text-white">
+              <p className="mt-3 text-sm font-semibold text-ink">
                 Final Cost:{' '}
                 <span className="text-ember-400">
                   ${((Number(run.total_cost) || 0) / (totalAttended || 1)).toFixed(2)}
@@ -435,7 +435,7 @@ export default function CompleteRunPage() {
               </p>
             )}
             {!run.is_variable_cost && run.cost && (
-              <p className="mt-3 text-sm font-semibold text-white">
+              <p className="mt-3 text-sm font-semibold text-ink">
                 Final Cost: <span className="text-ember-400">${Number(run.cost).toFixed(2)}</span> per
                 person
               </p>

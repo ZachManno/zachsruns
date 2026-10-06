@@ -152,7 +152,7 @@ export default function ManageRunsPage() {
                       className="flex flex-col justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/[0.07] p-4 md:flex-row md:items-center"
                     >
                       <div className="min-w-0">
-                        <p className="font-semibold text-white">
+                        <p className="font-semibold text-ink">
                           {name} wants to drop to {requestedLabel}
                         </p>
                         <p className="mt-0.5 text-sm text-zinc-400">
@@ -405,7 +405,7 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
           {/* Run Info */}
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-start gap-2 md:items-center">
-              <h3 className="font-display text-base font-bold tracking-tight text-white md:text-lg">
+              <h3 className="font-display text-base font-bold tracking-tight text-ink md:text-lg">
                 {run.title}
               </h3>
               {run.private_group_name && (

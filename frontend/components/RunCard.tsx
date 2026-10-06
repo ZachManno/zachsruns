@@ -197,7 +197,7 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
         ? 'border-emerald-400/60 bg-emerald-500/90 text-white shadow-[0_6px_18px_-8px_rgba(16,185,129,0.9)]'
         : 'border-court-700 bg-court-800/70 text-emerald-300/80 hover:border-emerald-500/50 hover:bg-emerald-500/10 hover:text-emerald-300',
       amber: active
-        ? 'border-amber-400/60 bg-amber-500/90 text-court-950 shadow-[0_6px_18px_-8px_rgba(245,158,11,0.9)]'
+        ? 'border-amber-400/60 bg-amber-500/90 text-basketball-black shadow-[0_6px_18px_-8px_rgba(245,158,11,0.9)]'
         : 'border-court-700 bg-court-800/70 text-amber-300/80 hover:border-amber-500/50 hover:bg-amber-500/10 hover:text-amber-300',
       red: active
         ? 'border-red-400/60 bg-red-500/90 text-white shadow-[0_6px_18px_-8px_rgba(239,68,68,0.9)]'
@@ -218,7 +218,7 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
       {/* Header: title, date, time */}
       <div className="mb-4 flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <h3 className="font-display text-lg font-bold leading-tight tracking-tight text-white md:text-xl">
+          <h3 className="font-display text-lg font-bold leading-tight tracking-tight text-ink md:text-xl">
             {run.title}
           </h3>
           <div className="mt-2 space-y-1 text-sm">

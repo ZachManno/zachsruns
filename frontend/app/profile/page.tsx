@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
+import { Theme } from '@/lib/theme';
 import { useRouter } from 'next/navigation';
 import { usersApi } from '@/lib/api';
 import { Run } from '@/types';
@@ -9,8 +11,14 @@ import UserBadge from '@/components/UserBadge';
 import RunCard from '@/components/RunCard';
 import BadgeIcon from '@/components/BadgeIcon';
 
+const THEME_OPTIONS: { value: Theme; label: string; hint: string }[] = [
+  { value: 'dark', label: 'Dark', hint: 'Default court-side look' },
+  { value: 'light', label: 'Light', hint: 'Brighter, daytime look' },
+];
+
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth();
+  const { theme, setTheme } = useTheme();
   const router = useRouter();
   const [runs, setRuns] = useState<{ upcoming: Run[]; history: Run[] }>({
     upcoming: [],
@@ -98,7 +106,7 @@ export default function ProfilePage() {
             {user.badge && (
               <div className="flex shrink-0 items-center gap-2 self-start rounded-xl border border-court-700 bg-court-900/70 px-3 py-2 sm:self-center">
                 <BadgeIcon badge={user.badge} size="large" />
-                <span className="font-display text-sm font-bold text-white">
+                <span className="font-display text-sm font-bold text-ink">
                   {user.badge === 'regular' ? 'Regular' : user.badge === 'plus_one' ? '+1' : ''}
                 </span>
               </div>
@@ -124,6 +132,42 @@ export default function ProfilePage() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Appearance */}
+        <div className="card card-pad mb-6 md:mb-8">
+          <h2 className="heading-3">Appearance</h2>
+          <p className="field-hint mb-3">Saved on this device.</p>
+          <div className="grid grid-cols-2 gap-3">
+            {THEME_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setTheme(option.value)}
+                aria-pressed={theme === option.value}
+                className={`choice-tile justify-between ${theme === option.value ? 'choice-tile-active' : ''}`}
+              >
+                <span className="flex flex-col items-start gap-0.5 text-left">
+                  <span className="font-semibold">{option.label}</span>
+                  <span className="text-xs text-zinc-500">{option.hint}</span>
+                </span>
+                {theme === option.value && (
+                  <svg
+                    className="h-4 w-4 shrink-0 text-ember-400"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M16.7 5.3a1 1 0 010 1.4l-7.5 7.5a1 1 0 01-1.4 0L3.3 9.7a1 1 0 011.4-1.4l3.8 3.8 6.8-6.8a1 1 0 011.4 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="mb-8 md:mb-10">

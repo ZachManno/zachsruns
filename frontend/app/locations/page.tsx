@@ -98,7 +98,7 @@ export default function LocationsPage() {
                   </div>
                 )}
                 <div className="p-4 md:p-5">
-                  <h2 className="font-display text-lg font-bold tracking-tight text-white md:text-xl">
+                  <h2 className="font-display text-lg font-bold tracking-tight text-ink md:text-xl">
                     {location.name}
                   </h2>
                   <p className="mt-2 text-sm text-zinc-400">{location.address}</p>

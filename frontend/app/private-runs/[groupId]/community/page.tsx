@@ -112,7 +112,7 @@ export default function PrivateGroupCommunityPage() {
                   {(member.first_name?.[0] || member.username[0] || '?').toUpperCase()}
                 </span>
                 <div className="min-w-0">
-                  <p className="flex items-center gap-1.5 truncate font-medium text-white">
+                  <p className="flex items-center gap-1.5 truncate font-medium text-ink">
                     {getDisplayName(member)}
                     {member.badge && (
                       <BadgeIcon badge={member.badge as 'regular' | 'plus_one'} size="small" />

@@ -86,7 +86,7 @@ export default function CommunityPage() {
               {initials}
             </span>
             <div className="min-w-0">
-              <p className="flex items-center gap-1.5 truncate font-semibold text-white">
+              <p className="flex items-center gap-1.5 truncate font-semibold text-ink">
                 {displayName}
                 {user.badge && <BadgeIcon badge={user.badge} size="small" />}
               </p>
@@ -104,7 +104,7 @@ export default function CommunityPage() {
             </div>
           </div>
           <div className="shrink-0 text-right">
-            <p className="font-display text-lg font-bold leading-none text-white">
+            <p className="font-display text-lg font-bold leading-none text-ink">
               {user.runs_attended_count || 0}
             </p>
             <p className="mt-0.5 text-[10px] uppercase tracking-wider text-zinc-500">
