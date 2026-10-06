@@ -74,31 +74,32 @@ function HomeContent() {
 
       {/* ── Hero ── */}
       <section className="mt-3 md:mt-4">
-        <div className="relative">
-          <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-            <div
-              className="absolute inset-0 bg-cover bg-center md:hidden"
-              style={{ backgroundImage: "url('/images/bball-backdrop-2-mobile.jpg')" }}
-            />
-            <div
-              className="absolute inset-0 hidden bg-cover md:block"
-              style={{
-                backgroundImage: "url('/images/bball-backdrop-2.jpg')",
-                backgroundPosition: 'center 40%',
-              }}
-            />
-            <div
-              className="absolute inset-0"
-              style={{
-                background:
-                  'linear-gradient(to bottom, rgba(8,8,10,0.12) 0%, rgba(8,8,10,0) 20%, rgba(8,8,10,0) 68%, rgba(8,8,10,0.7) 88%, rgba(8,8,10,1) 100%)',
-              }}
-            />
-          </div>
+        <div className="relative overflow-hidden">
+          <div
+            className="absolute inset-0 bg-cover bg-center md:hidden"
+            style={{ backgroundImage: "url('/images/bball-backdrop-2-mobile.jpg')" }}
+            aria-hidden
+          />
+          <div
+            className="absolute inset-0 hidden bg-cover md:block"
+            style={{
+              backgroundImage: "url('/images/bball-backdrop-2.jpg')",
+              backgroundPosition: 'center 40%',
+            }}
+            aria-hidden
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(to bottom, rgba(8,8,10,0.12) 0%, rgba(8,8,10,0) 20%, rgba(8,8,10,0) 68%, rgba(8,8,10,0.7) 88%, rgba(8,8,10,1) 100%)',
+            }}
+            aria-hidden
+          />
 
           <div className="container relative mx-auto flex min-h-[188px] items-center justify-center px-4 py-12 md:min-h-[340px] md:py-16">
-            <div className="mx-auto max-w-3xl text-center">
-              <h1 className="hero-title-plate inline-block rounded-2xl border border-white/10 px-5 py-3 font-display text-[1.75rem] font-extrabold leading-[1.1] tracking-tight text-white sm:px-8 sm:py-4 sm:text-4xl md:text-5xl">
+            <div className="animate-rise-in mx-auto max-w-3xl text-center">
+              <h1 className="inline-block rounded-2xl border border-white/10 bg-court-950/70 px-5 py-3 font-display text-[1.75rem] font-extrabold leading-[1.1] tracking-tight text-white backdrop-blur-md sm:px-8 sm:py-4 sm:text-4xl md:text-5xl">
                 Zach&apos;s <span className="text-gradient-ember">Organized Runs</span>
               </h1>
 
