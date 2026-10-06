@@ -7,6 +7,7 @@ import { adminApi } from '@/lib/api';
 import { User } from '@/types';
 import UserBadge from '@/components/UserBadge';
 import BackLink from '@/components/BackLink';
+import ModalPortal from '@/components/ModalPortal';
 
 const getDisplayName = (u: User) =>
   u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : u.username;
@@ -205,66 +206,68 @@ export default function VerifyUsersPage() {
       </div>
 
       {verifyTarget && (
-        <div className="modal-overlay">
-          <div className="modal-panel max-w-md animate-rise-in">
-            <h2 className="heading-2">Verify {getDisplayName(verifyTarget)}</h2>
-            <p className="mb-4 mt-1 text-sm text-zinc-400">Add as Plus 1?</p>
+        <ModalPortal>
+          <div className="modal-overlay">
+            <div className="modal-panel max-w-md animate-rise-in">
+              <h2 className="heading-2">Verify {getDisplayName(verifyTarget)}</h2>
+              <p className="mb-4 mt-1 text-sm text-zinc-400">Add as Plus 1?</p>
 
-            <div className="mb-5 flex gap-2">
-              <button
-                onClick={() => setAddAsPlusOne(true)}
-                className={`btn flex-1 ${addAsPlusOne === true ? 'btn-primary' : 'btn-secondary'}`}
-              >
-                Yes
-              </button>
-              <button
-                onClick={() => setAddAsPlusOne(false)}
-                className={`btn flex-1 ${addAsPlusOne === false ? 'btn-primary' : 'btn-secondary'}`}
-              >
-                No
-              </button>
-            </div>
-
-            {addAsPlusOne && (
-              <div className="mb-5">
-                <label htmlFor="referrer" className="field-label">
-                  Who are they a +1 of?
-                </label>
-                <select
-                  id="referrer"
-                  value={referrerId}
-                  onChange={(e) => setReferrerId(e.target.value)}
-                  className="field-select"
+              <div className="mb-5 flex gap-2">
+                <button
+                  onClick={() => setAddAsPlusOne(true)}
+                  className={`btn flex-1 ${addAsPlusOne === true ? 'btn-primary' : 'btn-secondary'}`}
                 >
-                  <option value="">Select a Regular</option>
-                  {regulars.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {getDisplayName(r)}
-                    </option>
-                  ))}
-                </select>
-                {regulars.length === 0 && (
-                  <p className="field-hint">
-                    No users have the Regular badge yet. Assign one in Manage Badges first.
-                  </p>
-                )}
+                  Yes
+                </button>
+                <button
+                  onClick={() => setAddAsPlusOne(false)}
+                  className={`btn flex-1 ${addAsPlusOne === false ? 'btn-primary' : 'btn-secondary'}`}
+                >
+                  No
+                </button>
               </div>
-            )}
 
-            <div className="flex justify-end gap-2">
-              <button onClick={() => setVerifyTarget(null)} className="btn btn-secondary">
-                Cancel
-              </button>
-              <button
-                onClick={handleVerifyConfirm}
-                disabled={addAsPlusOne === null || (addAsPlusOne && !referrerId)}
-                className="btn btn-primary"
-              >
-                {addAsPlusOne ? 'Verify & Save +1' : 'Verify'}
-              </button>
+              {addAsPlusOne && (
+                <div className="mb-5">
+                  <label htmlFor="referrer" className="field-label">
+                    Who are they a +1 of?
+                  </label>
+                  <select
+                    id="referrer"
+                    value={referrerId}
+                    onChange={(e) => setReferrerId(e.target.value)}
+                    className="field-select"
+                  >
+                    <option value="">Select a Regular</option>
+                    {regulars.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {getDisplayName(r)}
+                      </option>
+                    ))}
+                  </select>
+                  {regulars.length === 0 && (
+                    <p className="field-hint">
+                      No users have the Regular badge yet. Assign one in Manage Badges first.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setVerifyTarget(null)} className="btn btn-secondary">
+                  Cancel
+                </button>
+                <button
+                  onClick={handleVerifyConfirm}
+                  disabled={addAsPlusOne === null || (addAsPlusOne && !referrerId)}
+                  className="btn btn-primary"
+                >
+                  {addAsPlusOne ? 'Verify & Save +1' : 'Verify'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   );

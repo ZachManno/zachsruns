@@ -8,6 +8,7 @@ import { DropRequest, Run } from '@/types';
 import Link from 'next/link';
 import BadgeIcon from '@/components/BadgeIcon';
 import BackLink from '@/components/BackLink';
+import ModalPortal from '@/components/ModalPortal';
 
 function formatRunDate(dateString: string) {
   const [year, month, day] = dateString.split('T')[0].split('-').map(Number);
@@ -618,49 +619,51 @@ function RunRow({ run, onDelete, onRefresh }: { run: Run; onDelete: (id: string)
 
       {/* Remind Modal */}
       {showRemindModal && (
-        <div className="modal-overlay">
-          <div className="modal-panel max-w-md animate-rise-in">
-            <h3 className="heading-2 mb-4">Send Reminder: {run.title}</h3>
-            <div className="mb-5">
-              <label className="field-label">
-                Reminder Message <span className="text-ember-400">*</span>
-              </label>
-              <input
-                type="text"
-                value={reminderMessage}
-                onChange={(e) => {
-                  if (e.target.value.length <= 100) {
-                    setReminderMessage(e.target.value);
-                  }
-                }}
-                placeholder="Enter reminder message (max 100 characters)"
-                className="field-input"
-                maxLength={100}
-                autoFocus
-              />
-              <p className="field-hint">{reminderMessage.length}/100 characters</p>
-            </div>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setShowRemindModal(false);
-                  setReminderMessage('');
-                }}
-                disabled={sendingReminder}
-                className="btn btn-secondary"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleRemind}
-                disabled={sendingReminder || !reminderMessage.trim()}
-                className="btn btn-primary"
-              >
-                {sendingReminder ? 'Sending...' : 'Send Reminder'}
-              </button>
+        <ModalPortal>
+          <div className="modal-overlay">
+            <div className="modal-panel max-w-md animate-rise-in">
+              <h3 className="heading-2 mb-4">Send Reminder: {run.title}</h3>
+              <div className="mb-5">
+                <label className="field-label">
+                  Reminder Message <span className="text-ember-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={reminderMessage}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 100) {
+                      setReminderMessage(e.target.value);
+                    }
+                  }}
+                  placeholder="Enter reminder message (max 100 characters)"
+                  className="field-input"
+                  maxLength={100}
+                  autoFocus
+                />
+                <p className="field-hint">{reminderMessage.length}/100 characters</p>
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowRemindModal(false);
+                    setReminderMessage('');
+                  }}
+                  disabled={sendingReminder}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRemind}
+                  disabled={sendingReminder || !reminderMessage.trim()}
+                  className="btn btn-primary"
+                >
+                  {sendingReminder ? 'Sending...' : 'Send Reminder'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   );

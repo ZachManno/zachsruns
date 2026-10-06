@@ -7,6 +7,7 @@ import { privateGroupsApi } from '@/lib/api';
 import { PrivateGroup } from '@/types';
 import Link from 'next/link';
 import BackLink from '@/components/BackLink';
+import ModalPortal from '@/components/ModalPortal';
 
 export default function AdminPrivateGroupsPage() {
   const { user, loading: authLoading, refreshUser } = useAuth();
@@ -189,32 +190,34 @@ export default function AdminPrivateGroupsPage() {
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && groupToDelete && (
-        <div className="modal-overlay">
-          <div className="modal-panel max-w-md animate-rise-in">
-            <h3 className="font-display text-xl font-bold text-red-300">Delete Group</h3>
-            <p className="mt-3 text-sm leading-relaxed text-zinc-300">
-              Are you sure you&apos;d like to delete the entire group{' '}
-              <strong className="text-ink">&quot;{groupToDelete.name}&quot;</strong>? All runs in
-              this group will be permanently deleted.
-            </p>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                disabled={deleting}
-                className="btn btn-secondary"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleDelete(deleteConfirm)}
-                disabled={deleting}
-                className="btn btn-danger"
-              >
-                {deleting ? 'Deleting...' : 'Delete Group'}
-              </button>
+        <ModalPortal>
+          <div className="modal-overlay">
+            <div className="modal-panel max-w-md animate-rise-in">
+              <h3 className="font-display text-xl font-bold text-red-300">Delete Group</h3>
+              <p className="mt-3 text-sm leading-relaxed text-zinc-300">
+                Are you sure you&apos;d like to delete the entire group{' '}
+                <strong className="text-ink">&quot;{groupToDelete.name}&quot;</strong>? All runs in
+                this group will be permanently deleted.
+              </p>
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  onClick={() => setDeleteConfirm(null)}
+                  disabled={deleting}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDelete(deleteConfirm)}
+                  disabled={deleting}
+                  className="btn btn-danger"
+                >
+                  {deleting ? 'Deleting...' : 'Delete Group'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   );

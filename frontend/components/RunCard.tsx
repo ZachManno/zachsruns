@@ -7,6 +7,7 @@ import { isLateDropWindow } from '@/lib/dropLock';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import BadgeIcon from './BadgeIcon';
+import ModalPortal from './ModalPortal';
 
 interface RunCardProps {
   run: Run;
@@ -409,36 +410,38 @@ export default function RunCard({ run, onUpdate }: RunCardProps) {
       )}
 
       {dropPromptStatus && (
-        <div className="modal-overlay">
-          <div className="modal-panel max-w-md animate-rise-in" role="dialog" aria-modal="true">
-            <h4 className="heading-3 mb-2">Late drop needs approval</h4>
-            <p className="text-sm leading-relaxed text-zinc-400">
-              You are attempting to drop within 1 hour of the run starting time, this requires admin verification. Please notify the admin in order to get this approved. Continue?
-            </p>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setDropPromptStatus(null)}
-                disabled={updating}
-                className="btn btn-secondary"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const status = dropPromptStatus;
-                  setDropPromptStatus(null);
-                  submitRsvp(status, true);
-                }}
-                disabled={updating}
-                className="btn btn-primary"
-              >
-                Continue
-              </button>
+        <ModalPortal>
+          <div className="modal-overlay">
+            <div className="modal-panel max-w-md animate-rise-in" role="dialog" aria-modal="true">
+              <h4 className="heading-3 mb-2">Late drop needs approval</h4>
+              <p className="text-sm leading-relaxed text-zinc-400">
+                You are attempting to drop within 1 hour of the run starting time, this requires admin verification. Please notify the admin in order to get this approved. Continue?
+              </p>
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDropPromptStatus(null)}
+                  disabled={updating}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const status = dropPromptStatus;
+                    setDropPromptStatus(null);
+                    submitRsvp(status, true);
+                  }}
+                  disabled={updating}
+                  className="btn btn-primary"
+                >
+                  Continue
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   );
