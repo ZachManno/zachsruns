@@ -13,11 +13,6 @@ const statusTextShades = (family) => ({
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  // Touch browsers leave :hover stuck on whatever sits under the last tap, which made cards
-  // look pre-selected after navigating. This scopes every hover: utility to pointing devices.
-  future: {
-    hoverOnlyWhenSupported: true,
-  },
   content: [
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -121,6 +116,11 @@ module.exports = {
     // (accent and status shades that need a darker step on a light background).
     plugin(function ({ addVariant }) {
       addVariant('light', 'html.light &');
+      // iOS keeps :hover on whatever sits under the last tap after a navigation.
+      // HoverReset puts `.nav-hover-reset` on <html> until the next real press or
+      // mouse move, so leftover hover from "Admin" doesn't paint the first card.
+      addVariant('hover', 'html:not(.nav-hover-reset) &:hover');
+      addVariant('group-hover', 'html:not(.nav-hover-reset) :merge(.group):hover &');
     }),
   ],
 }

@@ -5,6 +5,7 @@ import { AuthProvider } from '@/context/AuthContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { THEME_STORAGE_KEY } from '@/lib/theme';
 import Navbar from '@/components/Navbar';
+import HoverReset from '@/components/HoverReset';
 import { Analytics } from '@vercel/analytics/next';
 
 const inter = Inter({
@@ -57,6 +58,7 @@ export default function RootLayout({
 
         <ThemeProvider>
           <AuthProvider>
+            <HoverReset />
             <Navbar />
             <main className="min-h-screen">{children}</main>
           </AuthProvider>
