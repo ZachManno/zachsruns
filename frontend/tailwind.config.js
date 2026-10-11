@@ -13,6 +13,11 @@ const statusTextShades = (family) => ({
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  // Touch browsers leave :hover stuck on whatever sits under the last tap, which made cards
+  // look pre-selected after navigating. This scopes every hover: utility to pointing devices.
+  future: {
+    hoverOnlyWhenSupported: true,
+  },
   content: [
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
